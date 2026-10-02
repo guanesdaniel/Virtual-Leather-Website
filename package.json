@@ -1,0 +1,18 @@
+{
+  "name": "virtual-leather-website",
+  "private": true,
+  "type": "module",
+  "description": "Static website for virtualleather.net (Ecwid storefront embedded).",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "images": "node tools/images.mjs",
+    "serve": "npx --yes http-server site -p 8080 -c-1",
+    "check": "node tools/check.mjs"
+  },
+  "devDependencies": {
+    "@fontsource-variable/fraunces": "^5.0.0",
+    "@fontsource-variable/inter": "^5.0.0",
+    "@fontsource/great-vibes": "^5.3.0",
+    "sharp": "^0.33.0"
+  }
+}
