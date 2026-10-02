@@ -329,3 +329,7 @@ fieldset.panel { margin: 0; min-width: 0; }
   .consent-box { max-width: none; padding: 10px 12px; font-size: .85rem; }
   .consent-actions .btn { flex: 1 1 0; min-height: 40px; padding: .4em .6em; font-size: .88rem; }
 }
+
+/* Brush "VL" logo */
+.brand { gap: 12px; }
+.brand-mark { width: auto; height: 36px; color: var(--ink); }
