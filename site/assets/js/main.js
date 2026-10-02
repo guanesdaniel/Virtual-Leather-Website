@@ -32,7 +32,6 @@
     var setOptions = function (show) {
       opts.hidden = !show;
       btnSave.hidden = !show;
-      btnChoose.hidden = show;
       btnChoose.setAttribute('aria-expanded', String(show));
     };
     var close = function (choice) {
@@ -47,7 +46,7 @@
       var a = b.getAttribute('data-consent');
       if (a === 'accept') close({ analytics: true, marketing: true });
       else if (a === 'reject') close({ analytics: false, marketing: false });
-      else if (a === 'customise') { setOptions(true); opts.analytics.focus(); }
+      else if (a === 'customise') { var open = opts.hidden; setOptions(open); if (open) opts.analytics.focus(); }
       else if (a === 'save') close({ analytics: opts.analytics.checked, marketing: opts.marketing.checked });
     });
     document.addEventListener('click', function (e) {

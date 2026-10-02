@@ -313,3 +313,19 @@ fieldset.panel { margin: 0; min-width: 0; }
   .consent-actions .btn { flex: 1 1 45%; min-height: 44px; padding: .5em .8em; font-size: .92rem; }
 }
 .store-wrap [id^="my-store-"] { background: #fff; border-radius: var(--radius); padding: 8px 12px; }
+
+/* Compact cookie banner */
+.consent { left: auto; right: 88px; bottom: 16px; justify-content: flex-end; }
+.consent-box { max-width: 360px; padding: 12px 14px; font-size: .88rem; border-radius: 14px; }
+.consent-text { margin: 0 0 10px; }
+.consent-text .link-button { color: var(--tan-light); }
+.consent-options p { margin: 0 0 6px; font-size: .84rem; }
+.consent-options fieldset { display: flex; gap: 14px; margin: 0 0 10px; }
+.consent-options .check { padding: 2px 0; }
+.consent-actions { gap: 8px; }
+.consent-actions .btn { flex: 1 1 0; min-height: 40px; padding: .4em .9em; font-size: .9rem; }
+@media (max-width: 600px) {
+  .consent { left: 8px; right: 76px; bottom: 10px; }
+  .consent-box { max-width: none; padding: 10px 12px; font-size: .85rem; }
+  .consent-actions .btn { flex: 1 1 0; min-height: 40px; padding: .4em .6em; font-size: .88rem; }
+}

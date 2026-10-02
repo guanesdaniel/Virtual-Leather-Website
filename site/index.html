@@ -21,12 +21,12 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/styles.css?v=1">
+<link rel="stylesheet" href="/assets/css/styles.css?v=2">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"Virtual Leather","legalName":"Virtual Leather Intl","url":"https://virtualleather.net/","logo":"https://virtualleather.net/favicon.svg","email":"danielguanes@virtualleather.info","sameAs":["https://www.instagram.com/virtualleatherintl/","https://virtualleathershop.etsy.com/"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","telephone":"+447552809738","email":"danielguanes@virtualleather.info","availableLanguage":["English","Spanish"]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://virtualleather.net/#bbq-apron","name":"Personalised BBQ Leather Apron with Beer Holder","description":"Made-to-measure leather BBQ apron with adjustable straps, drink holder, tool loops and pocket. Engraved with your name, phrase or logo.","image":"https://virtualleather.net/assets/img/hero-bbq-1080.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619498562","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619498562"}},{"@type":"Product","@id":"https://virtualleather.net/#barber-apron","name":"Personalised Barber Leather Apron","description":"Made-to-measure leather barber apron with tool pockets, engraved with your shop name or logo.","image":"https://virtualleather.net/assets/img/p-619492033-800.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619492033","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619492033"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you size the apron?","acceptedAnswer":{"@type":"Answer","text":"Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are adjustable."}},{"@type":"Question","name":"Will I see my design before you make it?","acceptedAnswer":{"@type":"Answer","text":"Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it."}},{"@type":"Question","name":"What can you engrave?","acceptedAnswer":{"@type":"Answer","text":"Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. Personalisation is included in the price."}},{"@type":"Question","name":"Do you ship worldwide?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number."}}]}]}</script>
 <script src="/assets/js/config.js?v=1"></script>
 <script src="/assets/js/analytics.js?v=1"></script>
-<script src="/assets/js/main.js?v=1" defer></script>
+<script src="/assets/js/main.js?v=2" defer></script>
 </head>
 <body class="home">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -541,21 +541,19 @@
 </aside>
 <div class="consent" id="consent" role="region" aria-label="Cookie consent" hidden>
   <div class="consent-box">
-    <p class="consent-title">Cookies on Virtual Leather</p>
-    <p>We use essential cookies to run the cart and checkout. With your permission we'd also like to use Google Analytics to understand how the site is used, and the Meta Pixel to measure our Facebook and Instagram ads. <a href="/cookies/">Cookie policy</a></p>
+    <p class="consent-text">We use cookies for stats and ads. <button type="button" class="link-button" data-consent="customise" aria-expanded="false" aria-controls="consent-options">More info</button></p>
     <form class="consent-options" id="consent-options" hidden>
+      <p>Essential cookies run the cart and checkout. With your OK we also use Google Analytics (visit stats) and the Meta Pixel (ad measurement). <a href="/cookies/">Cookie policy</a></p>
       <fieldset>
         <legend class="visually-hidden">Choose which cookies to allow</legend>
-        <label class="check"><input type="checkbox" checked disabled> <span><strong>Essential</strong>: cart, checkout and remembering this choice. Always on.</span></label>
-        <label class="check"><input type="checkbox" name="analytics"> <span><strong>Analytics</strong>: Google Analytics 4 visit statistics.</span></label>
-        <label class="check"><input type="checkbox" name="marketing"> <span><strong>Marketing</strong>: Meta Pixel ad measurement (Facebook &amp; Instagram).</span></label>
+        <label class="check"><input type="checkbox" name="analytics"> <span>Analytics</span></label>
+        <label class="check"><input type="checkbox" name="marketing"> <span>Marketing</span></label>
       </fieldset>
     </form>
     <div class="consent-actions">
-      <button type="button" class="btn btn-light" data-consent="reject">Reject optional</button>
-      <button type="button" class="btn btn-light" data-consent="customise" aria-expanded="false" aria-controls="consent-options">Choose</button>
-      <button type="button" class="btn btn-light" data-consent="save" hidden>Save choices</button>
-      <button type="button" class="btn btn-light" data-consent="accept">Accept all</button>
+      <button type="button" class="btn btn-light" data-consent="reject">Reject</button>
+      <button type="button" class="btn btn-light" data-consent="save" hidden>Save</button>
+      <button type="button" class="btn btn-light" data-consent="accept">Accept</button>
     </div>
   </div>
 </div>
