@@ -20,7 +20,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [ ] Ecwid: check that your plan allows the store to run on your own domain. Then in *Settings → General → Store profile*, add `https://virtualleather.net/shop/` as the storefront URL so emails and SEO links point to the new site.
 - [ ] Ecwid: keep Ecwid's own GA and Facebook Pixel integrations **off** (see README).
 - [ ] Ecwid: consider making "Email for design confirmation" and "Phone Number for shipping confirmation" **optional** product options. Checkout already collects both, so customers wouldn't be asked twice (less data, faster checkout).
-- [ ] Hostinger: SSL on, then FTP secrets added to GitHub (see README), then merge to `main`.
+- [ ] Hostinger DNS: point `virtualleather.net` at GitHub Pages (4 A records + `www` CNAME, see README). Then in GitHub → Settings → Pages, tick "Enforce HTTPS".
 - [ ] Meta: verify the domain and confirm that test events arrive.
 - [ ] Google Search Console: add `virtualleather.net` and submit `https://virtualleather.net/sitemap.xml`.
 - [ ] Update the website link on Instagram, Etsy and WhatsApp Business to `https://virtualleather.net`.

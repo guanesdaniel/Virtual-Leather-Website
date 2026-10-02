@@ -1,9 +1,6 @@
-# Builds the site and uploads site/ to Hostinger over FTP whenever main changes.
-# One-time setup (GitHub repo → Settings → Secrets and variables → Actions):
-#   FTP_SERVER    e.g. ftp.virtualleather.net   (hPanel → Files → FTP Accounts)
-#   FTP_USERNAME  e.g. u123456789.virtualleather.net
-#   FTP_PASSWORD  the FTP account password
-# Until those secrets exist, the workflow builds and checks the site but skips the upload.
+# Builds the site and publishes site/ to GitHub Pages (free hosting) via the gh-pages branch.
+# The domain virtualleather.net (registered at Hostinger) points to GitHub Pages through DNS records;
+# see README "Publishing". Pull requests only build and check.
 name: Build and deploy
 
 on:
@@ -16,11 +13,12 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    env:
-      FTP_SERVER: ${{ secrets.FTP_SERVER }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,14 +28,12 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run check
-      - name: Upload to Hostinger
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && env.FTP_SERVER != ''
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Publish to GitHub Pages (gh-pages branch)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./site/
-          # Hostinger's main FTP account usually opens directly in public_html, so the default is ./
-          # Set the repository variable FTP_DIR (e.g. public_html/) if your FTP root is one level up.
-          server-dir: ${{ vars.FTP_DIR || './' }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          cname: virtualleather.net
+          force_orphan: true

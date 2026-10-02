@@ -1,6 +1,6 @@
 # virtualleather.net
 
-The Virtual Leather website: a fast, hand-coded static site with the existing **Ecwid** store (ID `97299801`) embedded for cart and checkout. It needs no paid website builder. It's hosted on Hostinger.
+The Virtual Leather website: a fast, hand-coded static site with the existing **Ecwid** store (ID `97299801`) embedded for cart and checkout. It needs no paid website builder. It's hosted free on GitHub Pages; the domain is registered at Hostinger.
 
 ## What's in it
 
@@ -34,19 +34,29 @@ npm run serve        # preview at http://localhost:8080
 
 `npm run images` re-downloads product photos from Ecwid and converts them to WebP. Edit the list in `tools/images.mjs` first.
 
-## Publishing to Hostinger (free, automatic)
+## Publishing (free: GitHub Pages + your Hostinger domain)
 
-1. **Point the domain.** In hPanel → *Websites*, add `virtualleather.net` as a website, or check it's attached to your hosting plan. If the domain is registered at Hostinger, DNS is set automatically.
-2. **Turn on SSL.** In hPanel → *Security → SSL*, install the free SSL for `virtualleather.net` and `www.virtualleather.net`.
-3. **FTP details.** In hPanel → *Files → FTP Accounts*, note the hostname, username and password.
-4. **GitHub secrets.** In GitHub → this repo → *Settings → Secrets and variables → Actions*, add:
-   - `FTP_SERVER`: FTP hostname, e.g. `ftp.virtualleather.net`
-   - `FTP_USERNAME`
-   - `FTP_PASSWORD`
-   - Optional *variable* `FTP_DIR`: set it to `public_html/` only if your FTP login opens one level above `public_html`.
-5. Merge to `main`. The **Build and deploy** GitHub Action builds the site and uploads `site/` to Hostinger. Every later change to `main` goes live the same way.
+Hosting is **GitHub Pages**, which is free for this public repo. Hostinger is used **only for the domain**.
 
-`site/.htaccess` forces HTTPS, redirects `www` to the bare domain, sets caching and security headers, and serves the custom 404 page.
+- Every push to `main` runs the **Build and deploy** GitHub Action. It builds the site and publishes `site/` to the `gh-pages` branch, which GitHub Pages serves.
+- The build writes `site/CNAME` (the domain `virtualleather.net`) and `site/.nojekyll`.
+
+**One-time DNS setup** in Hostinger: hPanel → Domains → virtualleather.net → **DNS / Nameservers → DNS records**.
+
+1. Delete the existing **A** record for `@` (it points to 34.206.176.23, a parking server) and any `AAAA` record for `@`.
+2. Add these records:
+
+| Type | Name | Points to | TTL |
+|---|---|---|---|
+| A | @ | 185.199.108.153 | 3600 |
+| A | @ | 185.199.109.153 | 3600 |
+| A | @ | 185.199.110.153 | 3600 |
+| A | @ | 185.199.111.153 | 3600 |
+| CNAME | www | guanesdaniel.github.io | 3600 |
+
+3. In GitHub → repo **Settings → Pages**, check that the source is the `gh-pages` branch and the custom domain shows `virtualleather.net`. Once the certificate is issued, tick **Enforce HTTPS**. This can take up to an hour after the DNS change.
+
+`site/.htaccess` is only used if the site is ever moved back to Apache/Hostinger hosting. GitHub Pages ignores it, and handles HTTPS and the 404 page itself.
 
 ## Analytics and ads
 
