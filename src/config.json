@@ -1,0 +1,22 @@
+{
+  "_comment": "Single source of truth for business details and tracking IDs. Edit, then run `npm run build`. Values marked TODO must be confirmed by the business owner before launch.",
+  "siteName": "Virtual Leather",
+  "legalName": "Virtual Leather Intl",
+  "siteUrl": "https://virtualleather.net",
+  "ownerName": "Daniel Guanes",
+  "email": "danielguanes@virtualleather.info",
+  "whatsappNumber": "447552809738",
+  "whatsappDisplay": "+44 7552 809738",
+  "businessAddress": "",
+  "companyNumber": "",
+  "madeIn": "Colombia",
+  "currency": "USD",
+  "ecwidStoreId": "97299801",
+  "ga4MeasurementId": "",
+  "metaPixelId": "",
+  "instagramUrl": "https://www.instagram.com/virtualleatherintl/",
+  "instagramHandle": "@virtualleatherintl",
+  "etsyUrl": "https://virtualleathershop.etsy.com/",
+  "etsyReviewsUrl": "https://www.etsy.com/shop/virtualleathershop/reviews",
+  "policiesUpdated": "2 October 2026"
+}

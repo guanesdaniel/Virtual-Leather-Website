@@ -1,0 +1,22 @@
+<!--{
+  "title": "Shop Leather Aprons, Bags & Accessories | Virtual Leather",
+  "description": "Shop personalised leather aprons, knife rolls, backpacks and duffle bags. Made to measure in Colombia and shipped worldwide. Secure checkout.",
+  "bodyClass": "shop"
+}-->
+<div class="wrap shop-intro">
+  <h1>Shop</h1>
+  <p class="muted">Every piece is handmade and personalised to order. Prefer a live preview? <a href="/#design">Use the apron designer</a>.</p>
+</div>
+<div class="wrap store-wrap">
+  <div id="my-store-{{site.ecwidStoreId}}"></div>
+  <p class="store-loading" data-store-loading>Loading the shop…</p>
+  <div class="card panel" data-store-fallback hidden>
+    <h2 style="font-size:1.4rem">The shop didn't load</h2>
+    <p>An ad or script blocker may be stopping our secure shop from loading. Please allow this site in your blocker and refresh the page. Or order with us directly:</p>
+    <div class="btn-row">
+      <a class="btn btn-dark" href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="shop-fallback">Order on WhatsApp</a>
+      <a class="btn btn-ghost" href="{{site.etsyUrl}}" target="_blank" rel="noopener">Shop on Etsy</a>
+    </div>
+  </div>
+  <noscript><p>Our shop needs JavaScript. You can also order on <a href="{{site.etsyUrl}}">Etsy</a> or by <a href="{{site.whatsappUrl}}">WhatsApp</a>.</p></noscript>
+</div>

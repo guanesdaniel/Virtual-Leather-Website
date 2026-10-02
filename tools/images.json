@@ -1,0 +1,205 @@
+{
+ "hero-bbq": {
+  "ratio": 0.766,
+  "widths": [
+   640,
+   1080
+  ]
+ },
+ "style-bbq": {
+  "ratio": 0.6667,
+  "widths": [
+   480
+  ]
+ },
+ "style-simple": {
+  "ratio": 0.7493,
+  "widths": [
+   480
+  ]
+ },
+ "style-barber": {
+  "ratio": 0.7493,
+  "widths": [
+   480
+  ]
+ },
+ "style-split": {
+  "ratio": 0.75,
+  "widths": [
+   480
+  ]
+ },
+ "style-wood": {
+  "ratio": 0.7493,
+  "widths": [
+   480
+  ]
+ },
+ "work-lyric-barber": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-acdc": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-monogram": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-barber-name": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-campari": {
+  "ratio": 0.75,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-grill-master": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-crest": {
+  "ratio": 0.7273,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "work-tan-logo": {
+  "ratio": 0.8695,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "workshop": {
+  "ratio": 1,
+  "widths": [
+   640,
+   1080
+  ]
+ },
+ "team-aprons": {
+  "ratio": 1.3345,
+  "widths": [
+   640,
+   1080
+  ]
+ },
+ "team-barber": {
+  "ratio": 1.3345,
+  "widths": [
+   640
+  ]
+ },
+ "sketch": {
+  "ratio": 1,
+  "widths": [
+   640
+  ]
+ },
+ "p-619498559": {
+  "ratio": 1.1278,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619483308": {
+  "ratio": 0.75,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-688211109": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619488531": {
+  "ratio": 0.8,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-738486114": {
+  "ratio": 0.8006,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619501024": {
+  "ratio": 0.6667,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619498562": {
+  "ratio": 0.766,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619492033": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619492031": {
+  "ratio": 0.75,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619505538": {
+  "ratio": 0.6667,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619501025": {
+  "ratio": 0.9932,
+  "widths": [
+   480,
+   800
+  ]
+ },
+ "p-619498560": {
+  "ratio": 0.7493,
+  "widths": [
+   480,
+   800
+  ]
+ }
+}
