@@ -201,11 +201,11 @@
       }
       function dist(a, b) { return Math.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])); }
       function intoTip(from, i, c1) {
-        var t = pts[i], T = tangent(i), k = dist(from, t) * 0.42;
+        var t = pts[i], T = tangent(i), k = dist(from, t) * 0.5;
         return ' C' + c1 + ' ' + f(t[0] - T[0] * k) + ',' + f(t[1] - T[1] * k) + ' ' + t[0] + ',' + t[1];
       }
       function outOfTip(i, to) {
-        var t = pts[i], T = tangent(i), k = dist(t, to) * 0.42;
+        var t = pts[i], T = tangent(i), k = dist(t, to) * 0.5;
         return ' C' + f(t[0] + T[0] * k) + ',' + f(t[1] + T[1] * k) + ' ' +
           f(to[0] - (to[0] - t[0]) * 0.25) + ',' + f(to[1] - (to[1] - t[1]) * 0.25) + ' ' + to[0] + ',' + to[1];
       }
@@ -230,9 +230,9 @@
       [[547, 121], [563, 108], [601, 108]]);
     [1, -1].forEach(function (sgn) {
       var w = el('g', { transform: sgn < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
-      el('path', { d: back, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
+      el('path', { d: back, fill: 'url(#wingGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
       el('path', { d: back, fill: 'rgba(0,0,0,.18)' }, w);
-      el('path', { d: front, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, w);
+      el('path', { d: front, fill: 'url(#wingGrad)', stroke: acc.edge, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, w);
       // tooled lines separating the feathers, running in from each notch
       [[476, 60], [492, 76], [506, 91], [521, 105]].forEach(function (n) {
         var ex = n[0] + (588 - n[0]) * 0.42, ey = n[1] + (92 - n[1]) * 0.42;
@@ -249,7 +249,7 @@
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'apron-title apron-desc' }, stage);
     el('title', { id: 'apron-title' }, svg).textContent = 'Preview of your ' + style.name;
     el('desc', { id: 'apron-desc' }, svg).textContent = main.label + ' leather with ' + acc.label.toLowerCase() + ' accessories and black straps' +
-      (st.wings ? ', leather wings' : '') + (st.opener ? ', bottle opener' : '') + (st.grease ? ', with a tin of leather care grease and cloth' : '') +
+      (st.wings ? ', ' + wingName(st) + ' leather wings' : '') + (st.opener ? ', bottle opener' : '') + (st.grease ? ', with a tin of leather care grease and cloth' : '') +
       (st.text ? ', engraved "' + st.text.replace(/\n/g, ' ') + '" at position ' + st.pos + ' (' + POS[st.pos].label.toLowerCase() + ')' : ', no engraving') + '.';
 
     var defs = el('defs', {}, svg);
@@ -263,6 +263,8 @@
     el('feDropShadow', { dx: 0, dy: 3, stdDeviation: 3, 'flood-color': '#000', 'flood-opacity': '.35' }, drop);
     var acG = el('linearGradient', { id: 'accGrad', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
     el('stop', { offset: '0', 'stop-color': acc.hi }, acG); el('stop', { offset: '1', 'stop-color': acc.hex }, acG);
+    var wc = COLORS[wingColor(st)], wgG = el('linearGradient', { id: 'wingGrad', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
+    el('stop', { offset: '0', 'stop-color': wc.hi }, wgG); el('stop', { offset: '1', 'stop-color': wc.hex }, wgG);
     var loopG = el('linearGradient', { id: 'loopGrad', x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
     el('stop', { offset: '0', 'stop-color': acc.hex }, loopG); el('stop', { offset: '.45', 'stop-color': acc.hi }, loopG); el('stop', { offset: '1', 'stop-color': acc.edge }, loopG);
     var metal = el('linearGradient', { id: 'metal', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
@@ -296,7 +298,7 @@
     // colour. As on the real apron, each strap lies on the connector from its edge, tucks into a
     // slit and runs underneath to the opposite side, where it comes back out through another slit.
     if (st.wings) {
-      wings(svg, acc);
+      wings(svg, COLORS[wingColor(st)]);
     } else {
       var cx = 600, cy = 79, rin = 44;
       var plateD = 'M498,79 L546,6 H654 L702,79 L654,152 H546 Z';
@@ -442,7 +444,7 @@
       text: (form.elements.engraving.value || '').replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim(),
       font: val('font') || 'serif', pos: val('position') || '1', logo: val('logo'), notes: val('notes'),
       height: val('height'), weight: val('weight'), email: val('email'), phone: val('phone'),
-      wings: val('wings'), opener: val('opener'), grease: val('grease')
+      wings: val('wings'), wingColor: val('wingColor'), opener: val('opener'), grease: val('grease')
     };
   }
 
@@ -467,7 +469,12 @@
     total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag')
   };
   var counter = document.getElementById('engraving-count');
+  var wingField = document.getElementById('wing-color-field');
   var waLink = document.getElementById('design-whatsapp');
+
+  // Wings follow the accessory colour unless the customer picks a wing colour.
+  function wingColor(st) { return COLORS[st.wingColor] ? st.wingColor : st.acc; }
+  function wingName(st) { return { tan: 'tan', brown: 'dark brown', black: 'black' }[wingColor(st)]; }
 
   function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0); }
 
@@ -477,7 +484,7 @@
       '- Main leather: ' + COLORS[st.main].label + '\n' +
       '- Accessories: ' + COLORS[st.acc].label + '\n' +
       '- ' + describe(st).split(' | ').slice(0, -1).join('\n- ') + '\n' +
-      (st.wings ? '- Extra: leather wings\n' : '') + (st.opener ? '- Extra: bottle opener\n' : '') + (st.grease ? '- Extra: protective leather grease 50 ml\n' : '') +
+      (st.wings ? '- Extra: leather wings (' + wingName(st) + ')\n' : '') + (st.opener ? '- Extra: bottle opener\n' : '') + (st.grease ? '- Extra: protective leather grease 50 ml\n' : '') +
       'Can you help me finish my order?';
   }
 
@@ -511,12 +518,13 @@
     syncPositions(st);
     syncExtras(st);
     st = read();
+    wingField.hidden = !st.wings;
     draw(st);
     summaryEls.style.textContent = STYLES[st.style].name;
     summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
     summaryEls.engraving.textContent = st.text ? '"' + st.text.replace(/\n/g, ' ') + '" · position ' + st.pos : (st.logo ? 'Logo (sent after order)' : 'None');
     var ex = [];
-    if (st.wings) ex.push('Wings'); if (st.opener) ex.push('Bottle opener'); if (st.grease) ex.push('Leather grease');
+    if (st.wings) ex.push('Wings (' + wingName(st) + ')'); if (st.opener) ex.push('Bottle opener'); if (st.grease) ex.push('Leather grease');
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
@@ -600,7 +608,7 @@
     setStatus('Adding to your cart…');
     VL.loadEcwid().then(function (E) {
       return addProduct(E, style.id, options)
-        .then(function () { return st.wings ? addProduct(E, 688211109, { Color: COLORS[st.acc].addon }) : null; })
+        .then(function () { return st.wings ? addProduct(E, 688211109, { Color: COLORS[wingColor(st)].addon }) : null; })
         .then(function () { return st.opener ? addProduct(E, 619483308, { Color: COLORS[st.acc].addon }) : null; })
         .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; });
     }).then(function () {
