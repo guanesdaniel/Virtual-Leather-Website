@@ -18,7 +18,7 @@
     barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, secondary: 'Secondary Color (Attachment/Pockets)' },
-    wood:   { id: 619498560, name: 'Woodworking apron', positions: 4, secondary: 'Secondary Color (Attachment/Pockets)' }
+    wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' }
   };
   // Leather palette taken from the reference illustration.
   //   hex = base, edge = outline/shadow, hi = highlight, strap = harness colour, engrave = lettering,
@@ -71,7 +71,8 @@
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     split:  { 1: { y: 420 }, 2: { y: 505, h: 60 }, 3: { x: 170, y: 1010, w: 210 }, 4: { x: 1030, y: 1010, w: 210 } },
-    simple: { 3: { y: 935 } }
+    simple: { 3: { y: 935 } },
+    wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
   };
   function posFor(styleKey, p) {
     var o = (POS_OVERRIDES[styleKey] || {})[p];
@@ -81,7 +82,7 @@
     return b;
   }
   // Where the optional bottle opener hangs on each style.
-  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [120, 1000] };
+  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [150, 985] };
 
   function rivet(g, x, y, r) {
     el('circle', { cx: x, cy: y, r: r || 9, fill: 'url(#metal)', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 1.5 }, g);
@@ -280,22 +281,30 @@
       });
       [[495, 1686], [705, 1686]].forEach(function (p) { rivet(svg, p[0], p[1], 7); rivet(svg, p[0] + (p[0] < 600 ? 50 : -50), p[1], 7); });
     } else if (st.style === 'wood') {
-      // Pencil pocket with pen slots, tool loops, tape-measure D-ring, hammer ring
-      // and a wide three-compartment tool pocket.
-      pocket(acs, 395, 660, 110, 190, acc);
-      [425, 450, 475].forEach(function (x) {
-        el('rect', { x: x - 7, y: 640, width: 14, height: 40, rx: 7, fill: '#d9b77a', stroke: '#6b4b1e', 'stroke-width': 2 }, acs);
+      // Layout from the Virtual Leather woodworking sketch: two logo spots high on the chest.
+      pocket(acs, 580, 525, 225, 238, acc);
+      dring(acs, 412, 820, acc);
+      // Hand-warmer pocket: open along both curved sides so hands go in from either side.
+      var kd = 'M444,882 H765 C770,960 790,1030 844,1050 V1222 Q844,1236 830,1236 H357 Q343,1236 343,1222 V1050 C397,1030 417,960 444,882 Z';
+      shape(acs, kd, acc);
+      el('path', { d: 'M454,894 H755 M832,1060 V1224 H355 V1060', fill: 'none', stroke: 'rgba(255,240,225,.55)', 'stroke-width': 2.5, 'stroke-dasharray': '10 8' }, acs);
+      el('path', { d: 'M765,882 C770,960 790,1030 844,1050 M444,882 C417,960 397,1030 343,1050', fill: 'none', stroke: acc.edge, 'stroke-width': 6, opacity: '.8' }, acs);
+      rivet(acs, 452, 892, 7); rivet(acs, 757, 892, 7); rivet(acs, 352, 1060, 7); rivet(acs, 835, 1060, 7);
+      // Side strap with a raised hammer loop between riveted ends.
+      plate(acs, 53, 1355, 264, 105, acc, 6);
+      el('rect', { x: 140, y: 1340, width: 90, height: 135, rx: 16, fill: 'url(#loopGrad)', stroke: acc.edge, 'stroke-width': 3 }, acs);
+      [[75, 1385], [105, 1385], [75, 1430], [105, 1430], [265, 1385], [295, 1385], [265, 1430], [295, 1430]].forEach(function (r) { rivet(acs, r[0], r[1], 7); });
+      pocket(acs, 820, 1470, 250, 262, acc);
+      // Bottom corner tabs with D-rings and leg ties.
+      var ties = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
+      tube(ties, 'M18,1708 C-10,1720 -6,1760 30,1772');
+      tube(ties, 'M1182,1708 C1210,1720 1206,1760 1170,1772');
+      [[25, 1680], [1095, 1680]].forEach(function (p, i) {
+        el('path', { d: i ? 'M1175,1690 a18,20 0 0 1 0,38' : 'M25,1690 a18,20 0 0 0 0,38', fill: 'none', stroke: 'url(#metal)', 'stroke-width': 6 }, svg);
+        plate(svg, p[0], p[1], 80, 60, acc, 5);
+        rivet(svg, p[0] + 24, p[1] + 18, 6); rivet(svg, p[0] + 56, p[1] + 18, 6);
+        rivet(svg, p[0] + 24, p[1] + 42, 6); rivet(svg, p[0] + 56, p[1] + 42, 6);
       });
-      loops(acs, 578, 804, 305, 54, 3, acc);
-      dring(acs, 600, 1080, acc);
-      ringLoop(acs, 1081, 1035, acc);
-      plate(acs, 200, 1180, 800, 390, acc, 8);
-      stitchRect(acs, 212, 1192, 776, 366);
-      [467, 733].forEach(function (x) {
-        el('path', { d: 'M' + x + ',1192 V1558', stroke: 'rgba(255,240,225,.55)', 'stroke-width': 2.5, 'stroke-dasharray': '10 8' }, acs);
-        rivet(acs, x, 1196, 7);
-      });
-      rivet(acs, 214, 1194, 8); rivet(acs, 986, 1194, 8); rivet(acs, 214, 1556, 8); rivet(acs, 986, 1556, 8);
     }
     if (st.opener && op) opener(acs, op[0], op[1], acc);
 
