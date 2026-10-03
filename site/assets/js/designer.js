@@ -63,8 +63,8 @@
   var STRAP_BLACK = '#1b1918'; // neck and waist straps are always black
   var BIB = 'M350,236 Q350,220 366,220 Q600,242 834,220 Q850,220 850,236 L850,560 C860,760 1000,900 1160,950 ' +
     'L1160,1742 Q1160,1760 1142,1760 L58,1760 Q40,1760 40,1742 L40,950 C200,900 340,760 350,560 Z';
-  var STRAP_L = 'M390,300 V215 C390,165 440,125 545,98';
-  var STRAP_R = 'M810,300 V215 C810,165 760,125 655,98';
+  var STRAP_L = 'M390,318 V215 C390,165 440,125 545,98';
+  var STRAP_R = 'M810,318 V215 C810,165 760,125 655,98';
   var OUTER_L = 'M545,45 C340,20 205,45 175,170 C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
   var OUTER_R = 'M655,45 C860,20 995,45 1025,170 C1050,280 1055,430 1060,560 L1065,650 C1070,770 1155,775 1155,690 L1155,620';
 
@@ -238,14 +238,12 @@
       el('path', { d: d, stroke: 'rgba(255,255,255,.12)', 'stroke-width': 3, transform: 'translate(-6 -2)' }, g);
     }
 
-    // Black harness straps with sliders, and the back piece (hexagon, or wings if chosen).
+    // Outer harness straps (behind everything) with their sliders.
     var harness = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
-    [OUTER_L, OUTER_R, STRAP_L, STRAP_R].forEach(function (d) { tube(harness, d); });
+    [OUTER_L, OUTER_R].forEach(function (d) { tube(harness, d); });
     [[143, 460], [1057, 460]].forEach(function (p) {
       el('rect', { x: p[0] - 13, y: p[1] - 26, width: 26, height: 52, rx: 13, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 6 }, svg);
     });
-    if (st.wings) wings(svg, acc);
-    else shape(svg, 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z', acc);
 
     // Apron body
     el('path', { d: BIB, fill: main.hex }, svg);
@@ -253,7 +251,31 @@
     el('rect', { x: 0, y: 0, width: W, height: H, filter: 'url(#mottle)' }, tex);
     el('rect', { x: 0, y: 0, width: W, height: H, filter: 'url(#grain)', opacity: '.5' }, tex);
     el('path', { d: BIB, fill: 'none', stroke: main.edge, 'stroke-width': 4 }, svg);
-    [[388, 258], [388, 296], [812, 258], [812, 296]].forEach(function (p) { rivet(svg, p[0], p[1], 9); });
+
+    // Neck straps lie on top of the apron and are pinned to it with two rivets each.
+    var neck = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
+    [STRAP_L, STRAP_R].forEach(function (d) { tube(neck, d); });
+    [[390, 262], [390, 300], [810, 262], [810, 300]].forEach(function (p) { rivet(svg, p[0], p[1], 9); });
+
+    // Back piece: wings if chosen, otherwise the hexagon connector in the accessory colour,
+    // with each of the four straps visibly threading in through a slot.
+    if (st.wings) {
+      wings(svg, acc);
+    } else {
+      shape(svg, 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z', acc);
+      var thread = el('g', { fill: 'none' }, svg);
+      [[[486, 34], [552, 54]], [[714, 34], [648, 54]], [[492, 114], [552, 98]], [[708, 114], [648, 98]]].forEach(function (seg) {
+        var a0 = seg[0], a1 = seg[1];
+        var d = 'M' + a0[0] + ',' + a0[1] + ' L' + a1[0] + ',' + a1[1];
+        el('path', { d: d, stroke: '#8f8a84', 'stroke-width': 36, 'stroke-linecap': 'butt' }, thread);
+        el('path', { d: d, stroke: STRAP_BLACK, 'stroke-width': 30, 'stroke-linecap': 'butt' }, thread);
+        // Slot where the strap passes into the connector.
+        var dx = a1[0] - a0[0], dy = a1[1] - a0[1], len = Math.sqrt(dx * dx + dy * dy);
+        var px = -dy / len * 21, py = dx / len * 21;
+        el('path', { d: 'M' + (a1[0] + px) + ',' + (a1[1] + py) + ' L' + (a1[0] - px) + ',' + (a1[1] - py),
+          stroke: acc.edge, 'stroke-width': 7, 'stroke-linecap': 'round' }, thread);
+      });
+    }
 
     var acs = el('g', {}, svg);
     // Waist tabs with D-rings
