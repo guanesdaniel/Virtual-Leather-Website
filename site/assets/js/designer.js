@@ -203,8 +203,6 @@
         el('path', { d: d, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
       });
     });
-    el('ellipse', { cx: 600, cy: 104, rx: 34, ry: 22, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3 }, g);
-    rivet(g, 587, 104, 7); rivet(g, 613, 104, 7);
   }
 
   function draw(st) {
@@ -256,21 +254,28 @@
     });
     [[390, 262], [390, 300], [810, 262], [810, 300]].forEach(function (p) { rivet(svg, p[0], p[1], 9); });
 
-    // Back piece: wings if chosen, otherwise the connector in the accessory colour. The straps
-    // run across its outer rim and pass under the centre panel through two slots.
+    // Back piece: wings if chosen, otherwise the hexagon connector, both in the accessory colour.
+    // As on the real apron, the two straps run across the piece and pass under a centre plate
+    // through two slots; the wings' centre plate carries two pins.
+    var hc = el('clipPath', { id: 'backclip' }, defs);
     if (st.wings) {
       wings(svg, acc);
+      el('path', { d: 'M532,40 H668 V122 H532 Z' }, hc);
     } else {
       var hex = 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z';
       shape(svg, hex, acc);
-      var rim = el('g', { fill: 'none', 'clip-path': 'url(#hexclip)' }, svg);
-      var hc = el('clipPath', { id: 'hexclip' }, defs);
       el('path', { d: hex }, hc);
-      tube(rim, STRAP_B);
-      tube(rim, STRAP_A);
-      var panel = 'M560,78 L578,36 H622 L640,78 L622,120 H578 Z';
-      el('path', { d: panel, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
-      // Slots where the straps disappear under the panel.
+    }
+    var rim = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
+    tube(rim, STRAP_B);
+    tube(rim, STRAP_A);
+    if (st.wings) {
+      el('path', { d: 'M556,80 C556,58 576,52 600,52 C624,52 644,58 644,80 C644,102 624,108 600,108 C576,108 556,102 556,80 Z',
+        fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
+      el('path', { d: 'M566,58 C557,66 557,94 566,102 M634,58 C643,66 643,94 634,102', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round' }, svg);
+      rivet(svg, 586, 80, 9); rivet(svg, 614, 80, 9);
+    } else {
+      el('path', { d: 'M560,78 L578,36 H622 L640,78 L622,120 H578 Z', fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
       el('path', { d: 'M572,48 L560,78 L572,108 M628,48 L640,78 L628,108', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
     }
 
