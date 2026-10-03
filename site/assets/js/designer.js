@@ -186,23 +186,18 @@
   // Optional leather wings at the back cross-over (as the owner's reference): three layered
   // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
-    function tier(len, top, h, n) {
-      var cx = 600, x0 = cx - len;
-      var d = 'M' + cx + ',' + top + ' C' + (cx - len * 0.35) + ',' + (top - h * 0.55) + ' ' + (cx - len * 0.8) + ',' + (top - h * 0.45) + ' ' + x0 + ',' + (top + h * 0.05);
-      var seg = len / n, base = top + h * 0.5;
-      for (var i = 0; i < n; i++) {
-        var xa = x0 + i * seg, xb = xa + seg, yb = base + (i + 1) * (h * 0.5 / n);
-        d += ' Q' + (xa + seg * 0.25) + ',' + (yb + h * 0.55) + ' ' + xb + ',' + yb;
-      }
-      return d + ' L' + cx + ',' + (top + h) + ' Z';
-    }
-    var tiers = [tier(150, 112, 40, 4), tier(205, 92, 42, 5), tier(250, 68, 46, 6)];
-    [1, -1].forEach(function (s) {
-      var w = el('g', { transform: (s < 0 ? 'translate(1200 0) scale(-1 1) ' : '') + 'rotate(14 600 100)' }, g);
-      tiers.forEach(function (d) {
-        el('path', { d: d, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
-      });
+    // Simple two-layer leather wings sitting over the strap crossing, with two pins (owner's reference).
+    var back = 'M600,128 L554,128 Q538,148 516,138 Q502,124 482,122 Q468,106 446,104 Q434,88 412,84 ' +
+      'Q400,70 380,64 Q368,52 348,44 C400,26 488,24 540,38 C568,46 588,54 600,62 Z';
+    var front = 'M600,114 L562,114 Q548,130 528,123 Q516,110 498,108 Q486,94 466,92 Q456,78 436,74 ' +
+      'Q426,62 408,56 C452,46 518,46 552,56 C574,64 590,70 600,76 Z';
+    [1, -1].forEach(function (sgn) {
+      var w = el('g', { transform: sgn < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
+      el('path', { d: back, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
+      el('path', { d: back, fill: 'rgba(0,0,0,.18)' }, w);
+      el('path', { d: front, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, w);
     });
+    rivet(g, 584, 108, 9); rivet(g, 616, 108, 9);
   }
 
   function draw(st) {
@@ -259,15 +254,6 @@
     // slit and runs underneath to the opposite side, where it comes back out through another slit.
     if (st.wings) {
       wings(svg, acc);
-      var wc = el('clipPath', { id: 'backclip' }, defs);
-      el('path', { d: 'M532,40 H668 V122 H532 Z' }, wc);
-      var wrim = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
-      tube(wrim, STRAP_B);
-      tube(wrim, STRAP_A);
-      el('path', { d: 'M556,80 C556,58 576,52 600,52 C624,52 644,58 644,80 C644,102 624,108 600,108 C576,108 556,102 556,80 Z',
-        fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
-      el('path', { d: 'M566,58 C557,66 557,94 566,102 M634,58 C643,66 643,94 634,102', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round' }, svg);
-      rivet(svg, 586, 80, 9); rivet(svg, 614, 80, 9);
     } else {
       var cx = 600, cy = 79, rin = 44;
       var plateD = 'M498,79 L546,6 H654 L702,79 L654,152 H546 Z';
