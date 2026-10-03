@@ -18,7 +18,7 @@
     barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, secondary: 'Secondary Color (Attachment/Pockets)' },
-    wood:   { id: 619498560, name: 'Woodworking apron', positions: 4, secondary: 'Secondary Color (Attachment/Pockets)' }
+    wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' }
   };
   // Leather palette taken from the reference illustration.
   //   hex = base, edge = outline/shadow, hi = highlight, strap = harness colour, engrave = lettering,
@@ -71,7 +71,8 @@
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     split:  { 1: { y: 420 }, 2: { y: 505, h: 60 }, 3: { x: 170, y: 1010, w: 210 }, 4: { x: 1030, y: 1010, w: 210 } },
-    simple: { 3: { y: 935 } }
+    simple: { 3: { y: 935 } },
+    wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
   };
   function posFor(styleKey, p) {
     var o = (POS_OVERRIDES[styleKey] || {})[p];
@@ -81,7 +82,7 @@
     return b;
   }
   // Where the optional bottle opener hangs on each style.
-  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [120, 1000] };
+  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [150, 985] };
 
   function rivet(g, x, y, r) {
     el('circle', { cx: x, cy: y, r: r || 9, fill: 'url(#metal)', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 1.5 }, g);
@@ -154,31 +155,42 @@
     rivet(g, x - 13, y + 25, 6); rivet(g, x + 13, y + 25, 6);
     el('circle', { cx: x, cy: y + 98, r: 40, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 8 }, g);
   }
-  // Optional bottle opener: riveted tab, clip, black strap, opener head and ring.
+  // Optional bottle opener (as the owner's reference): riveted leather tab, metal clip,
+  // long black strap with a rivet, round metal opener head and a pointed ring.
   function opener(g, x, y, acc) {
-    plate(g, x - 27, y, 54, 36, acc, 6);
-    rivet(g, x - 11, y + 18, 6); rivet(g, x + 11, y + 18, 6);
-    el('rect', { x: x - 27, y: y + 36, width: 54, height: 14, rx: 4, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 5 }, g);
-    el('rect', { x: x - 21, y: y + 46, width: 42, height: 150, rx: 8, fill: STRAP_BLACK, stroke: '#000', 'stroke-width': 2, filter: 'url(#drop)' }, g);
-    rivet(g, x, y + 178, 7);
-    el('circle', { cx: x, cy: y + 222, r: 26, fill: 'url(#metal)', stroke: '#8f8f8f', 'stroke-width': 3 }, g);
-    el('circle', { cx: x, cy: y + 222, r: 15, fill: '#e9e9e9' }, g);
-    el('path', { d: 'M' + x + ',' + (y + 318) + ' C' + (x - 18) + ',' + (y + 304) + ' ' + (x - 34) + ',' + (y + 286) + ' ' + (x - 34) + ',' + (y + 270) +
-      ' A34,34 0 1 1 ' + (x + 34) + ',' + (y + 270) + ' C' + (x + 34) + ',' + (y + 286) + ' ' + (x + 18) + ',' + (y + 304) + ' ' + x + ',' + (y + 318) + ' Z',
-      fill: 'none', stroke: 'url(#metal)', 'stroke-width': 7 }, g);
+    plate(g, x - 26, y, 52, 40, acc, 5);
+    rivet(g, x - 11, y + 20, 6); rivet(g, x + 11, y + 20, 6);
+    el('path', { d: 'M' + (x - 26) + ',' + (y + 42) + ' h52 v10 h-6 v-4 h-40 v4 h-6 Z', fill: 'url(#metal)', stroke: '#8a8a8a', 'stroke-width': 1.5 }, g);
+    el('rect', { x: x - 22, y: y + 52, width: 44, height: 180, rx: 6, fill: STRAP_BLACK, stroke: '#000', 'stroke-width': 2, filter: 'url(#drop)' }, g);
+    el('rect', { x: x - 18, y: y + 56, width: 6, height: 172, rx: 3, fill: 'rgba(255,255,255,.08)' }, g);
+    rivet(g, x, y + 212, 7);
+    el('circle', { cx: x, cy: y + 262, r: 34, fill: 'url(#metal)', stroke: '#8f8f8f', 'stroke-width': 3, filter: 'url(#drop)' }, g);
+    el('circle', { cx: x, cy: y + 262, r: 24, fill: '#efefef', stroke: '#b5b5b5', 'stroke-width': 2 }, g);
+    el('path', { d: 'M' + x + ',' + (y + 392) + ' L' + (x - 30) + ',' + (y + 364) + ' A40,40 0 1 1 ' + (x + 30) + ',' + (y + 364) + ' Z',
+      fill: 'none', stroke: 'url(#metal)', 'stroke-width': 8, 'stroke-linejoin': 'round' }, g);
   }
-  // Optional leather wings at the back cross-over (replace the hexagon connector).
+  // Optional leather wings at the back cross-over (as the owner's reference): three layered
+  // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
-    var half = 'M600,96 C585,70 540,40 470,30 C440,27 418,30 400,36 C430,46 452,54 466,62 C440,64 425,70 414,78 C445,82 470,88 488,96 ' +
-      'C470,102 456,110 448,120 C478,120 506,114 528,110 C522,118 518,126 516,134 C548,128 576,116 600,104 Z';
-    g = el('g', { transform: 'translate(600 85) scale(1.25) translate(-600 -85)' }, g);
+    function tier(len, top, h, n) {
+      var cx = 600, x0 = cx - len;
+      var d = 'M' + cx + ',' + top + ' C' + (cx - len * 0.35) + ',' + (top - h * 0.55) + ' ' + (cx - len * 0.8) + ',' + (top - h * 0.45) + ' ' + x0 + ',' + (top + h * 0.05);
+      var seg = len / n, base = top + h * 0.5;
+      for (var i = 0; i < n; i++) {
+        var xa = x0 + i * seg, xb = xa + seg, yb = base + (i + 1) * (h * 0.5 / n);
+        d += ' Q' + (xa + seg * 0.25) + ',' + (yb + h * 0.55) + ' ' + xb + ',' + yb;
+      }
+      return d + ' L' + cx + ',' + (top + h) + ' Z';
+    }
+    var tiers = [tier(150, 112, 40, 4), tier(205, 92, 42, 5), tier(250, 68, 46, 6)];
     [1, -1].forEach(function (s) {
-      var w = el('g', { transform: s < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
-      el('path', { d: half, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, w);
-      el('path', { d: 'M592,94 C560,72 520,56 470,48 M590,100 C560,92 525,86 488,84 M592,104 C566,108 540,112 520,116',
-        fill: 'none', stroke: acc.edge, 'stroke-width': 2.5, opacity: '.7' }, w);
+      var w = el('g', { transform: (s < 0 ? 'translate(1200 0) scale(-1 1) ' : '') + 'rotate(14 600 100)' }, g);
+      tiers.forEach(function (d) {
+        el('path', { d: d, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
+      });
     });
-    rivet(g, 583, 98, 7); rivet(g, 617, 98, 7);
+    el('ellipse', { cx: 600, cy: 104, rx: 34, ry: 22, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3 }, g);
+    rivet(g, 587, 104, 7); rivet(g, 613, 104, 7);
   }
 
   function draw(st) {
@@ -280,22 +292,30 @@
       });
       [[495, 1686], [705, 1686]].forEach(function (p) { rivet(svg, p[0], p[1], 7); rivet(svg, p[0] + (p[0] < 600 ? 50 : -50), p[1], 7); });
     } else if (st.style === 'wood') {
-      // Pencil pocket with pen slots, tool loops, tape-measure D-ring, hammer ring
-      // and a wide three-compartment tool pocket.
-      pocket(acs, 395, 660, 110, 190, acc);
-      [425, 450, 475].forEach(function (x) {
-        el('rect', { x: x - 7, y: 640, width: 14, height: 40, rx: 7, fill: '#d9b77a', stroke: '#6b4b1e', 'stroke-width': 2 }, acs);
+      // Layout from the Virtual Leather woodworking sketch: two logo spots high on the chest.
+      pocket(acs, 580, 525, 225, 238, acc);
+      dring(acs, 412, 820, acc);
+      // Hand-warmer pocket: open along both curved sides so hands go in from either side.
+      var kd = 'M444,882 H765 C770,960 790,1030 844,1050 V1222 Q844,1236 830,1236 H357 Q343,1236 343,1222 V1050 C397,1030 417,960 444,882 Z';
+      shape(acs, kd, acc);
+      el('path', { d: 'M454,894 H755 M832,1060 V1224 H355 V1060', fill: 'none', stroke: 'rgba(255,240,225,.55)', 'stroke-width': 2.5, 'stroke-dasharray': '10 8' }, acs);
+      el('path', { d: 'M765,882 C770,960 790,1030 844,1050 M444,882 C417,960 397,1030 343,1050', fill: 'none', stroke: acc.edge, 'stroke-width': 6, opacity: '.8' }, acs);
+      rivet(acs, 452, 892, 7); rivet(acs, 757, 892, 7); rivet(acs, 352, 1060, 7); rivet(acs, 835, 1060, 7);
+      // Side strap with a raised hammer loop between riveted ends.
+      plate(acs, 53, 1355, 264, 105, acc, 6);
+      el('rect', { x: 140, y: 1340, width: 90, height: 135, rx: 16, fill: 'url(#loopGrad)', stroke: acc.edge, 'stroke-width': 3 }, acs);
+      [[75, 1385], [105, 1385], [75, 1430], [105, 1430], [265, 1385], [295, 1385], [265, 1430], [295, 1430]].forEach(function (r) { rivet(acs, r[0], r[1], 7); });
+      pocket(acs, 820, 1470, 250, 262, acc);
+      // Bottom corner tabs with D-rings and leg ties.
+      var ties = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
+      tube(ties, 'M18,1708 C-10,1720 -6,1760 30,1772');
+      tube(ties, 'M1182,1708 C1210,1720 1206,1760 1170,1772');
+      [[25, 1680], [1095, 1680]].forEach(function (p, i) {
+        el('path', { d: i ? 'M1175,1690 a18,20 0 0 1 0,38' : 'M25,1690 a18,20 0 0 0 0,38', fill: 'none', stroke: 'url(#metal)', 'stroke-width': 6 }, svg);
+        plate(svg, p[0], p[1], 80, 60, acc, 5);
+        rivet(svg, p[0] + 24, p[1] + 18, 6); rivet(svg, p[0] + 56, p[1] + 18, 6);
+        rivet(svg, p[0] + 24, p[1] + 42, 6); rivet(svg, p[0] + 56, p[1] + 42, 6);
       });
-      loops(acs, 578, 804, 305, 54, 3, acc);
-      dring(acs, 600, 1080, acc);
-      ringLoop(acs, 1081, 1035, acc);
-      plate(acs, 200, 1180, 800, 390, acc, 8);
-      stitchRect(acs, 212, 1192, 776, 366);
-      [467, 733].forEach(function (x) {
-        el('path', { d: 'M' + x + ',1192 V1558', stroke: 'rgba(255,240,225,.55)', 'stroke-width': 2.5, 'stroke-dasharray': '10 8' }, acs);
-        rivet(acs, x, 1196, 7);
-      });
-      rivet(acs, 214, 1194, 8); rivet(acs, 986, 1194, 8); rivet(acs, 214, 1556, 8); rivet(acs, 986, 1556, 8);
     }
     if (st.opener && op) opener(acs, op[0], op[1], acc);
 
