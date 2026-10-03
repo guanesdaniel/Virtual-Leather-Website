@@ -170,6 +170,16 @@
     el('path', { d: 'M' + x + ',' + (y + 392) + ' L' + (x - 30) + ',' + (y + 364) + ' A40,40 0 1 1 ' + (x + 30) + ',' + (y + 364) + ' Z',
       fill: 'none', stroke: 'url(#metal)', 'stroke-width': 8, 'stroke-linejoin': 'round' }, g);
   }
+  // Optional 50 ml protective grease: a round tin and a polishing cloth beside the apron.
+  function greaseTin(g) {
+    var t = el('g', { filter: 'url(#drop)' }, g);
+    el('rect', { x: 1000, y: 655, width: 70, height: 90, rx: 14, fill: '#f2f1ee', stroke: '#c9c7c2', 'stroke-width': 3 }, t);
+    el('path', { d: 'M1006,690 h58 M1006,712 h58', stroke: '#dedcd7', 'stroke-width': 2 }, t);
+    el('circle', { cx: 955, cy: 700, r: 62, fill: 'url(#metal)', stroke: '#8a8a8a', 'stroke-width': 4 }, t);
+    el('circle', { cx: 955, cy: 700, r: 50, fill: '#2f55c9', stroke: '#1f3d9a', 'stroke-width': 2 }, t);
+    el('rect', { x: 905, y: 690, width: 100, height: 20, fill: '#1e2428' }, t);
+    el('path', { d: 'M935,750 a20,20 0 0 1 40,0 Z', fill: '#e8e8e8' }, t);
+  }
   // Optional leather wings at the back cross-over (as the owner's reference): three layered
   // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
@@ -200,7 +210,7 @@
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'apron-title apron-desc' }, stage);
     el('title', { id: 'apron-title' }, svg).textContent = 'Preview of your ' + style.name;
     el('desc', { id: 'apron-desc' }, svg).textContent = main.label + ' leather with ' + acc.label.toLowerCase() + ' accessories and black straps' +
-      (st.wings ? ', leather wings' : '') + (st.opener ? ', bottle opener' : '') +
+      (st.wings ? ', leather wings' : '') + (st.opener ? ', bottle opener' : '') + (st.grease ? ', with a tin of leather care grease and cloth' : '') +
       (st.text ? ', engraved "' + st.text.replace(/\n/g, ' ') + '" at position ' + st.pos + ' (' + POS[st.pos].label.toLowerCase() + ')' : ', no engraving') + '.';
 
     var defs = el('defs', {}, svg);
@@ -319,6 +329,7 @@
       });
     }
     if (st.opener && op) opener(acs, op[0], op[1], acc);
+    if (st.grease) greaseTin(svg);
 
     // Position guides
     var guides = el('g', { 'aria-hidden': 'true' }, svg);
@@ -364,7 +375,7 @@
       text: (form.elements.engraving.value || '').replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim(),
       font: val('font') || 'serif', pos: val('position') || '1', logo: val('logo'), notes: val('notes'),
       height: val('height'), weight: val('weight'), email: val('email'), phone: val('phone'),
-      wings: val('wings'), opener: val('opener')
+      wings: val('wings'), opener: val('opener'), grease: val('grease')
     };
   }
 
@@ -391,7 +402,7 @@
   var counter = document.getElementById('engraving-count');
   var waLink = document.getElementById('design-whatsapp');
 
-  function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0); }
+  function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0); }
 
   function waMessage(st) {
     return 'Hi Virtual Leather! I designed an apron on your website:\n' +
@@ -399,7 +410,7 @@
       '- Main leather: ' + COLORS[st.main].label + '\n' +
       '- Accessories: ' + COLORS[st.acc].label + '\n' +
       '- ' + describe(st).split(' | ').slice(0, -1).join('\n- ') + '\n' +
-      (st.wings ? '- Extra: leather wings\n' : '') + (st.opener ? '- Extra: bottle opener\n' : '') +
+      (st.wings ? '- Extra: leather wings\n' : '') + (st.opener ? '- Extra: bottle opener\n' : '') + (st.grease ? '- Extra: protective leather grease 50 ml\n' : '') +
       'Can you help me finish my order?';
   }
 
@@ -423,7 +434,7 @@
     summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
     summaryEls.engraving.textContent = st.text ? '"' + st.text.replace(/\n/g, ' ') + '" · position ' + st.pos : (st.logo ? 'Logo (sent after order)' : 'None');
     var ex = [];
-    if (st.wings) ex.push('Wings'); if (st.opener) ex.push('Bottle opener');
+    if (st.wings) ex.push('Wings'); if (st.opener) ex.push('Bottle opener'); if (st.grease) ex.push('Leather grease');
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
@@ -508,7 +519,8 @@
     VL.loadEcwid().then(function (E) {
       return addProduct(E, style.id, options)
         .then(function () { return st.wings ? addProduct(E, 688211109, { Color: COLORS[st.acc].addon }) : null; })
-        .then(function () { return st.opener ? addProduct(E, 619483308, { Color: COLORS[st.acc].addon }) : null; });
+        .then(function () { return st.opener ? addProduct(E, 619483308, { Color: COLORS[st.acc].addon }) : null; })
+        .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; });
     }).then(function () {
       setStatus('');
       form.hidden = true;
