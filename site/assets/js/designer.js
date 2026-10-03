@@ -190,18 +190,36 @@
     // each layer has stepped feather "fingers" pointing outwards, longest at the top.
     // Points for the left wing as [tip, notch, tip, notch, ...]; mirrored for the right.
     function wingPath(topStart, topC1, topC2, pts, end) {
-      var d = 'M' + topStart + ' C' + topC1 + ' ' + topC2 + ' ' + pts[0][0] + ',' + pts[0][1];
-      for (var i = 1; i < pts.length; i++) {
-        var p0 = pts[i - 1], p1 = pts[i];
-        if (i % 2) {
-          // tip -> notch: the underside of a feather
-          d += ' Q' + (p0[0] + (p1[0] - p0[0]) * 0.6).toFixed(1) + ',' + (p0[1] + (p1[1] - p0[1]) * 0.15 + 3).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
-        } else {
-          // notch -> next tip: the rounded end of the next feather
-          d += ' Q' + (p1[0] - 8).toFixed(1) + ',' + (p0[1] + 1).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
+      // Each feather is a smooth rounded lobe: the curve keeps one tangent through the tip
+      // (running from the previous notch towards the next one) and only turns sharply in the notches.
+      function f(n) { return n.toFixed(1); }
+      function tangent(i) {
+        var prev = i === 0 ? topC2.split(',').map(Number) : pts[i - 1];
+        var next = i === pts.length - 1 ? end[0] : pts[i + 1];
+        var dx = next[0] - prev[0], dy = next[1] - prev[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+        return [dx / len, dy / len];
+      }
+      function dist(a, b) { return Math.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])); }
+      function intoTip(from, i, c1) {
+        var t = pts[i], T = tangent(i), k = dist(from, t) * 0.42;
+        return ' C' + c1 + ' ' + f(t[0] - T[0] * k) + ',' + f(t[1] - T[1] * k) + ' ' + t[0] + ',' + t[1];
+      }
+      function outOfTip(i, to) {
+        var t = pts[i], T = tangent(i), k = dist(t, to) * 0.42;
+        return ' C' + f(t[0] + T[0] * k) + ',' + f(t[1] + T[1] * k) + ' ' +
+          f(to[0] - (to[0] - t[0]) * 0.25) + ',' + f(to[1] - (to[1] - t[1]) * 0.25) + ' ' + to[0] + ',' + to[1];
+      }
+      var start = topStart.split(',').map(Number);
+      var d = 'M' + topStart + intoTip(start, 0, topC1);
+      for (var i = 0; i < pts.length; i += 2) {
+        var notch = i + 1 < pts.length ? pts[i + 1] : end[0];
+        d += outOfTip(i, notch);
+        if (i + 2 < pts.length) {
+          var n = pts[i + 1], t2 = pts[i + 2];
+          d += intoTip(n, i + 2, f(n[0] + (t2[0] - n[0]) * 0.25) + ',' + f(n[1] + (t2[1] - n[1]) * 0.25));
         }
       }
-      for (var j = 0; j < end.length; j++) d += ' L' + end[j][0] + ',' + end[j][1];
+      for (var j = 1; j < end.length; j++) d += ' L' + end[j][0] + ',' + end[j][1];
       return d + ' Z';
     }
     var back = wingPath('601,63', '560,46', '470,24',
