@@ -83,7 +83,7 @@
     return b;
   }
   // Where the optional bottle opener hangs on each style.
-  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [150, 985] };
+  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [973, 990] };
 
   function rivet(g, x, y, r) {
     el('circle', { cx: x, cy: y, r: r || 9, fill: 'url(#metal)', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 1.5 }, g);
