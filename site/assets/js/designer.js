@@ -15,7 +15,7 @@
 
   var STYLES = {
     bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
-    barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
+    barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' },
     wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' }
@@ -83,7 +83,7 @@
     return b;
   }
   // Where the optional bottle opener hangs on each style.
-  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [150, 985] };
+  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [973, 990] };
 
   function rivet(g, x, y, r) {
     el('circle', { cx: x, cy: y, r: r || 9, fill: 'url(#metal)', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 1.5 }, g);
@@ -414,6 +414,20 @@
       'Can you help me finish my order?';
   }
 
+  // Extras offered per style (default: all). The barber apron has no bottle opener.
+  var ALL_EXTRAS = ['wings', 'opener', 'grease'];
+  function syncExtras(st) {
+    var allowed = STYLES[st.style].extras || ALL_EXTRAS;
+    ALL_EXTRAS.forEach(function (name) {
+      var box = form.elements[name];
+      if (!box) return;
+      var on = allowed.indexOf(name) !== -1;
+      box.disabled = !on;
+      if (!on) box.checked = false;
+      box.closest('.check').hidden = !on;
+    });
+  }
+
   function syncPositions(st) {
     var max = STYLES[st.style].positions;
     var radios = form.querySelectorAll('input[name="position"]');
@@ -428,6 +442,7 @@
   function update() {
     var st = read();
     syncPositions(st);
+    syncExtras(st);
     st = read();
     draw(st);
     summaryEls.style.textContent = STYLES[st.style].name;
