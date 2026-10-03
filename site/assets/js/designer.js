@@ -186,18 +186,35 @@
   // Optional leather wings at the back cross-over (as the owner's reference): three layered
   // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
-    // Simple two-layer leather wings sitting over the strap crossing, with two pins (owner's reference).
-    var back = 'M600,128 L554,128 Q538,148 516,138 Q502,124 482,122 Q468,106 446,104 Q434,88 412,84 ' +
-      'Q400,70 380,64 Q368,52 348,44 C400,26 488,24 540,38 C568,46 588,54 600,62 Z';
-    var front = 'M600,114 L562,114 Q548,130 528,123 Q516,110 498,108 Q486,94 466,92 Q456,78 436,74 ' +
-      'Q426,62 408,56 C452,46 518,46 552,56 C574,64 590,70 600,76 Z';
+    // Two-layer leather wings over the strap crossing, traced from the owner's reference:
+    // tips sweep up along the straps, rounded feather lobes underneath, a V notch at the top
+    // centre and two pins above the straight bottom centre.
+    function featherPath(top, lower, lobe) {
+      // top: [start(centre top), c1, c2, tip]; lower: points from tip back towards the centre.
+      var d = 'M' + top[0] + ' C' + top[1] + ' ' + top[2] + ' ' + top[3];
+      for (var i = 1; i < lower.length; i++) {
+        var p0 = lower[i - 1], p1 = lower[i];
+        var mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
+        var dx = p1[0] - p0[0], dy = p1[1] - p0[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var nx = -dy / len, ny = dx / len; // normal pointing down/out of the wing
+        if (ny < 0) { nx = -nx; ny = -ny; }
+        var k = i < lower.length - 1 ? lobe : 0;
+        d += ' Q' + (mx + nx * k).toFixed(1) + ',' + (my + ny * k).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
+      }
+      return d + ' Z';
+    }
+    var back = featherPath(['600,58', '560,40', '468,20', '398,28'],
+      [[398, 28], [420, 44], [440, 66], [460, 86], [481, 104], [503, 122], [527, 136], [552, 124], [600, 110]], 16);
+    var front = featherPath(['600,66', '566,50', '488,32', '424,37'],
+      [[424, 37], [442, 52], [460, 72], [479, 90], [499, 106], [520, 120], [544, 124], [600, 104]], 13);
     [1, -1].forEach(function (sgn) {
       var w = el('g', { transform: sgn < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
       el('path', { d: back, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
-      el('path', { d: back, fill: 'rgba(0,0,0,.18)' }, w);
+      el('path', { d: back, fill: 'rgba(0,0,0,.2)' }, w);
       el('path', { d: front, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, w);
+      el('path', { d: front, fill: 'rgba(255,240,225,.06)' }, w);
     });
-    rivet(g, 584, 108, 9); rivet(g, 616, 108, 9);
+    rivet(g, 585, 92, 8); rivet(g, 615, 92, 8);
   }
 
   function draw(st) {
