@@ -187,34 +187,42 @@
   // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
     // Two-layer leather wings over the strap crossing, traced from the owner's reference:
-    // tips sweep up along the straps, rounded feather lobes underneath, a V notch at the top
-    // centre and two pins above the straight bottom centre.
-    function featherPath(top, lower, lobe) {
-      // top: [start(centre top), c1, c2, tip]; lower: points from tip back towards the centre.
-      var d = 'M' + top[0] + ' C' + top[1] + ' ' + top[2] + ' ' + top[3];
-      for (var i = 1; i < lower.length; i++) {
-        var p0 = lower[i - 1], p1 = lower[i];
-        var mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
-        var dx = p1[0] - p0[0], dy = p1[1] - p0[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
-        var nx = -dy / len, ny = dx / len; // normal pointing down/out of the wing
-        if (ny < 0) { nx = -nx; ny = -ny; }
-        var k = i < lower.length - 1 ? lobe : 0;
-        d += ' Q' + (mx + nx * k).toFixed(1) + ',' + (my + ny * k).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
+    // each layer has stepped feather "fingers" pointing outwards, longest at the top.
+    // Points for the left wing as [tip, notch, tip, notch, ...]; mirrored for the right.
+    function wingPath(topStart, topC1, topC2, pts, end) {
+      var d = 'M' + topStart + ' C' + topC1 + ' ' + topC2 + ' ' + pts[0][0] + ',' + pts[0][1];
+      for (var i = 1; i < pts.length; i++) {
+        var p0 = pts[i - 1], p1 = pts[i];
+        if (i % 2) {
+          // tip -> notch: the underside of a feather
+          d += ' Q' + (p0[0] + (p1[0] - p0[0]) * 0.6).toFixed(1) + ',' + (p0[1] + (p1[1] - p0[1]) * 0.15 + 3).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
+        } else {
+          // notch -> next tip: the rounded end of the next feather
+          d += ' Q' + (p1[0] - 8).toFixed(1) + ',' + (p0[1] + 1).toFixed(1) + ' ' + p1[0] + ',' + p1[1];
+        }
       }
+      for (var j = 0; j < end.length; j++) d += ' L' + end[j][0] + ',' + end[j][1];
       return d + ' Z';
     }
-    var back = featherPath(['600,58', '560,40', '468,20', '398,28'],
-      [[398, 28], [420, 44], [440, 66], [460, 86], [481, 104], [503, 122], [527, 136], [552, 124], [600, 110]], 16);
-    var front = featherPath(['600,66', '566,50', '488,32', '424,37'],
-      [[424, 37], [442, 52], [460, 72], [479, 90], [499, 106], [520, 120], [544, 124], [600, 104]], 13);
+    var back = wingPath('601,63', '560,46', '470,24',
+      [[406, 33], [437, 47], [427, 52], [455, 67], [448, 73], [471, 84], [464, 88], [488, 98], [481, 105], [513, 109], [506, 126], [527, 119], [523, 135]],
+      [[545, 122], [563, 113], [601, 113]]);
+    var front = wingPath('601,76', '570,62', '505,40',
+      [[452, 46], [476, 60], [469, 64], [492, 76], [485, 80], [506, 91], [499, 97], [521, 105], [516, 115], [535, 120], [530, 129]],
+      [[547, 121], [563, 108], [601, 108]]);
     [1, -1].forEach(function (sgn) {
       var w = el('g', { transform: sgn < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
       el('path', { d: back, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
-      el('path', { d: back, fill: 'rgba(0,0,0,.2)' }, w);
+      el('path', { d: back, fill: 'rgba(0,0,0,.18)' }, w);
       el('path', { d: front, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, w);
-      el('path', { d: front, fill: 'rgba(255,240,225,.06)' }, w);
+      // tooled lines separating the feathers, running in from each notch
+      [[476, 60], [492, 76], [506, 91], [521, 105]].forEach(function (n) {
+        var ex = n[0] + (588 - n[0]) * 0.42, ey = n[1] + (92 - n[1]) * 0.42;
+        el('path', { d: 'M' + n[0] + ',' + n[1] + ' Q' + ((n[0] + ex) / 2).toFixed(1) + ',' + ((n[1] + ey) / 2 - 4).toFixed(1) + ' ' + ex.toFixed(1) + ',' + ey.toFixed(1),
+          fill: 'none', stroke: acc.edge, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: 0.7 }, w);
+      });
     });
-    rivet(g, 585, 92, 8); rivet(g, 615, 92, 8);
+    rivet(g, 581, 95, 8); rivet(g, 619, 95, 8);
   }
 
   function draw(st) {
