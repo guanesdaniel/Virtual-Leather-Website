@@ -155,31 +155,42 @@
     rivet(g, x - 13, y + 25, 6); rivet(g, x + 13, y + 25, 6);
     el('circle', { cx: x, cy: y + 98, r: 40, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 8 }, g);
   }
-  // Optional bottle opener: riveted tab, clip, black strap, opener head and ring.
+  // Optional bottle opener (as the owner's reference): riveted leather tab, metal clip,
+  // long black strap with a rivet, round metal opener head and a pointed ring.
   function opener(g, x, y, acc) {
-    plate(g, x - 27, y, 54, 36, acc, 6);
-    rivet(g, x - 11, y + 18, 6); rivet(g, x + 11, y + 18, 6);
-    el('rect', { x: x - 27, y: y + 36, width: 54, height: 14, rx: 4, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 5 }, g);
-    el('rect', { x: x - 21, y: y + 46, width: 42, height: 150, rx: 8, fill: STRAP_BLACK, stroke: '#000', 'stroke-width': 2, filter: 'url(#drop)' }, g);
-    rivet(g, x, y + 178, 7);
-    el('circle', { cx: x, cy: y + 222, r: 26, fill: 'url(#metal)', stroke: '#8f8f8f', 'stroke-width': 3 }, g);
-    el('circle', { cx: x, cy: y + 222, r: 15, fill: '#e9e9e9' }, g);
-    el('path', { d: 'M' + x + ',' + (y + 318) + ' C' + (x - 18) + ',' + (y + 304) + ' ' + (x - 34) + ',' + (y + 286) + ' ' + (x - 34) + ',' + (y + 270) +
-      ' A34,34 0 1 1 ' + (x + 34) + ',' + (y + 270) + ' C' + (x + 34) + ',' + (y + 286) + ' ' + (x + 18) + ',' + (y + 304) + ' ' + x + ',' + (y + 318) + ' Z',
-      fill: 'none', stroke: 'url(#metal)', 'stroke-width': 7 }, g);
+    plate(g, x - 26, y, 52, 40, acc, 5);
+    rivet(g, x - 11, y + 20, 6); rivet(g, x + 11, y + 20, 6);
+    el('path', { d: 'M' + (x - 26) + ',' + (y + 42) + ' h52 v10 h-6 v-4 h-40 v4 h-6 Z', fill: 'url(#metal)', stroke: '#8a8a8a', 'stroke-width': 1.5 }, g);
+    el('rect', { x: x - 22, y: y + 52, width: 44, height: 180, rx: 6, fill: STRAP_BLACK, stroke: '#000', 'stroke-width': 2, filter: 'url(#drop)' }, g);
+    el('rect', { x: x - 18, y: y + 56, width: 6, height: 172, rx: 3, fill: 'rgba(255,255,255,.08)' }, g);
+    rivet(g, x, y + 212, 7);
+    el('circle', { cx: x, cy: y + 262, r: 34, fill: 'url(#metal)', stroke: '#8f8f8f', 'stroke-width': 3, filter: 'url(#drop)' }, g);
+    el('circle', { cx: x, cy: y + 262, r: 24, fill: '#efefef', stroke: '#b5b5b5', 'stroke-width': 2 }, g);
+    el('path', { d: 'M' + x + ',' + (y + 392) + ' L' + (x - 30) + ',' + (y + 364) + ' A40,40 0 1 1 ' + (x + 30) + ',' + (y + 364) + ' Z',
+      fill: 'none', stroke: 'url(#metal)', 'stroke-width': 8, 'stroke-linejoin': 'round' }, g);
   }
-  // Optional leather wings at the back cross-over (replace the hexagon connector).
+  // Optional leather wings at the back cross-over (as the owner's reference): three layered
+  // tiers of scalloped feathers on each side, joined by two rivets in the middle.
   function wings(g, acc) {
-    var half = 'M600,96 C585,70 540,40 470,30 C440,27 418,30 400,36 C430,46 452,54 466,62 C440,64 425,70 414,78 C445,82 470,88 488,96 ' +
-      'C470,102 456,110 448,120 C478,120 506,114 528,110 C522,118 518,126 516,134 C548,128 576,116 600,104 Z';
-    g = el('g', { transform: 'translate(600 85) scale(1.25) translate(-600 -85)' }, g);
+    function tier(len, top, h, n) {
+      var cx = 600, x0 = cx - len;
+      var d = 'M' + cx + ',' + top + ' C' + (cx - len * 0.35) + ',' + (top - h * 0.55) + ' ' + (cx - len * 0.8) + ',' + (top - h * 0.45) + ' ' + x0 + ',' + (top + h * 0.05);
+      var seg = len / n, base = top + h * 0.5;
+      for (var i = 0; i < n; i++) {
+        var xa = x0 + i * seg, xb = xa + seg, yb = base + (i + 1) * (h * 0.5 / n);
+        d += ' Q' + (xa + seg * 0.25) + ',' + (yb + h * 0.55) + ' ' + xb + ',' + yb;
+      }
+      return d + ' L' + cx + ',' + (top + h) + ' Z';
+    }
+    var tiers = [tier(150, 112, 40, 4), tier(205, 92, 42, 5), tier(250, 68, 46, 6)];
     [1, -1].forEach(function (s) {
-      var w = el('g', { transform: s < 0 ? 'translate(1200 0) scale(-1 1)' : '' }, g);
-      el('path', { d: half, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, w);
-      el('path', { d: 'M592,94 C560,72 520,56 470,48 M590,100 C560,92 525,86 488,84 M592,104 C566,108 540,112 520,116',
-        fill: 'none', stroke: acc.edge, 'stroke-width': 2.5, opacity: '.7' }, w);
+      var w = el('g', { transform: (s < 0 ? 'translate(1200 0) scale(-1 1) ' : '') + 'rotate(14 600 100)' }, g);
+      tiers.forEach(function (d) {
+        el('path', { d: d, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
+      });
     });
-    rivet(g, 583, 98, 7); rivet(g, 617, 98, 7);
+    el('ellipse', { cx: 600, cy: 104, rx: 34, ry: 22, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3 }, g);
+    rivet(g, 587, 104, 7); rivet(g, 613, 104, 7);
   }
 
   function draw(st) {
