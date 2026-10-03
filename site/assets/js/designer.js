@@ -71,6 +71,7 @@
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     bbq:    { 3: { x: 381, y: 1005 }, 4: { x: 851, y: 1000 } },
+    barber: { 3: { x: 326, y: 955, w: 250, h: 64 }, 4: { x: 800, y: 955, w: 250, h: 64 } },
     split:  { 1: { y: 420 }, 2: { y: 505, h: 60 } },
     simple: { 3: { x: 378, y: 935, w: 250, h: 64 }, 4: { x: 822, y: 935, w: 250, h: 64 } },
     wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
