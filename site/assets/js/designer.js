@@ -70,6 +70,7 @@
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
+    bbq:    { 3: { x: 381, y: 1005 }, 4: { x: 851, y: 1000 } },
     split:  { 1: { y: 420 }, 2: { y: 505, h: 60 }, 3: { x: 170, y: 1010, w: 210 }, 4: { x: 1030, y: 1010, w: 210 } },
     simple: { 3: { y: 935 } },
     wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
@@ -259,7 +260,7 @@
       hstrap(acs, 82, 1055, 153, 48, acc); hstrap(acs, 507, 1055, 140, 48, acc);
       shape(acs, 'M278,1055 H472 V1082 H440 V1212 Q440,1230 422,1230 H398 L380,1200 L362,1230 H334 Q316,1230 316,1212 V1082 H278 Z', acc);
       el('ellipse', { cx: 378, cy: 1145, rx: 17, ry: 36, fill: main.edge }, acs);
-      vstrap(acs, 298, 1280, 48, 155, acc); vstrap(acs, 388, 1280, 45, 155, acc);
+      vstrap(acs, 316, 1280, 48, 155, acc); vstrap(acs, 388, 1280, 46, 155, acc);
       if (!st.opener) dring(acs, 598, 1215, acc);
       pocket(acs, 730, 1065, 260, 298, acc);
     } else if (st.style === 'barber') {
