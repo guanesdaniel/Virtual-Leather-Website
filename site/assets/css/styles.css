@@ -333,4 +333,4 @@ fieldset.panel { margin: 0; min-width: 0; }
 /* Brush "VL" logo */
 .brand { gap: 12px; }
 .brand-mark { width: auto; height: 36px; color: var(--ink); }
-.sub-field { margin: 2px 0 10px 30px; max-width: 320px; }
+.sub-field { margin: 4px 0 12px 30px; }
