@@ -540,7 +540,20 @@
   }
 
   var customised = false;
+  // Wing and opener colours follow the accessory colour until the customer picks one themselves.
+  var colourPicked = { wingColor: false, openerColor: false };
+  function followAccessory() {
+    var acc = val('acc');
+    Object.keys(colourPicked).forEach(function (name) {
+      if (colourPicked[name]) return;
+      var r = form.querySelector('input[name="' + name + '"][value="' + acc + '"]');
+      if (r) r.checked = true;
+    });
+  }
+  followAccessory();
   form.addEventListener('input', function (e) {
+    if (colourPicked.hasOwnProperty(e.target.name)) colourPicked[e.target.name] = true;
+    if (e.target.name === 'acc') followAccessory();
     if (e.target.name === 'engraving') {
       var lines = e.target.value.split('\n');
       if (lines.length > 3) e.target.value = lines.slice(0, 3).join('\n');
