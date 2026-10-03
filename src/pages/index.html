@@ -127,7 +127,33 @@
           </fieldset>
 
           <fieldset class="card panel">
-            <legend><span class="num">3</span> Add your engraving</legend>
+            <legend><span class="num">3</span> Optional extras</legend>
+            <p class="hint">Wings and bottle opener are made in your accessory colour unless you pick another colour for them. All extras show on the preview.</p>
+            <label class="check"><input type="checkbox" name="wings"> <span><strong>Leather wings, +$18</strong>: replace the strap connector at the back.</span></label>
+            <div class="field sub-field" id="wing-color-field" hidden>
+              <label for="wing-color">Wings colour</label>
+              <select id="wing-color" name="wingColor">
+                <option value="">Match accessories (default)</option>
+                <option value="tan">Tan (light brown)</option>
+                <option value="brown">Dark brown</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+            <label class="check"><input type="checkbox" name="opener"> <span><strong>Bottle opener, +$18</strong>: hangs from the front of the apron, always to hand.</span></label>
+            <div class="field sub-field" id="opener-color-field" hidden>
+              <label for="opener-color">Bottle opener colour</label>
+              <select id="opener-color" name="openerColor">
+                <option value="">Match accessories (default)</option>
+                <option value="tan">Tan (light brown)</option>
+                <option value="brown">Dark brown</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+            <label class="check"><input type="checkbox" name="grease"> <span><strong>Protective leather grease 50 ml, +$18</strong>: nourishes, protects and softens your apron. Comes with a cloth.</span></label>
+          </fieldset>
+
+          <fieldset class="card panel">
+            <legend><span class="num">4</span> Add your engraving</legend>
             <p class="hint">Engraving is included. We engrave exactly what you type, so please check spelling and capitals. Leave the box empty if you'd like it plain.</p>
             <div class="field">
               <label for="engraving">Name or phrase (up to 3 lines)</label>
@@ -162,7 +188,7 @@
           </fieldset>
 
           <fieldset class="card panel">
-            <legend><span class="num">4</span> Size and contact details</legend>
+            <legend><span class="num">5</span> Size and contact details</legend>
             <p class="hint">We cut every apron to fit the person who'll wear it. We use your email and phone only to send your design proof and shipping updates. See our <a href="/privacy/">privacy policy</a>.</p>
             <div class="two-col">
               <div class="field">
@@ -187,32 +213,6 @@
               </div>
             </div>
             <p class="small muted" style="margin:0">* Required</p>
-          </fieldset>
-
-          <fieldset class="card panel">
-            <legend><span class="num">5</span> Optional extras</legend>
-            <p class="hint">Wings and bottle opener are made in your accessory colour unless you pick another colour for them. All extras show on the preview.</p>
-            <label class="check"><input type="checkbox" name="wings"> <span><strong>Leather wings, +$18</strong>: replace the strap connector at the back.</span></label>
-            <div class="field sub-field" id="wing-color-field" hidden>
-              <label for="wing-color">Wings colour</label>
-              <select id="wing-color" name="wingColor">
-                <option value="">Match accessories (default)</option>
-                <option value="tan">Tan (light brown)</option>
-                <option value="brown">Dark brown</option>
-                <option value="black">Black</option>
-              </select>
-            </div>
-            <label class="check"><input type="checkbox" name="opener"> <span><strong>Bottle opener, +$18</strong>: hangs from the front of the apron, always to hand.</span></label>
-            <div class="field sub-field" id="opener-color-field" hidden>
-              <label for="opener-color">Bottle opener colour</label>
-              <select id="opener-color" name="openerColor">
-                <option value="">Match accessories (default)</option>
-                <option value="tan">Tan (light brown)</option>
-                <option value="brown">Dark brown</option>
-                <option value="black">Black</option>
-              </select>
-            </div>
-            <label class="check"><input type="checkbox" name="grease"> <span><strong>Protective leather grease 50 ml, +$18</strong>: nourishes, protects and softens your apron. Comes with a cloth.</span></label>
           </fieldset>
 
           <div class="summary" aria-labelledby="summary-title">
