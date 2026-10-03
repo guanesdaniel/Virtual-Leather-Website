@@ -17,7 +17,7 @@
     bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
     barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
-    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, secondary: 'Secondary Color (Attachment/Pockets)' },
+    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' },
     wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' }
   };
   // Leather palette taken from the reference illustration.
@@ -71,7 +71,7 @@
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     bbq:    { 3: { x: 381, y: 1005 }, 4: { x: 851, y: 1000 } },
-    split:  { 1: { y: 420 }, 2: { y: 505, h: 60 }, 3: { x: 170, y: 1010, w: 210 }, 4: { x: 1030, y: 1010, w: 210 } },
+    split:  { 1: { y: 420 }, 2: { y: 505, h: 60 } },
     simple: { 3: { x: 378, y: 935, w: 250, h: 64 }, 4: { x: 822, y: 935, w: 250, h: 64 } },
     wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
   };
