@@ -63,10 +63,12 @@
   var STRAP_BLACK = '#1b1918'; // neck and waist straps are always black
   var BIB = 'M350,236 Q350,220 366,220 Q600,242 834,220 Q850,220 850,236 L850,560 C860,760 1000,900 1160,950 ' +
     'L1160,1742 Q1160,1760 1142,1760 L58,1760 Q40,1760 40,1742 L40,950 C200,900 340,760 350,560 Z';
-  var STRAP_L = 'M390,318 V215 C390,165 440,125 545,98';
-  var STRAP_R = 'M810,318 V215 C810,165 760,125 655,98';
-  var OUTER_L = 'M545,45 C340,20 205,45 175,170 C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
-  var OUTER_R = 'M655,45 C860,20 995,45 1025,170 C1050,280 1055,430 1060,560 L1065,650 C1070,770 1155,775 1155,690 L1155,620';
+  // In reality there are two straps: each rises from the apron, crosses diagonally through the
+  // back connector and continues over the opposite shoulder down to the waist hook.
+  var STRAP_A = 'M390,318 V220 C390,160 452,120 540,100 C580,90 620,62 668,46 ' +
+    'C860,14 995,45 1025,170 C1050,280 1055,430 1060,560 L1065,650 C1070,770 1155,775 1155,690 L1155,620';
+  var STRAP_B = 'M810,318 V220 C810,160 748,120 660,100 C620,90 580,62 532,46 ' +
+    'C340,14 205,45 175,170 C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
@@ -201,8 +203,6 @@
         el('path', { d: d, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, w);
       });
     });
-    el('ellipse', { cx: 600, cy: 104, rx: 34, ry: 22, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3 }, g);
-    rivet(g, 587, 104, 7); rivet(g, 613, 104, 7);
   }
 
   function draw(st) {
@@ -238,13 +238,6 @@
       el('path', { d: d, stroke: 'rgba(255,255,255,.12)', 'stroke-width': 3, transform: 'translate(-6 -2)' }, g);
     }
 
-    // Outer harness straps (behind everything) with their sliders.
-    var harness = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
-    [OUTER_L, OUTER_R].forEach(function (d) { tube(harness, d); });
-    [[143, 460], [1057, 460]].forEach(function (p) {
-      el('rect', { x: p[0] - 13, y: p[1] - 26, width: 26, height: 52, rx: 13, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 6 }, svg);
-    });
-
     // Apron body
     el('path', { d: BIB, fill: main.hex }, svg);
     var tex = el('g', { 'clip-path': 'url(#bibclip)' }, svg);
@@ -252,29 +245,38 @@
     el('rect', { x: 0, y: 0, width: W, height: H, filter: 'url(#grain)', opacity: '.5' }, tex);
     el('path', { d: BIB, fill: 'none', stroke: main.edge, 'stroke-width': 4 }, svg);
 
-    // Neck straps lie on top of the apron and are pinned to it with two rivets each.
-    var neck = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
-    [STRAP_L, STRAP_R].forEach(function (d) { tube(neck, d); });
+    // The two straps lie on top of the apron, pinned with two rivets each, with metal sliders.
+    var harness = el('g', { fill: 'none', 'stroke-linejoin': 'round' }, svg);
+    tube(harness, STRAP_B);
+    tube(harness, STRAP_A);
+    [[143, 460], [1057, 460]].forEach(function (p) {
+      el('rect', { x: p[0] - 13, y: p[1] - 26, width: 26, height: 52, rx: 13, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 6 }, svg);
+    });
     [[390, 262], [390, 300], [810, 262], [810, 300]].forEach(function (p) { rivet(svg, p[0], p[1], 9); });
 
-    // Back piece: wings if chosen, otherwise the hexagon connector in the accessory colour,
-    // with each of the four straps visibly threading in through a slot.
+    // Back piece: wings if chosen, otherwise the hexagon connector, both in the accessory colour.
+    // As on the real apron, the two straps run across the piece and pass under a centre plate
+    // through two slots; the wings' centre plate carries two pins.
+    var hc = el('clipPath', { id: 'backclip' }, defs);
     if (st.wings) {
       wings(svg, acc);
+      el('path', { d: 'M532,40 H668 V122 H532 Z' }, hc);
     } else {
-      shape(svg, 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z', acc);
-      var thread = el('g', { fill: 'none' }, svg);
-      [[[486, 34], [552, 54]], [[714, 34], [648, 54]], [[492, 114], [552, 98]], [[708, 114], [648, 98]]].forEach(function (seg) {
-        var a0 = seg[0], a1 = seg[1];
-        var d = 'M' + a0[0] + ',' + a0[1] + ' L' + a1[0] + ',' + a1[1];
-        el('path', { d: d, stroke: '#8f8a84', 'stroke-width': 36, 'stroke-linecap': 'butt' }, thread);
-        el('path', { d: d, stroke: STRAP_BLACK, 'stroke-width': 30, 'stroke-linecap': 'butt' }, thread);
-        // Slot where the strap passes into the connector.
-        var dx = a1[0] - a0[0], dy = a1[1] - a0[1], len = Math.sqrt(dx * dx + dy * dy);
-        var px = -dy / len * 21, py = dx / len * 21;
-        el('path', { d: 'M' + (a1[0] + px) + ',' + (a1[1] + py) + ' L' + (a1[0] - px) + ',' + (a1[1] - py),
-          stroke: acc.edge, 'stroke-width': 7, 'stroke-linecap': 'round' }, thread);
-      });
+      var hex = 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z';
+      shape(svg, hex, acc);
+      el('path', { d: hex }, hc);
+    }
+    var rim = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
+    tube(rim, STRAP_B);
+    tube(rim, STRAP_A);
+    if (st.wings) {
+      el('path', { d: 'M556,80 C556,58 576,52 600,52 C624,52 644,58 644,80 C644,102 624,108 600,108 C576,108 556,102 556,80 Z',
+        fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
+      el('path', { d: 'M566,58 C557,66 557,94 566,102 M634,58 C643,66 643,94 634,102', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round' }, svg);
+      rivet(svg, 586, 80, 9); rivet(svg, 614, 80, 9);
+    } else {
+      el('path', { d: 'M560,78 L578,36 H622 L640,78 L622,120 H578 Z', fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
+      el('path', { d: 'M572,48 L560,78 L572,108 M628,48 L640,78 L628,108', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
     }
 
     var acs = el('g', {}, svg);
