@@ -81,7 +81,7 @@
     return b;
   }
   // Where the optional bottle opener hangs on each style.
-  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [900, 960] };
+  var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [120, 1000] };
 
   function rivet(g, x, y, r) {
     el('circle', { cx: x, cy: y, r: r || 9, fill: 'url(#metal)', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 1.5 }, g);
@@ -280,9 +280,22 @@
       });
       [[495, 1686], [705, 1686]].forEach(function (p) { rivet(svg, p[0], p[1], 7); rivet(svg, p[0] + (p[0] < 600 ? 50 : -50), p[1], 7); });
     } else if (st.style === 'wood') {
+      // Pencil pocket with pen slots, tool loops, tape-measure D-ring, hammer ring
+      // and a wide three-compartment tool pocket.
+      pocket(acs, 395, 660, 110, 190, acc);
+      [425, 450, 475].forEach(function (x) {
+        el('rect', { x: x - 7, y: 640, width: 14, height: 40, rx: 7, fill: '#d9b77a', stroke: '#6b4b1e', 'stroke-width': 2 }, acs);
+      });
       loops(acs, 578, 804, 305, 54, 3, acc);
-      hstrap(acs, 120, 1040, 180, 50, acc);
-      pocket(acs, 100, 1150, 440, 420, acc); pocket(acs, 660, 1150, 440, 420, acc);
+      dring(acs, 600, 1080, acc);
+      ringLoop(acs, 1081, 1035, acc);
+      plate(acs, 200, 1180, 800, 390, acc, 8);
+      stitchRect(acs, 212, 1192, 776, 366);
+      [467, 733].forEach(function (x) {
+        el('path', { d: 'M' + x + ',1192 V1558', stroke: 'rgba(255,240,225,.55)', 'stroke-width': 2.5, 'stroke-dasharray': '10 8' }, acs);
+        rivet(acs, x, 1196, 7);
+      });
+      rivet(acs, 214, 1194, 8); rivet(acs, 986, 1194, 8); rivet(acs, 214, 1556, 8); rivet(acs, 986, 1556, 8);
     }
     if (st.opener && op) opener(acs, op[0], op[1], acc);
 
