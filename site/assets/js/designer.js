@@ -65,10 +65,10 @@
     'L1160,1742 Q1160,1760 1142,1760 L58,1760 Q40,1760 40,1742 L40,950 C200,900 340,760 350,560 Z';
   // In reality there are two straps: each rises from the apron, crosses diagonally through the
   // back connector and continues over the opposite shoulder down to the waist hook.
-  var STRAP_A = 'M390,318 V220 C390,160 452,120 540,100 C580,90 620,62 668,46 ' +
-    'C860,14 995,45 1025,170 C1050,280 1055,430 1060,560 L1065,650 C1070,770 1155,775 1155,690 L1155,620';
-  var STRAP_B = 'M810,318 V220 C810,160 748,120 660,100 C620,90 580,62 532,46 ' +
-    'C340,14 205,45 175,170 C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
+  var STRAP_A = 'M390,318 V230 C390,172 452,170 530,132 L670,26 C742,-12 962,22 1025,170 ' +
+    'C1050,280 1055,430 1060,560 L1065,650 C1070,770 1155,775 1155,690 L1155,620';
+  var STRAP_B = 'M810,318 V230 C810,172 748,170 670,132 L530,26 C458,-12 238,22 175,170 ' +
+    'C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
@@ -254,29 +254,42 @@
     });
     [[390, 262], [390, 300], [810, 262], [810, 300]].forEach(function (p) { rivet(svg, p[0], p[1], 9); });
 
-    // Back piece: wings if chosen, otherwise the hexagon connector, both in the accessory colour.
-    // As on the real apron, the two straps run across the piece and pass under a centre plate
-    // through two slots; the wings' centre plate carries two pins.
-    var hc = el('clipPath', { id: 'backclip' }, defs);
+    // Back piece. Wings if chosen; otherwise a single flat leather connector in the accessory
+    // colour. As on the real apron, each strap lies on the connector from its edge, tucks into a
+    // slit and runs underneath to the opposite side, where it comes back out through another slit.
     if (st.wings) {
       wings(svg, acc);
-      el('path', { d: 'M532,40 H668 V122 H532 Z' }, hc);
-    } else {
-      var hex = 'M500,78 L535,15 H665 L700,78 L665,142 H535 Z';
-      shape(svg, hex, acc);
-      el('path', { d: hex }, hc);
-    }
-    var rim = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
-    tube(rim, STRAP_B);
-    tube(rim, STRAP_A);
-    if (st.wings) {
+      var wc = el('clipPath', { id: 'backclip' }, defs);
+      el('path', { d: 'M532,40 H668 V122 H532 Z' }, wc);
+      var wrim = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
+      tube(wrim, STRAP_B);
+      tube(wrim, STRAP_A);
       el('path', { d: 'M556,80 C556,58 576,52 600,52 C624,52 644,58 644,80 C644,102 624,108 600,108 C576,108 556,102 556,80 Z',
         fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
       el('path', { d: 'M566,58 C557,66 557,94 566,102 M634,58 C643,66 643,94 634,102', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round' }, svg);
       rivet(svg, 586, 80, 9); rivet(svg, 614, 80, 9);
     } else {
-      el('path', { d: 'M560,78 L578,36 H622 L640,78 L622,120 H578 Z', fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, svg);
-      el('path', { d: 'M572,48 L560,78 L572,108 M628,48 L640,78 L628,108', fill: 'none', stroke: '#140c09', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+      var cx = 600, cy = 79, rin = 44;
+      var plateD = 'M498,79 L546,6 H654 L702,79 L654,152 H546 Z';
+      el('path', { d: plateD, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 4, 'stroke-linejoin': 'round', filter: 'url(#drop)' }, svg);
+      // Straps are visible on the plate only between its edge and the slits.
+      var pc = el('clipPath', { id: 'backclip' }, defs);
+      el('path', { d: plateD + ' M' + (cx + rin) + ',' + cy + ' A' + rin + ',' + rin + ' 0 1 0 ' + (cx - rin) + ',' + cy + ' A' + rin + ',' + rin + ' 0 1 0 ' + (cx + rin) + ',' + cy + ' Z',
+        'clip-rule': 'evenodd' }, pc);
+      var onPlate = el('g', { fill: 'none', 'clip-path': 'url(#backclip)' }, svg);
+      tube(onPlate, STRAP_B);
+      tube(onPlate, STRAP_A);
+      // Slits: cut across each strap where it tucks under the plate.
+      var dirs = [[0.797, -0.604], [-0.797, -0.604]];
+      dirs.forEach(function (d) {
+        [1, -1].forEach(function (sgn) {
+          var x = cx + d[0] * rin * sgn, y = cy + d[1] * rin * sgn;
+          var px = -d[1] * 22, py = d[0] * 22;
+          el('path', { d: 'M' + (x + px) + ',' + (y + py) + ' L' + (x - px) + ',' + (y - py), stroke: '#140c09', 'stroke-width': 6, 'stroke-linecap': 'round' }, svg);
+          el('path', { d: 'M' + (x + px + d[0] * 4 * sgn) + ',' + (y + py + d[1] * 4 * sgn) + ' L' + (x - px + d[0] * 4 * sgn) + ',' + (y - py + d[1] * 4 * sgn),
+            stroke: 'rgba(255,235,215,.35)', 'stroke-width': 2, 'stroke-linecap': 'round' }, svg);
+        });
+      });
     }
 
     var acs = el('g', {}, svg);
