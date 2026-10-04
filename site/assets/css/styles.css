@@ -98,6 +98,12 @@ main:focus { outline: none; }
 .hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin: 28px 0 32px; }
 .hero-price { color: #ddd2c6; font-size: .98rem; }
 .hero-price strong { color: #fff; }
+.hero-rating { margin: -12px 0 28px; font-size: .98rem; }
+.hero-rating a { color: #ddd2c6; text-decoration: none; }
+.hero-rating a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hero-rating strong { color: #fff; }
+.hero-stars { color: var(--tan-light); letter-spacing: 2px; margin-right: 8px; }
+.hero-stars .off { color: rgba(246, 239, 230, .3); }
 .hero-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; font-size: .95rem; color: #ddd2c6; }
 .hero-facts li { display: flex; gap: 10px; align-items: flex-start; }
 .hero-facts svg { flex: none; margin-top: 3px; color: var(--tan-light); }

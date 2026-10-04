@@ -53,10 +53,13 @@ function plain(s) {
     .replace(/[ \t]+/g, ' ')
     .trim();
 }
-// Etsy titles are long keyword lists; keep the first phrase.
+// Etsy titles are long keyword lists; keep the product name: the first phrase, then the part before a
+// colon if that's still long, then whole words only.
 function shortTitle(t) {
-  const first = plain(t).split(/\s[|,–-]\s|\s\|\s|,/)[0].trim();
-  return first.length > 60 ? first.slice(0, 57).trimEnd() + '…' : first;
+  let name = plain(t).split(/\s[|,–-]\s|\s\|\s|,/)[0].trim();
+  if (name.length > 60 && name.includes(': ')) name = name.split(': ')[0].trim();
+  if (name.length > 60) name = name.slice(0, 58).replace(/\s+\S*$/, '').trim() + '…';
+  return name;
 }
 function monthYear(ts) {
   return new Date(ts * 1000).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -74,11 +77,21 @@ try {
     if (!page.results || page.results.length < 100) break;
   }
   const time = (r) => r.created_timestamp || r.create_timestamp || 0;
-  const written = all.filter((r) => plain(r.review)).sort((a, b) => time(b) - time(a)).slice(0, SHOW);
+  // Etsy keeps one review per item bought, so a customer who ordered an apron and extras often has the same
+  // words (and stars) on each. Those are shown once, naming every item, rather than as repeats. Without a
+  // buyer ID (hidden by some buyers' privacy settings), the same words within the same hour count as one.
+  const unique = new Map();
+  for (const r of all.filter((r) => plain(r.review)).sort((a, b) => time(b) - time(a))) {
+    const who = r.buyer_user_id || 'h' + Math.floor(time(r) / 3600);
+    const key = [who, r.rating, plain(r.review).toLowerCase().replace(/\s+/g, ' ')].join('|');
+    if (unique.has(key)) unique.get(key).listings.push(r.listing_id);
+    else unique.set(key, { ...r, listings: [r.listing_id] });
+  }
+  const written = [...unique.values()].slice(0, SHOW);
 
   // Product names for the reviews shown (optional: reviews still show if this fails).
   const titles = {};
-  const ids = [...new Set(written.map((r) => r.listing_id).filter(Boolean))];
+  const ids = [...new Set(written.flatMap((r) => r.listings).filter(Boolean))];
   if (ids.length) {
     try {
       const listings = await api('/listings/batch?listing_ids=' + ids.join(','));
@@ -99,7 +112,7 @@ try {
       rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
       text: plain(r.review),
       date: monthYear(time(r)),
-      item: titles[r.listing_id] || ''
+      item: [...new Set(r.listings.map((id) => titles[id]).filter(Boolean))].join(' + ')
     }))
   };
   await writeFile('src/data/reviews.json', JSON.stringify(out, null, 2) + '\n');

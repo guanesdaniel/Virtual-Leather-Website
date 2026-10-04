@@ -22,7 +22,7 @@ Everything you'd normally change is in **`src/`**:
 - `src/data/reviews.json`: Etsy reviews shown on the homepage. Filled in automatically from Etsy (see below); don't edit by hand.
 
 ### Etsy reviews on the site (automatic)
-The homepage shows your most recent written Etsy reviews (any rating, in the customers' own words) and your Etsy star average and review count. They're fetched through Etsy's official API, so customers read them here and are never sent to Etsy. Until reviews are available, the Reviews section and its menu link stay hidden.
+The homepage shows your most recent written Etsy reviews (any rating, in the customers' own words) and your Etsy star average and review count, which also appear under the "Design your apron" button at the top. They're fetched through Etsy's official API, so customers read them here and are never sent to Etsy. Etsy keeps one review per item, so when a customer leaves the same words on several items of one order (an apron and its extras), they're shown once, naming each item. Until reviews are available, the Reviews section and its menu link stay hidden; once they're up, they stay up even if Etsy can't be reached during an update (each update starts from the reviews already on the site).
 
 One-time setup (about 10 minutes, free):
 1. Signed in to your Etsy shop account, open **https://www.etsy.com/developers/register** and create an app. Name: "Virtual Leather website". Purpose: show my shop's reviews on my own website.
