@@ -35,6 +35,7 @@ jobs:
         run: npm run reviews
         env:
           ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
+          ETSY_SHARED_SECRET: ${{ secrets.ETSY_SHARED_SECRET }}
       - run: npm run build
       - run: npm run check
       - name: Publish to GitHub Pages (gh-pages branch)
