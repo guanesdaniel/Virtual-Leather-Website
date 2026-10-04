@@ -684,6 +684,7 @@
           '<div class="field"><label for="logo-' + id + '">Upload your logo to see it on the preview <span class="muted">(optional)</span></label>' +
           '<input type="file" id="logo-' + id + '" data-slot="' + id + '" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-describedby="logo-hint-' + id + ' logo-' + id + '-error">' +
           '<p class="hint" id="logo-hint-' + id + '">PNG, JPG, WebP or SVG, up to 15 MB. It stays on your device for this preview. After ordering, send us the original file by WhatsApp or email so we can engrave it sharply.</p>' +
+          '<p class="hint logo-kept" id="logo-' + id + '-kept" hidden></p>' +
           '<p class="error" id="logo-' + id + '-error" aria-live="polite"></p></div>' +
         '</div>' +
         // Size (text, design or logo)
@@ -772,13 +773,13 @@
     var l = slotLines(st, true);
     return l.length ? prefix + l.join(', ') : none;
   }
-  function describe(st) {
+  function describe(st, ref) {
     var parts = slotLines(st, false);
     if (!parts.length) parts.push('Engraving: none');
     var eng = engravings(st);
     if (eng.extra) parts.push('Engravings: ' + eng.count + ' (' + FREE_ENGRAVINGS + ' included + ' + eng.extra + ' extra)');
     if (st.notes) parts.push('Notes: ' + st.notes);
-    parts.push('Designed on virtualleather.net');
+    parts.push('Designed on virtualleather.net' + (ref ? ' (ref ' + ref + ')' : ''));
     return parts.join(' | ');
   }
 
@@ -1059,8 +1060,9 @@
       var spot = n.slice(n.indexOf('-') + 1);
       if (val('mode-' + spot) === 'design' && val('design-' + spot)) trackPick('engraving_design', val('design-' + spot), spot);
     }
+    saveDraftSoon();
   });
-  form.addEventListener('change', update);
+  form.addEventListener('change', function () { update(); saveDraftSoon(); });
 
   // The spot being edited follows focus; tapping a spot on the preview jumps to its card.
   function setActive(p) {
@@ -1100,6 +1102,7 @@
     var p = input.getAttribute('data-slot'), err = document.getElementById('logo-' + p + '-error');
     var f = input.files && input.files[0];
     err.textContent = '';
+    document.getElementById('logo-' + p + '-kept').hidden = true;
     if (!f) { delete logos[p]; update(); return; }
     if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type)) {
       err.textContent = 'Please choose a PNG, JPG, WebP or SVG image.'; input.value = ''; return;
@@ -1114,6 +1117,7 @@
       if (!logos[p].ok) err.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
       trackPick('logo_upload', 'customer_logo', p);
       update();
+      saveDraftSoon();
     };
     img.onerror = function () {
       URL.revokeObjectURL(url);
@@ -1189,6 +1193,150 @@
     form.elements[n].addEventListener('blur', function () { if (this.value) validateField(this); });
   });
 
+  /* ---------- Saved designs: carry on where you left off, and change an apron already in the cart ---------- */
+  // Kept on this device by VL.saved (main.js). editingRef is the design in the cart being changed:
+  // submitting then replaces that apron and its extras in the cart instead of adding another one.
+  var SAVE = VL.saved, editingRef = null, lastRef = null, restoredDraft = false, busy = false, draftTimer = null;
+  var savedBar = document.getElementById('saved-bar');
+  var STYLE_SHORT = { bbq: 'BBQ apron', barber: 'barber apron', simple: 'simple apron', split: 'split-leg apron', wood: 'woodworking apron' };
+  function styleLabel(st) { return STYLE_SHORT[st.style] + ' (' + SHORT[st.main] + ')'; }
+  function newRef() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint8Array(4), out = 'VL-';
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
+    else for (var i = 0; i < 4; i++) a[i] = Math.floor(Math.random() * 256);
+    for (var j = 0; j < 4; j++) out += chars[a[j] % chars.length];
+    return out;
+  }
+  // Everything the customer entered (logo previews too, when they fit in the browser's storage).
+  function snapshot() {
+    var fields = {}, kept = {}, names = {};
+    Array.prototype.forEach.call(form.elements, function (f) {
+      if (!f.name || f.type === 'file' || f.type === 'submit' || f.type === 'button') return;
+      if (f.type === 'radio') { if (f.checked) fields[f.name] = f.value; }
+      else if (f.type === 'checkbox') fields[f.name] = f.checked;
+      else fields[f.name] = f.value;
+    });
+    Object.keys(logos).forEach(function (p) {
+      names[p] = logos[p].name;
+      if (/^data:image\//.test(logos[p].src)) kept[p] = logos[p];
+    });
+    return { time: Date.now(), fields: fields, touched: modeTouched, picked: colourPicked, logos: kept, logoNames: names };
+  }
+  function clearErrors() {
+    Array.prototype.forEach.call(form.querySelectorAll('[aria-invalid="true"]'), function (i) { i.setAttribute('aria-invalid', 'false'); });
+    Array.prototype.forEach.call(form.querySelectorAll('.error'), function (e) { e.textContent = ''; });
+    setStatus('');
+  }
+  function restore(snap) {
+    var f = snap.fields || {};
+    Object.keys(f).forEach(function (name) {
+      var input = form.elements[name];
+      if (!input) return;
+      if (input.length && !input.tagName) Array.prototype.forEach.call(input, function (r) { r.checked = r.value === f[name]; });
+      else if (input.type === 'radio') input.checked = input.value === f[name];
+      else if (input.type === 'checkbox') input.checked = !!f[name];
+      else input.value = f[name];
+    });
+    var k;
+    for (k in modeTouched) delete modeTouched[k];
+    for (k in snap.touched || {}) modeTouched[k] = snap.touched[k];
+    for (k in colourPicked) colourPicked[k] = !!(snap.picked || {})[k];
+    for (k in logos) delete logos[k];
+    SLOT_KEYS.forEach(function (p) {
+      var l = (snap.logos || {})[p], name = (snap.logoNames || {})[p], note = document.getElementById('logo-' + p + '-kept');
+      document.getElementById('logo-' + p).value = '';
+      if (l) logos[p] = l;
+      note.textContent = l ? 'Showing the logo you added before (' + l.name + '). Choose a file to change it.'
+        : name ? 'Choose your logo file (' + name + ') again to see it on the preview.' : '';
+      note.hidden = !note.textContent;
+    });
+    clearErrors();
+    update();
+  }
+  // A fresh apron: everything back to the start except the style, email and phone.
+  function startNew() {
+    var style = val('style') || 'bbq', email = form.elements.email.value, phone = form.elements.phone.value, k;
+    form.reset();
+    form.querySelector('input[name="style"][value="' + style + '"]').checked = true;
+    form.elements.email.value = email;
+    form.elements.phone.value = phone;
+    for (k in modeTouched) delete modeTouched[k];
+    for (k in colourPicked) colourPicked[k] = false;
+    for (k in logos) delete logos[k];
+    SLOT_KEYS.forEach(function (p) { document.getElementById('logo-' + p + '-kept').hidden = true; });
+    applyDefaults(style, true);
+    followAccessory();
+    editingRef = null;
+    restoredDraft = false;
+    clearTimeout(draftTimer);
+    if (SAVE) SAVE.setDraft(null);
+    clearErrors();
+    update();
+    renderBar();
+  }
+  function startEditing(d) {
+    restore(d.snap);
+    editingRef = d.ref;
+    restoredDraft = false;
+    added.hidden = true;
+    form.hidden = false;
+    renderBar();
+  }
+  // Called after each change the customer makes, so the design is still here if they leave the page.
+  function saveDraftSoon() {
+    if (!SAVE || busy) return;
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(function () {
+      var d = snapshot();
+      d.editing = editingRef;
+      SAVE.setDraft(d);
+    }, 700);
+  }
+  // The bar above the form: which apron is being changed, or the ones already in the cart.
+  function renderBar() {
+    if (!savedBar) return;
+    var list = SAVE ? SAVE.designs() : [], editing = editingRef && SAVE ? SAVE.find(editingRef) : null;
+    if (editingRef && !editing) editingRef = null;
+    submit.textContent = editing ? 'Update my apron in the cart' : 'Add to cart';
+    savedBar.textContent = '';
+    function para(text, strong) {
+      var p = document.createElement('p');
+      if (strong) { var b = document.createElement('strong'); b.textContent = strong; p.appendChild(b); p.appendChild(document.createTextNode(' ')); }
+      p.appendChild(document.createTextNode(text));
+      savedBar.appendChild(p);
+    }
+    var row = document.createElement('div');
+    row.className = 'btn-row';
+    function button(text, onClick, dark) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn ' + (dark ? 'btn-dark' : 'btn-ghost');
+      b.textContent = text;
+      b.addEventListener('click', onClick);
+      row.appendChild(b);
+    }
+    if (editing) {
+      para('Make your changes, then press "Update my apron in the cart". It replaces the one in your cart.', 'You\'re changing the ' + editing.label + ' in your cart.');
+      button('Design a new apron instead', function () { startNew(); savedBar.focus(); });
+    } else {
+      if (list.length) {
+        para(list.length > 1 ? 'You have ' + list.length + ' aprons in your cart. Want to change one?' : 'Your ' + list[0].label + ' is in your cart. Want to change something?');
+        list.forEach(function (d) {
+          button(list.length > 1 ? 'Change your ' + d.label : 'Change my design', function () { startEditing(d); savedBar.focus(); }, true);
+        });
+      }
+      if (restoredDraft) {
+        para('We kept the design you were working on' + (list.length ? ' below.' : '.'));
+        button('Start again', function () { startNew(); form.querySelector('input[name="style"]:checked').focus(); });
+      }
+    }
+    if (row.firstChild) savedBar.appendChild(row);
+    savedBar.hidden = !savedBar.firstChild;
+    savedBar.tabIndex = -1;
+  }
+  // main.js drops designs whose apron has left the cart (for example, removed at checkout).
+  document.addEventListener('vl:saved-designs', function () { if (!busy) renderBar(); });
+
   var status = document.getElementById('designer-status');
   var submit = document.getElementById('designer-submit');
   var added = document.getElementById('designer-added');
@@ -1203,6 +1351,50 @@
         done = true; clearTimeout(t);
         success === false ? reject(new Error('rejected')) : resolve();
       } });
+    });
+  }
+  // What goes in the cart for a design: the apron, then its extras (Ecwid product IDs and options).
+  function cartLines(st, options) {
+    var lines = [{ id: STYLES[st.style].id, options: options, qty: 1 }], n = engravings(st).extra;
+    if (st.wings) lines.push({ id: 688211109, options: { Color: COLORS[wingColor(st)].addon }, qty: 1 });
+    if (st.opener) lines.push({ id: 619483308, options: { Color: COLORS[openerColor(st)].addon }, qty: 1 });
+    if (st.grease) lines.push({ id: 619498559, options: {}, qty: 1 });
+    if (n) lines.push({ id: ENGRAVING_ID, options: {}, qty: n });
+    return lines;
+  }
+  function addLines(E, lines) {
+    return lines.reduce(function (done, l) {
+      return done.then(function () { return addProduct(E, l.id, l.options, l.qty); });
+    }, Promise.resolve());
+  }
+  function sameOptions(have, want) {
+    have = have || {};
+    return Object.keys(want || {}).every(function (k) { return have[k] === want[k]; });
+  }
+  // Take a design that's being changed out of the cart: its apron and the extras added with it (any of the
+  // same extras that belong to other aprons are put back). Resolves with the apron's quantity in the
+  // cart, so the updated apron keeps it.
+  function takeOut(E, d) {
+    return new Promise(function (resolve, reject) {
+      E.Cart.get(function (cart) {
+        var items = cart && cart.items || [], at = SAVE.lineIndex(d, cart);
+        if (at === -1) return resolve(1);
+        var drop = [at], back = [], qty = items[at].quantity || 1;
+        (d.cart.extras || []).forEach(function (x) {
+          for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            if (drop.indexOf(i) !== -1 || !it.product || it.product.id !== x.id || !sameOptions(it.options, x.options)) continue;
+            drop.push(i);
+            if (it.quantity > x.qty) back.push({ id: x.id, options: x.options, qty: it.quantity - x.qty });
+            return;
+          }
+        });
+        var t = setTimeout(function () { reject(new Error('timeout')); }, 12000);
+        E.Cart.removeProducts(drop, function () {
+          clearTimeout(t);
+          addLines(E, back).then(function () { resolve(qty); }, reject);
+        });
+      });
     });
   }
 
@@ -1235,27 +1427,41 @@
       return;
     }
     var style = STYLES[st.style];
+    // Changing a design that's in the cart keeps its ref, and replaces it there instead of adding another.
+    var editing = editingRef && SAVE ? SAVE.find(editingRef) : null, ref = editing ? editing.ref : newRef();
     var options = {
       'Main Color': COLORS[st.main].ecwid,
       'Customer Height': st.height,
       'Customer Weight': st.weight,
-      'Description For Personalization': describe(st),
+      'Description For Personalization': describe(st, ref),
       'Email for design confirmation': st.email,
       'Phone Number for shipping confirmation': st.phone
     };
     options[style.secondary] = COLORS[st.acc].ecwid;
+    var lines = cartLines(st, options);
 
     submit.disabled = true;
-    setStatus('Adding to your cart…');
+    busy = true;
+    setStatus(editing ? 'Updating your cart…' : 'Adding to your cart…');
     VL.loadEcwid().then(function (E) {
-      return addProduct(E, style.id, options)
-        .then(function () { return st.wings ? addProduct(E, 688211109, { Color: COLORS[wingColor(st)].addon }) : null; })
-        .then(function () { return st.opener ? addProduct(E, 619483308, { Color: COLORS[openerColor(st)].addon }) : null; })
-        .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; })
-        .then(function () { var n = engravings(st).extra; return n ? addProduct(E, ENGRAVING_ID, {}, n) : null; });
+      if (!editing) return addLines(E, lines);
+      VL.cartBusy = true;
+      return takeOut(E, editing).then(function (qty) { lines[0].qty = qty; return addLines(E, lines); });
     }).then(function () {
+      if (SAVE) {
+        var list = SAVE.designs().filter(function (d) { return d.ref !== ref; });
+        list.push({ ref: ref, time: Date.now(), label: styleLabel(st), snap: snapshot(),
+          cart: { apronId: lines[0].id, extras: lines.slice(1) } });
+        SAVE.setDesigns(list);
+        clearTimeout(draftTimer);
+        SAVE.setDraft(null);
+      }
+      lastRef = ref;
+      editingRef = null;
+      restoredDraft = false;
       setStatus('');
-      showLogoStep(st);
+      showLogoStep(st, ref);
+      added.querySelector('h3').textContent = editing ? 'Your apron is updated in the cart ✓' : 'Added to your cart ✓';
       form.hidden = true;
       added.hidden = false;
       added.querySelector('h3').focus();
@@ -1263,19 +1469,24 @@
     }).catch(function () {
       setStatus('Sorry, we couldn\'t reach the cart (an ad blocker can cause this). Please send us your design on WhatsApp instead. It\'s already written for you.', 'error');
       if (waLink) waLink.focus();
-    }).then(function () { submit.disabled = false; });
+    }).then(function () {
+      submit.disabled = false;
+      busy = false;
+      setTimeout(function () { VL.cartBusy = false; }, 1500);
+      renderBar();
+    });
   });
 
   // Logo files can't travel with the cart (adding from this page carries text and choices only), so
   // when a spot uses a logo, the last step is sending the file on WhatsApp or by email.
-  function showLogoStep(st) {
+  function showLogoStep(st, ref) {
     var box = document.getElementById('logo-next');
     if (!box) return;
     var spots = positionsOf(st.style).filter(function (p) { return st.slots[p].mode === 'logo'; });
     box.hidden = !spots.length;
     if (!spots.length) return;
     var where = spots.map(spotName).join(' and ');
-    var text = 'Hi Virtual Leather! I\'ve just added a ' + STYLES[st.style].name + ' to my cart on your website. Here is my logo for ' + where + ':';
+    var text = 'Hi Virtual Leather! I\'ve just added a ' + STYLES[st.style].name + ' to my cart on your website (design ref ' + ref + '). Here is my logo for ' + where + ':';
     document.getElementById('logo-next-where').textContent = where;
     document.getElementById('logo-wa').href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(text);
     document.getElementById('logo-mail').href = 'mailto:' + C.email + '?subject=' + encodeURIComponent('My logo for my apron order') +
@@ -1317,8 +1528,15 @@
   }
 
   document.getElementById('designer-again').addEventListener('click', function () {
+    startNew();
     added.hidden = true; form.hidden = false;
-    form.elements['text-1'].focus();
+    form.querySelector('input[name="style"]:checked').focus();
+  });
+  document.getElementById('designer-edit').addEventListener('click', function () {
+    editingRef = SAVE && SAVE.find(lastRef) ? lastRef : null;
+    added.hidden = true; form.hidden = false;
+    renderBar();
+    (savedBar.hidden ? form.querySelector('input[name="style"]:checked') : savedBar).focus();
   });
 
   VL.designer = {
@@ -1328,6 +1546,19 @@
     }
   };
   // Deep link: /#design?style=barber is not valid hash syntax, so use data-style buttons or ?style=
+  // Pick up where the customer left off: the apron they asked to change (?edit=ref, from the shop), or
+  // the design they were working on.
+  if (SAVE) {
+    var askEdit = /[?&]edit=([\w-]+)/.exec(location.search), toEdit = askEdit && SAVE.find(askEdit[1]), draft = SAVE.draft();
+    if (draft && (!toEdit || draft.editing === toEdit.ref)) {
+      restore(draft);
+      editingRef = draft.editing && SAVE.find(draft.editing) ? draft.editing : null;
+      restoredDraft = !editingRef;
+    } else if (toEdit) {
+      startEditing(toEdit);
+    }
+    renderBar();
+  }
   var qs = /[?&]style=(\w+)/.exec(location.search);
   if (qs) VL.designer.setStyle(qs[1]);
 

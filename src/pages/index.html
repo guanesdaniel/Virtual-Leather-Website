@@ -97,6 +97,7 @@
 
       <div>
         <form id="designer-form" class="design-form" novalidate>
+          <div class="saved-bar" id="saved-bar" aria-live="polite" hidden></div>
           <fieldset class="card panel">
             <legend><span class="num">1</span> Choose your style</legend>
             <p class="hint">All aprons are $185 and made to measure.</p>
@@ -236,7 +237,8 @@
           </div>
           <div class="btn-row">
             <a class="btn btn-dark" href="/shop/#!/~/cart">Go to checkout</a>
-            <button type="button" class="btn btn-ghost" id="designer-again">Design another</button>
+            <button type="button" class="btn btn-ghost" id="designer-edit">Change this design</button>
+            <button type="button" class="btn btn-ghost" id="designer-again">Design another apron</button>
           </div>
         </div>
       </div>
@@ -374,4 +376,4 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=35" defer></script>
+<script src="/assets/js/designer.js?v=36" defer></script>
