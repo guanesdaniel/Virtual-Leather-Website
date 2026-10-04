@@ -8,13 +8,13 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [x] Meta Advanced Matching / Google Enhanced Conversions: **no**. The site never sends customer emails or phone numbers to Meta or Google.
 - [ ] **Etsy reviews**: the API key is saved as the GitHub secret `ETSY_API_KEY`; waiting for Etsy to approve the app. Reviews then appear on the homepage automatically and refresh every 6 hours.
 - [ ] **UK VAT**: the business isn't VAT-registered, so turn off the 20% VAT Ecwid adds for UK addresses (Settings → Taxes & Invoices). US orders have no tax.
-- [ ] **Legal entity and country** (for example a UK sole trader or company). This decides which law the Terms, Privacy and Refund policies cite.
-- [ ] **Business address** (and company number, if any; not VAT-registered) → `src/config.json`. UK and EU distance-selling rules require a geographic address on the site.
-- [ ] **Production time** after proof approval and **delivery times** by region.
-- [ ] **Customs and duties**: who pays import duties and taxes in each destination country?
-- [ ] **Cancellations**: can an order be cancelled for a full refund before the proof is approved?
-- [ ] **Record retention period** for orders (for example 6 years in the UK).
-- [ ] **Warranty**: do you offer one (your partner offers 1 year)? If yes, it can be added as a selling point.
+- [x] **Legal entity and country**: sole trader, UK (England and Wales law).
+- [x] **Business address**: 1 Viaduct Road, Leeds LS4 2BG, United Kingdom (`src/config.json`).
+- [x] **Production time**: about 3 days after proof approval. Optional: typical **delivery times** by region, to add to the shipping page.
+- [x] **Customs and duties**: the customer pays, unless agreed otherwise.
+- [x] **Cancellations**: full refund any time until the approved design is engraved.
+- [x] **Record retention**: as UK tax law requires (5 years after the 31 January deadline for the tax year).
+- [ ] **Warranty**: the same as on Etsy. Send a screenshot of the Etsy policy so it can be copied word for word.
 - [ ] **Logo**: send the logo file. A "VL" monogram and wordmark are used until then.
 - [ ] Is it OK to show the customer photos in the gallery? They come from your Ecwid listings, so they're your own photos. Confirm that the customers shown (or whose names or logos appear) are happy to be featured.
 

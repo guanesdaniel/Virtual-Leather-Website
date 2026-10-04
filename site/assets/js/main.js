@@ -10,10 +10,16 @@
   // One way to order an apron: the shop's pages for the aprons our designer makes open the designer,
   // with that apron chosen, instead of the shop's own order form.
   function designerStyle(id) { var p = (C.products || {})[String(id)]; return p && p.designer; }
-  function toDesigner(style) { location.replace('/?style=' + encodeURIComponent(style) + '#design'); }
+  // Products bought only through the designer: the aprons it makes, and the extra engraving (which only
+  // comes with an apron). Their shop pages open the designer instead.
+  function designerUrl(id) {
+    if (C.extraEngravingId && String(id) === String(C.extraEngravingId)) return '/#design';
+    var style = designerStyle(id);
+    return style ? '/?style=' + encodeURIComponent(style) + '#design' : '';
+  }
   var linked = /^#!\/(?:p\/(\d+)|[^?#]*?-p(\d+))(?:[\/?&]|$)/.exec(location.hash);
-  if (linked && document.getElementById('my-store-' + C.ecwidStoreId) && designerStyle(linked[1] || linked[2])) {
-    toDesigner(designerStyle(linked[1] || linked[2]));
+  if (linked && document.getElementById('my-store-' + C.ecwidStoreId) && designerUrl(linked[1] || linked[2])) {
+    location.replace(designerUrl(linked[1] || linked[2]));
     return;
   }
 
@@ -210,16 +216,29 @@
     }
 
     // Baseline = cart contents at load, so only later additions count as add_to_cart.
+    // The extra engraving only comes with an apron: if no apron is left in the cart, take it out.
+    function dropLoneEngraving(cart) {
+      if (!C.extraEngravingId || VL.cartBusy) return;
+      var lone = [], apron = false;
+      (cart && cart.items || []).forEach(function (it, i) {
+        var id = String(it.product && it.product.id), p = (C.products || {})[id];
+        if (id === String(C.extraEngravingId)) lone.push(i);
+        else if (p && p.group === 'aprons') apron = true;
+      });
+      if (lone.length && !apron) E.Cart.removeProducts(lone);
+    }
+
     E.Cart.get(function (cart) {
       if (!lastQty) lastQty = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
       syncSaved(cart);
+      dropLoneEngraving(cart);
     });
 
     E.OnCartChanged.add(function (cart) {
       var now = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
-      E.Cart.get(syncSaved);
+      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); });
       // While the designer swaps an edited design into the cart, re-adding it isn't a new add to cart.
       if (lastQty && !VL.cartBusy) {
         Object.keys(now).forEach(function (id) {
@@ -238,8 +257,8 @@
 
     E.OnPageLoaded.add(function (page) {
       if (!page) return;
-      if (page.type === 'PRODUCT' && page.productId && designerStyle(page.productId)) {
-        toDesigner(designerStyle(page.productId));
+      if (page.type === 'PRODUCT' && page.productId && designerUrl(page.productId)) {
+        location.replace(designerUrl(page.productId));
         return;
       }
       if (page.type === 'PRODUCT' && page.productId) {

@@ -66,6 +66,8 @@ Each design gets a reference (for example `VL-7K2P`) at the end of its order des
 ### Engraving price
 Each apron includes 2 engravings, and the chest (spots 1 and 2) counts as one. Each extra spot is $5, whatever is on it (text, a suggested design or a logo). The designer counts the spots in use, shows "Included" or "+$5" beside each one, adds the extras to the total and puts that many **Extra engraving** items in the cart (one Ecwid product at $5).
 
+The Extra Engraving can't be bought on its own: its shop page opens the designer, its tile is hidden in the shop, and it's taken out of any cart that has no apron in it (`main.js`).
+
 This switches on once `extraEngravingProductId` in `src/config.json` holds that Ecwid product's ID; until then, extra spots aren't charged and the site keeps saying "engraving included". To change the price, change it in Ecwid, in `ENGRAVING_PRICE` in `site/assets/js/designer.js`, and in the "$5" texts in `src/pages/index.html`.
 
 ## Publishing (free: GitHub Pages + your Hostinger domain)
