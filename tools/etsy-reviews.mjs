@@ -10,17 +10,21 @@
 // the shop's real average and count, and Etsy's required API notice next to them.
 import { writeFile } from 'node:fs/promises';
 
-// Common paste slips are tidied (spaces, line breaks, quote marks, spaces around the colon). Etsy wants
+// Common paste slips are tidied: spaces and line breaks anywhere (Etsy's codes have none), invisible
+// characters that copying from a web page or phone can add, and quote marks around the code. Etsy wants
 // "keystring:shared_secret"; the shared secret can also come from its own secret, ETSY_SHARED_SECRET.
-const tidy = (v) => String(v || '').trim().replace(/^['"]+|['"]+$/g, '').trim();
+const INVISIBLE = /[\s\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]+/g;
+const tidy = (v) => String(v || '').replace(INVISIBLE, '').replace(/^['"]+|['"]+$/g, '');
 const SECRET = tidy(process.env.ETSY_SHARED_SECRET);
-let KEY = tidy(process.env.ETSY_API_KEY).replace(/\s*:\s*/, ':');
+let KEY = tidy(process.env.ETSY_API_KEY);
 if (KEY && SECRET && !KEY.includes(':')) KEY += ':' + SECRET;
-// The key's shape, never its content (build logs are public): how many parts and how long each is.
+// The key's shape, never its content (build logs are public): how many parts, how long each is, and how
+// many characters in each are not letters or digits (Etsy's codes are letters and digits only).
 function keyShape() {
   const parts = KEY.split(':');
+  const odd = parts.map((x) => (x.match(/[^a-z0-9]/gi) || []).length);
   return `${parts.length} part${parts.length === 1 ? '' : 's'} separated by ":" (lengths ${parts.map((x) => x.length).join(' + ')})` +
-    (/\s/.test(KEY) ? ', with spaces or line breaks inside' : '');
+    (odd.some(Boolean) ? `, with ${odd.join(' + ')} character(s) that are not letters or digits` : '');
 }
 const SHOP = process.env.ETSY_SHOP_NAME || 'virtualleathershop';
 const BASE = process.env.ETSY_API_BASE || 'https://openapi.etsy.com/v3/application';
@@ -103,8 +107,9 @@ try {
 } catch (e) {
   console.warn('Could not fetch Etsy reviews (' + e.message.trim() + '). Keeping src/data/reviews.json as it is.');
   if (/ 40[13]:/.test(e.message)) {
-    console.warn('The Etsy key used has ' + keyShape() + '. Etsy expects 2 parts, "keystring:sharedsecret", ' +
-      'copied from Etsy > Your apps > See API key details, for an app whose status is Active. ' +
-      'Either put both in ETSY_API_KEY with a colon between them, or add the shared secret as its own secret, ETSY_SHARED_SECRET.');
+    console.warn('The Etsy key used has ' + keyShape() + '. Etsy expects 2 parts, "keystring:sharedsecret", copied from ' +
+      'the Etsy developer dashboard (Personal Apps: the Keystring column, and the Shared Secret shown with the eye icon). ' +
+      'ETSY_API_KEY should hold exactly the Keystring (24 letters and digits) and ETSY_SHARED_SECRET the Shared Secret; ' +
+      'or put both in ETSY_API_KEY with a colon between them.');
   }
 }
