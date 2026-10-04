@@ -187,7 +187,7 @@ main:focus { outline: none; }
 .cta-band .btn-row { justify-content: center; }
 
 /* Designer */
-.designer { display: grid; gap: 28px; align-items: start; }
+.designer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; }  /* minmax(0) stops the photo strip widening the page on phones */
 @media (min-width: 980px) { .designer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; } }
 .preview { position: relative; padding: 20px; border-radius: var(--radius); background: radial-gradient(ellipse at 50% 35%, #fffdf8 0, #efe5d8 75%); border: 1px solid var(--line); }
 @media (min-width: 980px) { .preview { position: sticky; top: calc(var(--header-h) + 16px); } }
@@ -244,6 +244,13 @@ fieldset.panel { margin: 0; min-width: 0; }
 .form-status { margin: 12px 0 0; font-weight: 600; }
 .form-status[data-kind="error"] { color: #ffb4a8; }
 .added { padding: 22px; border: 2px solid var(--ok); }
+/* Designer: "you have an apron in your cart" / "editing" bar, and the edit link above the shop */
+.saved-bar { margin: 0 0 18px; padding: 14px 16px; background: var(--paper); border: 2px solid var(--ok); border-radius: var(--radius-sm); }
+.saved-bar p { margin: 0 0 10px; }
+.saved-bar p:last-child { margin-bottom: 0; }
+.saved-bar .btn-row { gap: 8px; }
+.saved-bar .btn { min-height: 40px; padding: .45em 1.1em; font-size: .95rem; }
+.edit-designs { margin: 8px 0 0; padding: 10px 14px; background: var(--paper); border: 2px solid var(--ok); border-radius: var(--radius-sm); font-weight: 600; }
 .added h3 { color: var(--ok); }
 
 /* Shop page */

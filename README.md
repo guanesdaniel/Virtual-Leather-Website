@@ -55,6 +55,14 @@ The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLO
 
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 
+### Changing a design after adding it to the cart
+The designer remembers each design on the customer's own device (browser storage; see the cookie policy), so nobody has to start again:
+- **Unfinished design:** reopening the page brings it back, with a "Start again" button.
+- **In the cart:** "Added to your cart" offers **Change this design**. The designer and the shop page (above the cart) link back to each apron in the cart.
+- **Saving a change:** the button reads "Update my apron in the cart". It takes that apron and the extras added with it out of the cart and puts the updated ones in, so there are no duplicates.
+
+Each design gets a reference (for example `VL-7K2P`) at the end of its order description and in the "send your logo" message, so a logo file can be matched to its order. Saved designs are dropped once the apron leaves the cart, cleared when an order is placed, and deleted after 30 days. The code is `VL.saved` in `main.js` and the "Saved designs" part of `designer.js`.
+
 ### Engraving price
 Each apron includes 2 engravings, and the chest (spots 1 and 2) counts as one. Each extra spot is $5, whatever is on it (text, a suggested design or a logo). The designer counts the spots in use, shows "Included" or "+$5" beside each one, adds the extras to the total and puts that many **Extra engraving** items in the cart (one Ecwid product at $5).
 

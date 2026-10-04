@@ -90,6 +90,69 @@
     setTimeout(function () { t.remove(); }, ms || 7000);
   };
 
+  /* ---------- Saved apron designs (kept on this device only) ---------- */
+  // The designer keeps the design in progress and each apron design added to the cart, so customers can
+  // come back and change it without starting again. A design is dropped once its apron leaves the cart,
+  // everything is cleared when an order is placed, and nothing older than 30 days is used. Nothing here
+  // is sent anywhere. If the browser is short of space, logo previews are left out.
+  var SAVED_KEY = 'vl_designs', DRAFT_KEY = 'vl_design_draft', KEEP_MS = 30 * 864e5;
+  var DESC = 'Description For Personalization';
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; }
+  }
+  function writeJSON(key, v) {
+    try { if (v == null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); return true; } catch (e) { return false; }
+  }
+  function noLogos(d) { return d && d.snap ? Object.assign({}, d, { snap: Object.assign({}, d.snap, { logos: {} }) }) : d; }
+  function fresh(d) { return d && Date.now() - (d.time || 0) < KEEP_MS; }
+  VL.saved = {
+    designs: function () {
+      var all = readJSON(SAVED_KEY, []), list = (Array.isArray(all) ? all : []).filter(function (d) { return fresh(d) && d.ref && d.cart; });
+      if (list.length !== all.length) writeJSON(SAVED_KEY, list.length ? list : null);
+      return list;
+    },
+    setDesigns: function (list) {
+      if (!writeJSON(SAVED_KEY, list.length ? list : null)) writeJSON(SAVED_KEY, list.map(noLogos));
+      document.dispatchEvent(new CustomEvent('vl:saved-designs'));
+    },
+    find: function (ref) { return VL.saved.designs().filter(function (d) { return d.ref === ref; })[0] || null; },
+    draft: function () {
+      var d = readJSON(DRAFT_KEY, null);
+      if (d && !fresh(d)) writeJSON(DRAFT_KEY, null);
+      return fresh(d) && d.fields ? d : null;
+    },
+    setDraft: function (d) { if (!writeJSON(DRAFT_KEY, d)) writeJSON(DRAFT_KEY, noLogos(d)); },
+    clear: function () { writeJSON(SAVED_KEY, null); writeJSON(DRAFT_KEY, null); },
+    // The cart line holding this design's apron (its order description carries the design ref).
+    lineIndex: function (d, cart) {
+      var items = cart && cart.items || [];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i], desc = String((it.options || {})[DESC] || '');
+        if (it.product && it.product.id === d.cart.apronId && desc.indexOf(d.ref) !== -1) return i;
+      }
+      return -1;
+    }
+  };
+  // Keep only the designs still in the cart, and offer to edit them above the shop (and its cart).
+  function syncSaved(cart) {
+    var list = VL.saved.designs(), kept = list.filter(function (d) { return VL.saved.lineIndex(d, cart) !== -1; });
+    if (kept.length !== list.length && !VL.cartBusy) VL.saved.setDesigns(kept);
+    var box = $('[data-edit-designs]');
+    if (!box) return;
+    box.textContent = '';
+    box.hidden = !kept.length;
+    if (!kept.length) return;
+    box.appendChild(document.createTextNode(kept.length > 1 ? 'Want to change an apron? Edit ' : 'Want to change your apron? '));
+    kept.forEach(function (d, i) {
+      if (i) box.appendChild(document.createTextNode(i === kept.length - 1 ? ' or ' : ', '));
+      var a = document.createElement('a');
+      a.href = '/?edit=' + encodeURIComponent(d.ref) + '#design';
+      a.textContent = kept.length > 1 ? 'your ' + d.label : 'Edit your design';
+      box.appendChild(a);
+    });
+    box.appendChild(document.createTextNode('. Everything you entered is kept.'));
+  }
+
   /* ---------- Ecwid loader ---------- */
   var ecwidPromise = null;
   VL.loadEcwid = function () {
@@ -148,12 +211,15 @@
     E.Cart.get(function (cart) {
       if (!lastQty) lastQty = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
+      syncSaved(cart);
     });
 
     E.OnCartChanged.add(function (cart) {
       var now = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
-      if (lastQty) {
+      E.Cart.get(syncSaved);
+      // While the designer swaps an edited design into the cart, re-adding it isn't a new add to cart.
+      if (lastQty && !VL.cartBusy) {
         Object.keys(now).forEach(function (id) {
           var added = now[id].qty - (lastQty[id] ? lastQty[id].qty : 0);
           if (added > 0) {
@@ -198,6 +264,7 @@
     if (E.OnOrderPlaced) {
       E.OnOrderPlaced.add(function (order) {
         if (!order) return;
+        VL.saved.clear();
         var id = String(order.vendorOrderNumber || order.orderNumber || order.id || '');
         var seenKey = 'vl_order_' + id;
         try { if (sessionStorage.getItem(seenKey)) return; sessionStorage.setItem(seenKey, '1'); } catch (e) { /* ignore */ }

@@ -21,12 +21,12 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/styles.css?v=15">
+<link rel="stylesheet" href="/assets/css/styles.css?v=16">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"Virtual Leather","legalName":"Virtual Leather Intl","url":"https://virtualleather.net/","logo":"https://virtualleather.net/assets/img/logo-vl-512.png","email":"danielguanes@virtualleather.info","sameAs":["https://www.instagram.com/virtualleatherintl/","https://virtualleathershop.etsy.com/"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","telephone":"+447552809738","email":"danielguanes@virtualleather.info","availableLanguage":["English","Spanish"]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://virtualleather.net/#bbq-apron","name":"Personalised BBQ Leather Apron with Beer Holder","description":"Made-to-measure leather BBQ apron with adjustable straps, drink holder, tool loops and pocket. Engraved with your name, phrase or logo.","image":"https://virtualleather.net/assets/img/hero-bbq-1080.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619498562","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619498562"}},{"@type":"Product","@id":"https://virtualleather.net/#barber-apron","name":"Personalised Barber Leather Apron","description":"Made-to-measure leather barber apron with tool pockets, engraved with your shop name or logo.","image":"https://virtualleather.net/assets/img/p-619492033-800.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619492033","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619492033"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you size the apron?","acceptedAnswer":{"@type":"Answer","text":"Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are adjustable."}},{"@type":"Question","name":"Will I see my design before you make it?","acceptedAnswer":{"@type":"Answer","text":"Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it."}},{"@type":"Question","name":"What can you engrave?","acceptedAnswer":{"@type":"Answer","text":"Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. Two engravings are included in the price (the chest, spots 1 and 2, counts as one), and each extra spot is $5."}},{"@type":"Question","name":"Do you have discounts or special offers?","acceptedAnswer":{"@type":"Answer","text":"Offers, and prices for business, team and multi-apron orders, are agreed directly with us. Message us on WhatsApp or email and we'll talk it through."}},{"@type":"Question","name":"Do you ship worldwide?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number."}}]}]}</script>
 <script src="/assets/js/config.js?v=2"></script>
 <script src="/assets/js/analytics.js?v=2"></script>
-<script src="/assets/js/main.js?v=3" defer></script>
+<script src="/assets/js/main.js?v=4" defer></script>
 </head>
 <body class="home">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -193,6 +193,7 @@
 
       <div>
         <form id="designer-form" class="design-form" novalidate>
+          <div class="saved-bar" id="saved-bar" aria-live="polite" hidden></div>
           <fieldset class="card panel">
             <legend><span class="num">1</span> Choose your style</legend>
             <p class="hint">All aprons are $185 and made to measure.</p>
@@ -332,7 +333,8 @@
           </div>
           <div class="btn-row">
             <a class="btn btn-dark" href="/shop/#!/~/cart">Go to checkout</a>
-            <button type="button" class="btn btn-ghost" id="designer-again">Design another</button>
+            <button type="button" class="btn btn-ghost" id="designer-edit">Change this design</button>
+            <button type="button" class="btn btn-ghost" id="designer-again">Design another apron</button>
           </div>
         </div>
       </div>
@@ -551,7 +553,7 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=35" defer></script>
+<script src="/assets/js/designer.js?v=36" defer></script>
 
 </main>
 <footer class="site-footer">
