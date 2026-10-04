@@ -1,15 +1,21 @@
 // Fetches the shop's reviews through Etsy's official Open API (v3) and writes src/data/reviews.json,
 // so customers can read them on virtualleather.net without being sent to Etsy.
 //   ETSY_API_KEY="keystring:shared_secret" node tools/etsy-reviews.mjs   (npm run reviews)
-// The key lives only in the GitHub secret ETSY_API_KEY; the deploy workflow runs this before each
-// build (and every 6 hours). Without a key, or if Etsy can't be reached, the existing file is kept.
+//   or ETSY_API_KEY="keystring" ETSY_SHARED_SECRET="shared_secret" (two separate secrets).
+// The key lives only in GitHub secrets (ETSY_API_KEY, and ETSY_SHARED_SECRET if kept apart); the deploy
+// workflow runs this before each build (and every 6 hours). Without a key, or if Etsy can't be reached,
+// the existing file is kept.
 //
 // We show the most recent written reviews whatever their rating (not a hand-picked selection), with
 // the shop's real average and count, and Etsy's required API notice next to them.
 import { writeFile } from 'node:fs/promises';
 
-// Common paste slips are tidied (spaces, line breaks, quote marks, spaces around the colon).
-const KEY = (process.env.ETSY_API_KEY || '').trim().replace(/^['"]+|['"]+$/g, '').replace(/\s*:\s*/, ':');
+// Common paste slips are tidied (spaces, line breaks, quote marks, spaces around the colon). Etsy wants
+// "keystring:shared_secret"; the shared secret can also come from its own secret, ETSY_SHARED_SECRET.
+const tidy = (v) => String(v || '').trim().replace(/^['"]+|['"]+$/g, '').trim();
+const SECRET = tidy(process.env.ETSY_SHARED_SECRET);
+let KEY = tidy(process.env.ETSY_API_KEY).replace(/\s*:\s*/, ':');
+if (KEY && SECRET && !KEY.includes(':')) KEY += ':' + SECRET;
 // The key's shape, never its content (build logs are public): how many parts and how long each is.
 function keyShape() {
   const parts = KEY.split(':');
@@ -97,7 +103,8 @@ try {
 } catch (e) {
   console.warn('Could not fetch Etsy reviews (' + e.message.trim() + '). Keeping src/data/reviews.json as it is.');
   if (/ 40[13]:/.test(e.message)) {
-    console.warn('The ETSY_API_KEY secret has ' + keyShape() + '. Etsy expects 2 parts, "keystring:sharedsecret", ' +
-      'copied from Etsy > Your apps > See API key details, for an app whose status is Active.');
+    console.warn('The Etsy key used has ' + keyShape() + '. Etsy expects 2 parts, "keystring:sharedsecret", ' +
+      'copied from Etsy > Your apps > See API key details, for an app whose status is Active. ' +
+      'Either put both in ETSY_API_KEY with a colon between them, or add the shared secret as its own secret, ETSY_SHARED_SECRET.');
   }
 }

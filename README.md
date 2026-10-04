@@ -27,10 +27,10 @@ The homepage shows your most recent written Etsy reviews (any rating, in the cus
 One-time setup (about 10 minutes, free):
 1. Signed in to your Etsy shop account, open **https://www.etsy.com/developers/register** and create an app. Name: "Virtual Leather website". Purpose: show my shop's reviews on my own website.
 2. Once the app is active, open **Your apps** and copy its **Keystring** and **Shared secret**.
-3. On GitHub, go to the repository → **Settings → Secrets and variables → Actions → New repository secret**. Name: `ETSY_API_KEY`. Value: the keystring and the shared secret joined by a colon, `keystring:sharedsecret`. Don't paste the key anywhere else (not in chat, email or code).
+3. On GitHub, go to the repository → **Settings → Secrets and variables → Actions → New repository secret**, and add two secrets: `ETSY_API_KEY` = the **Keystring**, and `ETSY_SHARED_SECRET` = the **Shared secret**. (One secret `ETSY_API_KEY` = `keystring:sharedsecret` also works.) Don't paste them anywhere else (not in chat, email or code).
 4. Go to **Actions → Build and deploy → Run workflow**. Reviews then refresh automatically every 6 hours.
 
-To test locally: `ETSY_API_KEY=keystring:sharedsecret npm run reviews && npm run build`. The page shows Etsy's required notice: "This application uses the Etsy API but is not endorsed or certified by Etsy, Inc."
+To test locally: `ETSY_API_KEY=keystring ETSY_SHARED_SECRET=sharedsecret npm run reviews && npm run build`. If Etsy refuses the key, the build log shows the key's shape (number of parts and their lengths, never the key itself). The page shows Etsy's required notice: "This application uses the Etsy API but is not endorsed or certified by Etsy, Inc."
 
 - `src/pages/*.html`: page content. `src/partials/*.html`: header, footer, cookie banner, layout.
 - `site/assets/css/styles.css` and `site/assets/js/*.js`: design and behaviour.
