@@ -7,6 +7,16 @@
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
+  // One way to order an apron: the shop's pages for the aprons our designer makes open the designer,
+  // with that apron chosen, instead of the shop's own order form.
+  function designerStyle(id) { var p = (C.products || {})[String(id)]; return p && p.designer; }
+  function toDesigner(style) { location.replace('/?style=' + encodeURIComponent(style) + '#design'); }
+  var linked = /^#!\/(?:p\/(\d+)|[^?#]*?-p(\d+))(?:[\/?&]|$)/.exec(location.hash);
+  if (linked && document.getElementById('my-store-' + C.ecwidStoreId) && designerStyle(linked[1] || linked[2])) {
+    toDesigner(designerStyle(linked[1] || linked[2]));
+    return;
+  }
+
   function productInfo(id) {
     var p = (C.products || {})[String(id)];
     return p ? { item_id: String(id), item_name: p.name, price: p.price, item_category: p.group } : { item_id: String(id) };
@@ -67,6 +77,7 @@
     } else if (kind === 'select_style') {
       var style = el.getAttribute('data-style');
       if (style && VL.designer) VL.designer.setStyle(style);
+      else if (style) { e.preventDefault(); location.href = '/?style=' + encodeURIComponent(style) + '#design'; }
     }
   });
 
@@ -159,6 +170,10 @@
 
     E.OnPageLoaded.add(function (page) {
       if (!page) return;
+      if (page.type === 'PRODUCT' && page.productId && designerStyle(page.productId)) {
+        toDesigner(designerStyle(page.productId));
+        return;
+      }
       if (page.type === 'PRODUCT' && page.productId) {
         var info = productInfo(page.productId);
         info.item_name = info.item_name || page.name;

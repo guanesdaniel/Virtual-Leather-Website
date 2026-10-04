@@ -31,7 +31,8 @@ window.VL_CONFIG = {
     "619492033": {
       "name": "Barber Leather Apron",
       "price": 185,
-      "group": "aprons"
+      "group": "aprons",
+      "designer": "barber"
     },
     "619498559": {
       "name": "Leather Care Grease, 50 ml",
@@ -41,12 +42,14 @@ window.VL_CONFIG = {
     "619498560": {
       "name": "Woodworking Leather Apron",
       "price": 185,
-      "group": "aprons"
+      "group": "aprons",
+      "designer": "wood"
     },
     "619498562": {
       "name": "BBQ Leather Apron with Beer Holder",
       "price": 185,
-      "group": "aprons"
+      "group": "aprons",
+      "designer": "bbq"
     },
     "619501024": {
       "name": "Leather Duffle / Gym Bag",
@@ -56,12 +59,14 @@ window.VL_CONFIG = {
     "619501025": {
       "name": "Split-Leg Forging & Tattoo Apron",
       "price": 185,
-      "group": "aprons"
+      "group": "aprons",
+      "designer": "split"
     },
     "619505538": {
       "name": "Simple Leather Apron",
       "price": 185,
-      "group": "aprons"
+      "group": "aprons",
+      "designer": "simple"
     },
     "688211109": {
       "name": "Leather Wings (apron extra)",

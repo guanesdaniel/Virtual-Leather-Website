@@ -378,3 +378,23 @@ fieldset.panel { margin: 0; min-width: 0; }
 .logo-file input[type="file"] { width: 100%; font: inherit; padding: 10px; border: 1.5px dashed #cbbba8; border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
 .logo-file input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #apron-preview [data-slot] { cursor: pointer; }
+
+/* Designer: real photos of the chosen apron, photo viewer, logo step */
+.style-galleries { margin-top: 14px; }
+.style-about { margin: 0 0 10px; font-size: .95rem; }
+.gallery-title { margin: 0 0 6px; font-weight: 600; font-size: .9rem; }
+.gallery-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+.gallery-strip li { flex: none; scroll-snap-align: start; }
+.gallery-thumb { display: block; width: 104px; height: 104px; padding: 0; border: 1.5px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: #fff; cursor: zoom-in; }
+.gallery-thumb:hover { border-color: var(--ink); }
+.gallery-thumb:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.lightbox { border: 0; padding: 0; border-radius: var(--radius); max-width: min(92vw, 760px); width: 100%; background: var(--paper); }
+.lightbox::backdrop { background: rgba(20, 14, 10, .78); }
+.lightbox figure { margin: 0; }
+.lightbox img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #1b1714; }
+.lightbox figcaption { padding: 10px 16px 0; font-size: .92rem; }
+.lightbox-nav { display: flex; justify-content: space-between; gap: 8px; padding: 12px 16px 16px; }
+.logo-next { margin: 16px 0; padding: 14px 16px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm); }
+.logo-next h4 { margin: 0 0 6px; }
+.logo-next p { margin: 0 0 10px; }

@@ -90,6 +90,8 @@
         <span class="preview-tag" id="preview-tag" aria-hidden="true">BBQ apron</span>
         <div id="apron-preview" aria-live="polite"></div>
         <p class="preview-note">Tap a numbered spot to move your text or logo there. Preview only. Leather is a natural material, so tone and grain vary from piece to piece. We'll send you a proof of the final layout before engraving.</p>
+        <div class="style-galleries">{{gallery}}
+        </div>
       </div>
 
       <div>
@@ -208,9 +210,28 @@
           </div>
         </form>
 
+        <dialog class="lightbox" id="photo-viewer" aria-label="Photo">
+          <figure>
+            <img id="photo-viewer-img" src="" alt="">
+            <figcaption id="photo-viewer-caption"></figcaption>
+          </figure>
+          <div class="lightbox-nav">
+            <button type="button" class="btn btn-ghost btn-sm" data-photo-step="-1">&larr; Previous</button>
+            <button type="button" class="btn btn-dark btn-sm" data-photo-close>Close</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-photo-step="1">Next &rarr;</button>
+          </div>
+        </dialog>
         <div class="card added" id="designer-added" hidden>
           <h3 tabindex="-1">Added to your cart ✓</h3>
           <p>Next step: checkout. After you order, we'll email or WhatsApp you a design proof to approve before we start.</p>
+          <div class="logo-next" id="logo-next" hidden>
+            <h4>Don't forget your logo</h4>
+            <p>Send us the logo file for <span id="logo-next-where"></span>, before or after checkout, so we can engrave it sharply. The original file is best (PNG, JPG, PDF or SVG).</p>
+            <div class="btn-row">
+              <a class="btn btn-dark" id="logo-wa" href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="logo-step">Send it on WhatsApp</a>
+              <a class="btn btn-ghost" id="logo-mail" href="mailto:{{site.email}}" data-track="contact" data-channel="email" data-location="logo-step">Email it</a>
+            </div>
+          </div>
           <div class="btn-row">
             <a class="btn btn-dark" href="/shop/#!/~/cart">Go to checkout</a>
             <button type="button" class="btn btn-ghost" id="designer-again">Design another</button>
@@ -350,4 +371,4 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=33" defer></script>
+<script src="/assets/js/designer.js?v=34" defer></script>

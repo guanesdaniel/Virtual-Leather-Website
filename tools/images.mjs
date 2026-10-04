@@ -27,6 +27,12 @@ const IMAGES = {
   'team-barber': ['619492033', 10, [640]],
   'sketch': ['619498562', 2, [640]],
 };
+// Real photos for the designer, per apron style (src/data/gallery.json).
+const gallery = JSON.parse(await fs.readFile(new URL('../src/data/gallery.json', import.meta.url)));
+for (const [style, g] of Object.entries(gallery)) {
+  if (style.startsWith('_')) continue;
+  g.photos.forEach(([idx], i) => { IMAGES[`gal-${style}-${i}`] = [g.id, idx, [320, 1080]]; });
+}
 // Main image of every product, for product cards.
 for (const p of products) IMAGES[`p-${p.id}`] = [p.id, 0, [480, 800]];
 
