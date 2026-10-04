@@ -266,12 +266,13 @@
   }
   // Optional bottle opener (as the owner's reference): riveted leather tab, metal clip,
   // long black strap with a rivet, round metal opener head and a pointed ring.
-  function opener(g, x, y, acc) {
-    el('rect', { x: x - 26, y: y, width: 52, height: 40, rx: 5, fill: 'url(#openerGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, g);
+  // The riveted tab it hangs from is accessory leather; the long strap is the opener's own colour.
+  function opener(g, x, y, acc, oc) {
+    el('rect', { x: x - 26, y: y, width: 52, height: 40, rx: 5, fill: 'url(#accGrad)', stroke: acc.edge, 'stroke-width': 3, filter: 'url(#drop)' }, g);
     rivet(g, x - 11, y + 20, 6); rivet(g, x + 11, y + 20, 6);
     el('path', { d: 'M' + (x - 26) + ',' + (y + 42) + ' h52 v10 h-6 v-4 h-40 v4 h-6 Z', fill: 'url(#metal)', stroke: '#8a8a8a', 'stroke-width': 1.5 }, g);
-    el('rect', { x: x - 22, y: y + 52, width: 44, height: 180, rx: 6, fill: STRAP_BLACK, stroke: '#000', 'stroke-width': 2, filter: 'url(#drop)' }, g);
-    el('rect', { x: x - 18, y: y + 56, width: 6, height: 172, rx: 3, fill: 'rgba(255,255,255,.08)' }, g);
+    el('rect', { x: x - 22, y: y + 52, width: 44, height: 180, rx: 6, fill: 'url(#openerGrad)', stroke: oc.edge, 'stroke-width': 2, filter: 'url(#drop)' }, g);
+    el('rect', { x: x - 18, y: y + 56, width: 6, height: 172, rx: 3, fill: 'rgba(255,255,255,.1)' }, g);
     rivet(g, x, y + 212, 7);
     el('circle', { cx: x, cy: y + 262, r: 34, fill: 'url(#metal)', stroke: '#8f8f8f', 'stroke-width': 3, filter: 'url(#drop)' }, g);
     el('circle', { cx: x, cy: y + 262, r: 24, fill: '#efefef', stroke: '#b5b5b5', 'stroke-width': 2 }, g);
@@ -372,8 +373,9 @@
     el('stop', { offset: '0', 'stop-color': acc.hi }, acG); el('stop', { offset: '1', 'stop-color': acc.hex }, acG);
     var wc = COLORS[wingColor(st)], wgG = el('linearGradient', { id: 'wingGrad', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
     el('stop', { offset: '0', 'stop-color': wc.hi }, wgG); el('stop', { offset: '1', 'stop-color': wc.hex }, wgG);
-    var oc = COLORS[openerColor(st)], opG = el('linearGradient', { id: 'openerGrad', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
-    el('stop', { offset: '0', 'stop-color': oc.hi }, opG); el('stop', { offset: '1', 'stop-color': oc.hex }, opG);
+    // Bottle opener strap: shaded across its width like the leather loops.
+    var oc = COLORS[openerColor(st)], opG = el('linearGradient', { id: 'openerGrad', x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+    el('stop', { offset: '0', 'stop-color': oc.hex }, opG); el('stop', { offset: '.45', 'stop-color': oc.hi }, opG); el('stop', { offset: '1', 'stop-color': oc.edge }, opG);
     var loopG = el('linearGradient', { id: 'loopGrad', x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
     el('stop', { offset: '0', 'stop-color': acc.hex }, loopG); el('stop', { offset: '.45', 'stop-color': acc.hi }, loopG); el('stop', { offset: '1', 'stop-color': acc.edge }, loopG);
     var metal = el('linearGradient', { id: 'metal', x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
@@ -506,7 +508,7 @@
         rivet(svg, p[0] + 24, p[1] + 42, 6); rivet(svg, p[0] + 56, p[1] + 42, 6);
       });
     }
-    if (st.opener && op) opener(acs, op[0], op[1], COLORS[openerColor(st)]);
+    if (st.opener && op) opener(acs, op[0], op[1], acc, COLORS[openerColor(st)]);
     if (st.grease) greaseTin(svg);
 
     drawEngraving(svg, defs, st, main, acc);
