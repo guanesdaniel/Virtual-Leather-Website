@@ -7,7 +7,7 @@ window.VL_CONFIG = {
   "currency": "USD",
   "extraEngravingId": "619492030",
   "ga4MeasurementId": "",
-  "metaPixelId": "",
+  "metaPixelId": "298202042517671",
   "products": {
     "619483308": {
       "name": "Leather Bottle Opener (apron extra)",

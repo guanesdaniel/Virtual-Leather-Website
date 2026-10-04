@@ -1558,6 +1558,10 @@
       startEditing(toEdit);
     }
     renderBar();
+    // The design reference has done its job: keep it out of the address (and so out of analytics).
+    if (askEdit && history.replaceState) {
+      history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])edit=[^&]*&?/, '$1').replace(/[?&]$/, '') + location.hash);
+    }
   }
   var qs = /[?&]style=(\w+)/.exec(location.search);
   if (qs) VL.designer.setStyle(qs[1]);
