@@ -152,84 +152,8 @@
 
           <fieldset class="card panel">
             <legend><span class="num">4</span> Add your engraving</legend>
-            <p class="hint">Engraving is included. We engrave exactly what you type, so please check spelling and capitals. Leave the text empty if you'd like it plain. Tip: tap a numbered spot on the preview to move what you're editing there.</p>
-            <fieldset class="engrave-item is-active" id="text-item">
-              <legend>Your text</legend>
-              <div class="field">
-                <label for="engraving">Name or phrase (up to 3 lines)</label>
-                <textarea id="engraving" name="engraving" maxlength="40" rows="2" aria-describedby="engraving-hint engraving-count" placeholder="e.g. Grill Master Mike"></textarea>
-                <p class="hint" id="engraving-hint">Press Enter to start a new line.</p>
-                <p class="counter" id="engraving-count" aria-live="polite">0 / 40 characters</p>
-              </div>
-              <fieldset class="option-group">
-                <legend>Lettering</legend>
-                <div class="options font-opts">
-                  <label class="opt"><input type="radio" name="font" value="montserrat" checked><span>Montserrat</span></label>
-                  <label class="opt"><input type="radio" name="font" value="anton"><span>Anton</span></label>
-                  <label class="opt"><input type="radio" name="font" value="opensans"><span>Open Sans</span></label>
-                  <label class="opt"><input type="radio" name="font" value="classic"><span>Classic</span></label>
-                  <label class="opt"><input type="radio" name="font" value="alexbrush"><span>Alex Brush</span></label>
-                  <label class="opt"><input type="radio" name="font" value="comforter"><span>Comforter</span></label>
-                  <label class="opt"><input type="radio" name="font" value="signature"><span>Signature</span></label>
-                  <label class="opt"><input type="radio" name="font" value="brush"><span>Brush</span></label>
-                  <label class="opt"><input type="radio" name="font" value="bangers"><span>Bangers</span></label>
-                  <label class="opt"><input type="radio" name="font" value="graffiti"><span>Graffiti</span></label>
-                </div>
-              </fieldset>
-              <fieldset class="option-group">
-                <legend>Position (numbers match the preview)</legend>
-                <div class="options">
-                  <label class="opt"><input type="radio" name="position" value="1" checked><span>1 · Chest</span></label>
-                  <label class="opt"><input type="radio" name="position" value="2"><span>2 · Under chest</span></label>
-                  <label class="opt"><input type="radio" name="position" value="3"><span>3 · Left</span></label>
-                  <label class="opt"><input type="radio" name="position" value="4"><span>4 · Right</span></label>
-                  <label class="opt"><input type="radio" name="position" value="5"><span>5 · Down left</span></label>
-                  <label class="opt"><input type="radio" name="position" value="6"><span>6 · Down right</span></label>
-                  <label class="opt"><input type="radio" name="position" value="pocket"><span>Pocket</span></label>
-                </div>
-              </fieldset>
-              <div class="size-field">
-                <div class="size-head"><label for="text-size">Text size</label><output id="text-size-out" for="text-size">100%</output></div>
-                <div class="size-row">
-                  <button type="button" class="size-btn" data-target="text-size" data-step="-10" aria-label="Make the text smaller">&minus;</button>
-                  <input type="range" id="text-size" name="textSize" min="50" max="150" step="10" value="100" aria-describedby="text-size-fit">
-                  <button type="button" class="size-btn" data-target="text-size" data-step="10" aria-label="Make the text bigger">+</button>
-                </div>
-                <p class="fit-note" id="text-size-fit" aria-live="polite"></p>
-              </div>
-            </fieldset>
-            <label class="check"><input type="checkbox" name="logo"> <span><strong>Add a logo or image</strong> to engrave as well.</span></label>
-            <fieldset class="engrave-item sub-field" id="logo-item" hidden>
-              <legend>Your logo</legend>
-              <div class="field logo-file">
-                <label for="logo-file">Upload it to see it on the preview <span class="muted">(optional)</span></label>
-                <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-describedby="logo-hint logo-file-error">
-                <p class="hint" id="logo-hint">PNG, JPG, WebP or SVG, up to 15 MB. It stays on your device for this preview. After ordering, send us the original file by WhatsApp or email so we can engrave it sharply.</p>
-                <p class="error" id="logo-file-error" aria-live="polite"></p>
-              </div>
-              <fieldset class="option-group">
-                <legend>Logo position</legend>
-                <div class="options">
-                  <label class="opt"><input type="radio" name="logoPos" value="1"><span>1 · Chest</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="2"><span>2 · Under chest</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="3"><span>3 · Left</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="4"><span>4 · Right</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="5"><span>5 · Down left</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="6"><span>6 · Down right</span></label>
-                  <label class="opt"><input type="radio" name="logoPos" value="pocket"><span>Pocket</span></label>
-                </div>
-              </fieldset>
-              <p class="error" id="logo-pos-error" aria-live="polite"></p>
-              <div class="size-field">
-                <div class="size-head"><label for="logo-size">Logo size</label><output id="logo-size-out" for="logo-size">100%</output></div>
-                <div class="size-row">
-                  <button type="button" class="size-btn" data-target="logo-size" data-step="-10" aria-label="Make the logo smaller">&minus;</button>
-                  <input type="range" id="logo-size" name="logoSize" min="50" max="150" step="10" value="100" aria-describedby="logo-size-fit">
-                  <button type="button" class="size-btn" data-target="logo-size" data-step="10" aria-label="Make the logo bigger">+</button>
-                </div>
-                <p class="fit-note" id="logo-size-fit" aria-live="polite"></p>
-              </div>
-            </fieldset>
+            <p class="hint">Engraving is included. Go spot by spot: the numbers match the preview, and you can tap a spot on the preview to jump to it. Spots set to "None" stay plain. We engrave exactly what you type, so please check spelling and capitals.</p>
+            <div id="slots" class="slots"></div>
             <div class="field" style="margin:10px 0 0">
               <label for="notes">Anything else? <span class="muted">(optional)</span></label>
               <textarea id="notes" name="notes" maxlength="300" rows="2" placeholder="e.g. a second text in position 5, a date, or a gift note"></textarea>
@@ -426,4 +350,4 @@
   </div>
 </section>
 
-<script src="/assets/js/designer.js?v=26" defer></script>
+<script src="/assets/js/designer.js?v=27" defer></script>
