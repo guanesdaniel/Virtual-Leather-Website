@@ -164,6 +164,8 @@
       window.ec = window.ec || {};
       window.ec.config = window.ec.config || {};
       window.ec.config.storefrontUrls = { cleanUrls: false };
+      // Our cookie banner decides, before the store loads (see VL.consent.ecwid in analytics.js).
+      window.ec.config.tracking = { ask_consent: true, user_response: VL.consent && VL.consent.ecwid ? VL.consent.ecwid() : 'DECLINE' };
       var s = document.createElement('script');
       s.src = 'https://app.ecwid.com/script.js?' + C.ecwidStoreId + '&data_platform=code';
       s.charset = 'utf-8';
@@ -227,7 +229,7 @@
             info.item_name = info.item_name || now[id].name;
             info.price = now[id].price != null ? now[id].price : info.price;
             info.quantity = added;
-            track('add_to_cart', { currency: C.currency, value: (info.price || 0) * added, items: [info] });
+            track('add_to_cart', { currency: C.currency, value: (info.price || 0) * added, items: [info], from_store: true });
           }
         });
       }
@@ -243,7 +245,7 @@
       if (page.type === 'PRODUCT' && page.productId) {
         var info = productInfo(page.productId);
         info.item_name = info.item_name || page.name;
-        track('view_item', { currency: C.currency, value: info.price || 0, items: [info] });
+        track('view_item', { currency: C.currency, value: info.price || 0, items: [info], from_store: true });
       } else if (page.type === 'CART') {
         track('view_cart', {});
       } else if (/^CHECKOUT/.test(page.type) && !checkoutTracked) {
@@ -256,7 +258,7 @@
             return info;
           });
           var value = items.reduce(function (s, i) { return s + (i.price || 0) * (i.quantity || 1); }, 0);
-          track('begin_checkout', { currency: C.currency, value: value, items: items });
+          track('begin_checkout', { currency: C.currency, value: value, items: items, from_store: true });
         });
       }
     });
@@ -277,7 +279,7 @@
           return info;
         });
         track('purchase', {
-          transaction_id: id, event_id: 'Purchase.' + id,
+          transaction_id: id, event_id: 'Purchase.' + id, from_store: true,
           currency: C.currency, value: Number(order.total) || 0,
           tax: Number(order.tax) || 0, shipping: Number(order.shippingOption && order.shippingOption.shippingRate) || 0,
           items: items

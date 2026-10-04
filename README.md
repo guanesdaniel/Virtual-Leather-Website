@@ -107,23 +107,36 @@ All tracking is **consent-first**. GA4 and the Meta Pixel load only after the vi
 | Order placed | `purchase` (with `transaction_id`) | `Purchase` (`eventID = Purchase.<order no.>`) |
 | WhatsApp or email link clicked | `generate_lead` | `Contact` |
 
+**Who sends what to Meta.** The Meta pixel is **298202042517671**, the owner's own pixel, which is also connected in Ecwid (*Settings → General → Tracking & Analytics*). Ecwid's copy sends the shop's events: product views in the shop, add to cart (the designer's too), checkout and purchase, with Ecwid's own event IDs. The website (`analytics.js`) sends what only it sees: page views, `CustomizeProduct`, the apron viewed in the designer, and `Contact`. If Ecwid's pixel is ever removed, the website sends the shop events itself, so nothing is counted twice and nothing is lost.
+
+**Before consent, nothing reaches Meta.** The website creates the pixel's command queue but downloads Meta's code only after the visitor allows marketing cookies. Ecwid sees the queue and doesn't download it either.
+
+**What Meta and Google never get.** No customer names, emails or phone numbers. Meta Advanced Matching and Google Enhanced Conversions are **off** (the owner's decision, the same as on marketcenterco.com):
+- Meta's automatic events, which read buttons and forms, are switched off.
+- The customer email and phone Ecwid would attach to the pixel are removed before they reach Meta.
+- Addresses carrying a private key (for example a sign-in or order link from an Ecwid email) never go to Meta.
+- Google gets each address without its `#…` part and without a design reference.
+
+**Use your own GA4 property and Meta Pixel, never your partner's**, or the two shops' figures get mixed.
+
 ### Set up Google Analytics 4
-1. At analytics.google.com, create a property called "Virtual Leather". Set the time zone, and set the currency to **USD**.
-2. Add a **Web** data stream for `https://virtualleather.net` and copy the **Measurement ID** (`G-XXXXXXX`).
+1. At analytics.google.com, go to **Admin → Create → Property**. Call it "Virtual Leather", and set the time zone and the currency (**USD**).
+2. Add a **Web** data stream for `https://virtualleather.net` and copy the **Measurement ID** (`G-XXXXXXX`). Leave "user-provided data collection" off.
 3. Put it in `src/config.json` → `ga4MeasurementId`, then rebuild.
 4. In GA4 → *Admin → Events*, mark `purchase` and `generate_lead` as **key events**.
 5. Optional: link Google Ads and Search Console in GA4 → *Admin → Product links*.
 6. To see which suggested designs and engraving spots customers use, register `engraving_spot` as an event-scoped **custom dimension** (*Admin → Custom definitions*). `content_type` and `content_id` are standard for `select_content`.
 
 ### Set up the Meta Pixel and ads
-1. In Meta **Events Manager**, create or choose a dataset (Pixel) and copy its ID into `src/config.json` → `metaPixelId`.
+1. The pixel is already set: `src/config.json` → `metaPixelId` is the owner's own pixel (the one Ecwid uses). Optional extra safety: in Meta **Events Manager**, open the pixel's **Settings** and turn **Automatic advanced matching** off. The website already stops it from reading forms.
 2. In **Business Settings → Brand safety → Domains**, add and **verify** `virtualleather.net`. The DNS TXT method in Hostinger's DNS zone editor is the easiest.
 3. In Events Manager, check that `Purchase`, `AddToCart`, `InitiateCheckout`, `ViewContent` and `Contact` arrive. Use the *Test events* tab.
 4. Optimise purchase campaigns for **Purchase**. While purchase volume is still low, optimise for **AddToCart** or **Contact** (WhatsApp).
 5. **Conversions API (CAPI).** Browser events already carry an `eventID`. When you add server-side events (for example Meta's "Conversions API Gateway" or a small server function), send the same IDs so Meta de-duplicates them.
 
 ### Important: avoid double counting
-In the Ecwid admin, **don't** turn on Ecwid's own Google Analytics or Facebook Pixel integrations for this storefront. This site already sends those events and respects the visitor's cookie choice. Ecwid's integrations would count everything twice and skip the consent banner.
+- **Meta:** keep Ecwid's Meta pixel as it is; the website works with it (see "Who sends what to Meta" above). Don't add the pixel a second way, for example as custom code in Ecwid.
+- **Google:** **don't** turn on Ecwid's own Google Analytics. The website sends GA4 with the visitor's cookie choice; Ecwid's would count everything twice and skip the cookie banner.
 
 ## Before launch
 See [`LAUNCH-CHECKLIST.md`](LAUNCH-CHECKLIST.md). `npm run check` lists every open item.
