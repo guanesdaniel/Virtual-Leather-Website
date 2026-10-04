@@ -794,14 +794,39 @@
 
   function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0); }
 
+  // The WhatsApp message: short, plain lines that open by asking to talk the design through.
+  // (The full workshop detail, with fonts and sizes, goes in the order description instead.)
+  function spotName(p) { return p === 'pocket' ? 'Pocket' : POS[p].label + ' (' + p + ')'; }
   function waMessage(st) {
-    return 'Hi Virtual Leather! I designed an apron on your website:\n' +
-      '- Style: ' + STYLES[st.style].name + '\n' +
-      '- Main leather: ' + COLORS[st.main].label + '\n' +
-      '- Accessories: ' + COLORS[st.acc].label + '\n' +
-      '- ' + describe(st).split(' | ').slice(0, -1).join('\n- ') + '\n' +
-      (st.wings ? '- Extra: leather wings (' + wingName(st) + ')\n' : '') + (st.opener ? '- Extra: bottle opener (' + openerName(st) + ')\n' : '') + (st.grease ? '- Extra: protective leather grease 50 ml\n' : '') +
-      'Can you help me finish my order?';
+    var lines = [], hasLogo = false, extras = [];
+    var bigChest = POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && (st.slots['1'].mode === 'design' || st.slots['1'].mode === 'logo');
+    lines.push('Apron: ' + STYLES[st.style].name);
+    lines.push('Leather: ' + COLORS[st.main].label + ', with ' + COLORS[st.acc].label.toLowerCase() + ' accessories');
+    positionsOf(st.style).forEach(function (p) {
+      var sl = st.slots[p], size = (fit[p] ? fit[p].pct : sl.size), bigger = size !== 100 ? ', size ' + size + '%' : '';
+      if (sl.mode === 'text' && sl.text) {
+        lines.push(spotName(p) + ': "' + sl.text.replace(/\n/g, ' / ') + '" in ' + FONTS[sl.font].label + ' lettering' + bigger);
+      } else if (sl.mode === 'design' && DESIGNS[sl.design]) {
+        var d = DESIGNS[sl.design], f = sl.fields || {};
+        lines.push(spotName(p) + ': ' + (d.fields && d.fields.length ? d.label + ' design' : '"' + d.label + '" design') +
+          (f.name ? ', name "' + f.name + '"' : '') + (f.year ? ', Est. ' + f.year : '') +
+          (d.fields && d.fields.length ? ' (' + FONTS[sl.dfont].label + ' lettering)' : '') + bigger);
+      } else if (sl.mode === 'logo') {
+        hasLogo = true;
+        lines.push(spotName(p) + ': my logo' + bigger);
+      } else if (p === '2' && sl.mode === 'none' && bigChest) {
+        lines.push('Under chest (2): left empty so the chest design is bigger');
+      }
+    });
+    if (st.wings) extras.push('leather wings (' + wingName(st) + ')');
+    if (st.opener) extras.push('bottle opener (' + openerName(st) + ')');
+    if (st.grease) extras.push('protective leather grease');
+    if (extras.length) lines.push('Extras: ' + extras.join(', '));
+    if (st.notes) lines.push('Notes: ' + st.notes);
+    return 'Hi Virtual Leather! I\'d like to discuss my apron design with you before I order.\n\n' +
+      '*My design*\n- ' + lines.join('\n- ') + '\n\n' +
+      (hasLogo ? 'I\'ll send my logo file in this chat.\n\n' : '') +
+      'Can we talk it through?';
   }
 
   // Extras offered per style (default: all). The barber apron has no bottle opener.
