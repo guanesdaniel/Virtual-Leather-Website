@@ -14,7 +14,7 @@
   var PRICE = 185, EXTRA_PRICE = 18;
 
   var STYLES = {
-    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)' },
+    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
     barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' },
@@ -28,19 +28,31 @@
     brown: { label: 'Dark brown', ecwid: 'Dark Brown', addon: 'Dark Brown', hex: '#5b3c35', edge: '#2e1c18', hi: '#7a5650', strap: '#4a2f29', engrave: '#1c100c', mottleR: .27, mottleG: .16, mottleB: .13, mottleK: '1.1 0 0 0 -0.42' },
     black: { label: 'Black', ecwid: 'Black', addon: 'Black', hex: '#262322', edge: '#0e0d0c', hi: '#45403d', strap: '#1b1918', engrave: '#8a837d', mottleR: .16, mottleG: .15, mottleB: .145, mottleK: '0.9 0 0 0 -0.38' }
   };
+  // Engraving fonts (self-hosted free fonts, as offered on marketcenterco.com). scale evens out how big
+  // each one looks at the same size; real = the font's actual name, for the workshop.
   var FONTS = {
-    serif:  { label: 'Classic serif', family: 'Fraunces, Georgia, serif', weight: 700 },
-    sans:   { label: 'Modern bold', family: 'Inter, Arial, sans-serif', weight: 800 },
-    script: { label: 'Script', family: '"Great Vibes", "Brush Script MT", cursive', weight: 400 }
+    montserrat: { label: 'Montserrat', family: 'Montserrat, Arial, sans-serif', weight: 700, scale: 1 },
+    anton:      { label: 'Anton', family: 'Anton, Impact, sans-serif', weight: 400, scale: .81 },
+    opensans:   { label: 'Open Sans', family: '"Open Sans", Arial, sans-serif', weight: 600, scale: 1.02 },
+    classic:    { label: 'Classic', real: 'Playfair Display', family: '"Playfair Display", Georgia, serif', weight: 700, scale: 1.05 },
+    alexbrush:  { label: 'Alex Brush', family: '"Alex Brush", cursive', weight: 400, scale: 1.52 },
+    comforter:  { label: 'Comforter', family: 'Comforter, cursive', weight: 400, scale: 1.71 },
+    signature:  { label: 'Signature', real: 'Great Vibes', family: '"Great Vibes", cursive', weight: 400, scale: 1.46 },
+    brush:      { label: 'Brush', real: 'Kaushan Script', family: '"Kaushan Script", cursive', weight: 400, scale: 1.16 },
+    bangers:    { label: 'Bangers', family: 'Bangers, Impact, sans-serif', weight: 400, scale: 1.22 },
+    graffiti:   { label: 'Graffiti', real: 'Permanent Marker', family: '"Permanent Marker", cursive', weight: 400, scale: 1.1 }
   };
-  // Engraving positions 1-6 from the Virtual Leather "Apron Sketch" (1200 x 1800 drawing units).
+  function fontName(k) { var f = FONTS[k] || FONTS.montserrat; return f.label + (f.real ? ' (' + f.real + ')' : ''); }
+  // Engraving positions 1-6 from the Virtual Leather "Apron Sketch" (1200 x 1800 drawing units), plus the
+  // pocket on styles that have one. Optional sizing per spot (defaults in metrics()): fs = letter size and
+  // logoH = logo height at 100%; maxW / maxH = the most the spot can take before we shrink to fit.
   var POS = {
-    1: { x: 600, y: 465, w: 330, h: 90, label: 'Chest, top' },
-    2: { x: 600, y: 580, w: 330, h: 70, label: 'Chest, below 1' },
-    3: { x: 285, y: 880, w: 210, h: 70, label: 'Middle left' },
-    4: { x: 730, y: 930, w: 280, h: 56, label: 'Middle right' },
-    5: { x: 235, y: 1640, w: 260, h: 120, label: 'Bottom left' },
-    6: { x: 965, y: 1640, w: 260, h: 120, label: 'Bottom right' }
+    1: { x: 600, y: 465, w: 330, h: 90, label: 'Chest' },
+    2: { x: 600, y: 580, w: 330, h: 70, label: 'Under chest' },
+    3: { x: 285, y: 880, w: 210, h: 70, label: 'Left' },
+    4: { x: 730, y: 930, w: 280, h: 56, label: 'Right' },
+    5: { x: 235, y: 1640, w: 260, h: 120, label: 'Down left' },
+    6: { x: 965, y: 1640, w: 260, h: 120, label: 'Down right' }
   };
   VL.designerPositions = POS;
 
@@ -72,19 +84,40 @@
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
-    bbq:    { 3: { x: 381, y: 1005 }, 4: { x: 851, y: 1000 } },
+    bbq: {
+      1: { fs: 84, maxW: 470, maxH: 170, logoH: 170 },
+      2: { fs: 60, maxW: 470, maxH: 110, logoH: 110 },
+      3: { x: 381, y: 1005, fs: 58, maxW: 300, maxH: 150, logoH: 140 },
+      4: { x: 851, y: 1000, fs: 58, maxW: 300, maxH: 150, logoH: 140 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
+    },
     barber: { 3: { x: 326, y: 955, w: 250, h: 64 }, 4: { x: 800, y: 955, w: 250, h: 64 } },
     split:  { 1: { y: 420 }, 2: { y: 505, h: 60 } },
     simple: { 3: { x: 378, y: 935, w: 250, h: 64 }, 4: { x: 822, y: 935, w: 250, h: 64 } },
     wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
   };
   function posFor(styleKey, p) {
-    var o = (POS_OVERRIDES[styleKey] || {})[p];
-    if (!o) return POS[p];
-    var b = {}; for (var k in POS[p]) b[k] = POS[p][k];
+    var o = (POS_OVERRIDES[styleKey] || {})[p] || {}, base = POS[p] || {}, b = {};
+    for (var k in base) b[k] = base[k];
     for (var j in o) b[j] = o[j];
     return b;
   }
+  // stdW / stdH: the room used for the standard (100%) size; maxW / maxH: the most a bigger size may take.
+  function metrics(b) {
+    var maxW = b.maxW || b.w + 80, maxH = b.maxH || b.h * 2;
+    return { fs: b.fs || Math.min(96, b.h * 1.1), maxW: maxW, maxH: maxH, logoH: b.logoH || b.h * 1.6,
+      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7 };
+  }
+  // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
+  function positionsOf(styleKey) {
+    var s = STYLES[styleKey], list = [];
+    for (var i = 1; i <= s.positions; i++) list.push(String(i));
+    if (s.pocket) list.push('pocket');
+    return list;
+  }
+  function posLabel(p) { return p === 'pocket' ? 'Pocket' : p + ' (' + POS[p].label + ')'; }
   // Where the optional bottle opener hangs on each style.
   var OPENER_AT = { bbq: [598, 1170], barber: [424, 745], simple: [1010, 990], split: [185, 1410], wood: [973, 990] };
 
@@ -245,12 +278,15 @@
 
   function draw(st) {
     var style = STYLES[st.style], main = COLORS[st.main], acc = COLORS[st.acc];
+    // Engraving on the pocket is burned into the accessory leather, everywhere else into the apron body.
+    function inkFor(p) { return p === 'pocket' ? acc : main; }
     stage.textContent = '';
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'apron-title apron-desc' }, stage);
     el('title', { id: 'apron-title' }, svg).textContent = 'Preview of your ' + style.name;
     el('desc', { id: 'apron-desc' }, svg).textContent = main.label + ' leather with ' + acc.label.toLowerCase() + ' accessories and black straps' +
       (st.wings ? ', ' + wingName(st) + ' leather wings' : '') + (st.opener ? ', bottle opener with ' + openerName(st) + ' leather tab' : '') + (st.grease ? ', with a tin of leather care grease and cloth' : '') +
-      (st.text ? ', engraved "' + st.text.replace(/\n/g, ' ') + '" at position ' + st.pos + ' (' + POS[st.pos].label.toLowerCase() + ')' : ', no engraving') + '.';
+      (st.text ? ', engraved "' + st.text.replace(/\n/g, ' ') + '" in ' + FONTS[st.font].label + ' at position ' + posLabel(st.pos) : ', no engraved text') +
+      (st.logo ? ', logo at position ' + posLabel(st.logoPos) : '') + '.';
 
     var defs = el('defs', {}, svg);
     var mott = el('filter', { id: 'mottle', x: 0, y: 0, width: '100%', height: '100%' }, defs);
@@ -273,6 +309,17 @@
     el('stop', { offset: '0', 'stop-color': '#ffffff' }, metal); el('stop', { offset: '.5', 'stop-color': '#c9c9c9' }, metal); el('stop', { offset: '1', 'stop-color': '#7d7d7d' }, metal);
     var clip = el('clipPath', { id: 'bibclip' }, defs);
     el('path', { d: BIB }, clip);
+    // Uploaded logos are shown "burned in": the logo's shape (its dark parts, or for a light logo on a
+    // transparent background its opaque parts) in the engraving colour, plus a faint highlight.
+    if (st.logo && logoData) {
+      var shapeRow = logoData.mode === 'alpha' ? '0 0 0 1 0' : '-0.2126 -0.7152 -0.0722 1 0';
+      [['logoInk', inkFor(st.logoPos).engrave, 1], ['logoHi', '#ffe1c8', 0.22]].forEach(function (f) {
+        var rgb = [1, 3, 5].map(function (i) { return (parseInt(f[1].substr(i, 2), 16) / 255).toFixed(3); });
+        var flt = el('filter', { id: f[0], 'color-interpolation-filters': 'sRGB' }, defs);
+        el('feColorMatrix', { type: 'matrix', values: '0 0 0 0 ' + rgb[0] + '  0 0 0 0 ' + rgb[1] + '  0 0 0 0 ' + rgb[2] + '  ' +
+          shapeRow.split(' ').map(function (v) { return (v * f[2]).toString(); }).join(' ') }, flt);
+      });
+    }
 
     function tube(g, d) {
       el('path', { d: d, stroke: '#8f8a84', 'stroke-width': 38 }, g);
@@ -402,49 +449,95 @@
     if (st.opener && op) opener(acs, op[0], op[1], COLORS[openerColor(st)]);
     if (st.grease) greaseTin(svg);
 
-    // Position guides
+    // Engraving spots: dashed guides you can tap. A spot that holds the text or logo shows that instead.
+    var spots = positionsOf(st.style);
+    var editing = active === 'logo' && st.logo ? 'logo' : 'text';
     var guides = el('g', { 'aria-hidden': 'true' }, svg);
-    for (var p = 1; p <= style.positions; p++) {
+    spots.forEach(function (p) {
       var q = posFor(st.style, p);
-      var on = String(p) === String(st.pos);
-      if (on && st.text) continue;
-      el('rect', { x: q.x - q.w / 2, y: q.y - q.h / 2, width: q.w, height: q.h, rx: 8, fill: 'none',
-        stroke: on ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.4)', 'stroke-dasharray': '14 10', 'stroke-width': on ? 4 : 3 }, guides);
-      var t = el('text', { x: q.x, y: q.y + 14, 'text-anchor': 'middle', fill: on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.6)', 'font-size': 40, 'font-weight': 700, 'font-family': 'Inter, sans-serif' }, guides);
-      t.textContent = p;
-    }
+      var used = (st.text && p === st.pos) || (st.logo && p === st.logoPos);
+      var on = p === (editing === 'logo' ? st.logoPos : st.pos);
+      var g = el('g', { 'data-pos': p }, guides);
+      el('rect', { x: q.x - q.w / 2, y: q.y - q.h / 2, width: q.w, height: q.h, rx: 8, fill: 'rgba(255,255,255,0)',
+        stroke: used ? 'none' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.45)', 'stroke-dasharray': '14 10', 'stroke-width': on ? 4 : 3 }, g);
+      if (used) return;
+      var t = el('text', { x: q.x, y: q.y + (p === 'pocket' ? 12 : 14), 'text-anchor': 'middle', fill: on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.65)',
+        'font-size': p === 'pocket' ? 34 : 40, 'font-weight': 700, 'font-family': 'Inter, sans-serif' }, g);
+      t.textContent = p === 'pocket' ? 'Pocket' : p;
+    });
 
-    // Engraving: dark burned-in lettering with a faint highlight.
+    // Engraved text: dark burned-in lettering with a faint highlight, at the chosen size. maxPct is the
+    // biggest size (as % of standard) that fits the spot; update() keeps the slider within it.
+    var textG = null, logoG = null;
+    fit.text = fit.logo = null;
     if (st.text) {
-      var font = FONTS[st.font], box = posFor(st.style, st.pos);
+      var font = FONTS[st.font] || FONTS.montserrat, box = posFor(st.style, st.pos), m = metrics(box), ink = inkFor(st.pos);
       var lines = st.text.split('\n').slice(0, 3);
-      var g = el('g', { 'aria-hidden': 'true' }, svg);
-      var size = Math.min(110, (box.h * 1.3) / lines.length);
+      var base = m.fs * [1, 0.78, 0.62][lines.length - 1] * font.scale;
+      textG = el('g', { 'aria-hidden': 'true', 'data-item': 'text' }, svg);
       var hl = [], texts = [];
       lines.forEach(function (line) {
-        var h1 = el('text', { x: box.x + 2, 'text-anchor': 'middle', fill: 'rgba(255,225,200,.22)', 'font-family': font.family, 'font-weight': font.weight }, g);
-        var t = el('text', { x: box.x, 'text-anchor': 'middle', fill: main.engrave, 'font-family': font.family, 'font-weight': font.weight }, g);
+        var h1 = el('text', { x: box.x + 2, 'text-anchor': 'middle', fill: 'rgba(255,225,200,.22)', 'font-family': font.family, 'font-weight': font.weight, 'font-size': base.toFixed(1) }, textG);
+        var t = el('text', { x: box.x, 'text-anchor': 'middle', fill: ink.engrave, 'font-family': font.family, 'font-weight': font.weight, 'font-size': base.toFixed(1) }, textG);
         h1.textContent = line; t.textContent = line;
         hl.push(h1); texts.push(t);
       });
-      for (var guard = 0; guard < 40; guard++) {
-        texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
-        var widest = Math.max.apply(null, texts.map(function (t) { try { return t.getComputedTextLength(); } catch (e) { return 0; } }));
-        if (widest <= box.w + 60 || size <= 20) break;
-        size *= 0.93;
-      }
+      // Standard size: the spot's letter size, made smaller if the text is too long for the spot.
+      var widest = Math.max.apply(null, texts.map(function (t) { try { return t.getComputedTextLength(); } catch (e) { return 0; } })) || 1;
+      var tall = lines.length * base * 1.08 / font.scale;
+      var std = base * Math.min(1, m.stdW / widest, m.stdH / tall);
+      var maxPct = Math.max(100, Math.floor(100 * base * Math.min(m.maxW / widest, m.maxH / tall) / std));
+      var pct = Math.min(st.textSize, maxPct), size = Math.max(12, std * pct / 100);
+      texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
+      fit.text = { pct: pct, maxPct: maxPct };
       var lh = size * 1.08, top = box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
       texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
       hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
     }
+
+    // Logo: the uploaded image, or a placeholder until one is chosen.
+    if (st.logo) {
+      var lb = posFor(st.style, st.logoPos), lm = metrics(lb);
+      var aspect = logoData ? logoData.aspect : 1.6;
+      var lstd = Math.min(lm.logoH, lm.stdW / aspect, lm.stdH);
+      var lmax = Math.max(100, Math.floor(100 * Math.min(lm.maxW / (lstd * aspect), lm.maxH / lstd)));
+      var lpct = Math.min(st.logoSize, lmax), lhgt = lstd * lpct / 100, lwid = lhgt * aspect;
+      fit.logo = { pct: lpct, maxPct: lmax };
+      logoG = el('g', { 'aria-hidden': 'true', 'data-item': 'logo' }, svg);
+      var lx = lb.x - lwid / 2, ly = lb.y - lhgt / 2;
+      if (logoData) {
+        el('image', { href: logoData.src, x: lx + 2, y: ly + 2, width: lwid, height: lhgt, preserveAspectRatio: 'xMidYMid meet', filter: 'url(#logoHi)' }, logoG);
+        el('image', { href: logoData.src, x: lx, y: ly, width: lwid, height: lhgt, preserveAspectRatio: 'xMidYMid meet', filter: 'url(#logoInk)' }, logoG);
+      } else {
+        el('rect', { x: lx, y: ly, width: lwid, height: lhgt, rx: 12, fill: 'rgba(0,0,0,.06)', stroke: inkFor(st.logoPos).engrave, 'stroke-width': 3, 'stroke-dasharray': '8 7' }, logoG);
+        var ph = el('text', { x: lb.x, y: lb.y + lhgt * 0.1, 'text-anchor': 'middle', fill: inkFor(st.logoPos).engrave, 'font-size': Math.max(18, lhgt * 0.28).toFixed(1),
+          'font-weight': 700, 'font-family': 'Inter, sans-serif', 'letter-spacing': 2 }, logoG);
+        ph.textContent = 'LOGO';
+      }
+    }
+
+    // Outline what's being edited, so it's clear what a tap on the preview will move.
+    var editG = editing === 'logo' ? logoG : textG;
+    if (editG && (textG && logoG)) {
+      try {
+        var bb = editG.getBBox();
+        el('rect', { x: bb.x - 14, y: bb.y - 10, width: bb.width + 28, height: bb.height + 20, rx: 10, fill: 'none',
+          stroke: 'rgba(255,255,255,.85)', 'stroke-width': 3, 'stroke-dasharray': '10 8', 'pointer-events': 'none', 'aria-hidden': 'true' }, svg);
+      } catch (e) { /* not rendered yet */ }
+    }
   }
 
   /* ---------- State, summary, validation ---------- */
+  var active = 'text';   // what a tap on the preview moves: 'text' or 'logo'
+  var logoData = null;   // { src, aspect, mode, name } once a logo file is chosen (kept on this device only)
+  var fit = {};          // sizes actually drawn, as % of standard (set by draw)
+
   function read() {
     return {
       style: val('style') || 'bbq', main: val('main') || 'tan', acc: val('acc') || 'brown',
       text: (form.elements.engraving.value || '').replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim(),
-      font: val('font') || 'serif', pos: val('position') || '1', logo: val('logo'), notes: val('notes'),
+      font: FONTS[val('font')] ? val('font') : 'montserrat', pos: val('position') || '1', textSize: Number(val('textSize')) || 100,
+      logo: val('logo'), logoPos: val('logoPos') || '', logoSize: Number(val('logoSize')) || 100, notes: val('notes'),
       height: val('height'), weight: val('weight'), email: val('email'), phone: val('phone'),
       wings: val('wings'), wingColor: val('wingColor'), opener: val('opener'), openerColor: val('openerColor'), grease: val('grease')
     };
@@ -454,12 +547,16 @@
     var parts = [];
     if (st.text) {
       parts.push('Engraving text: "' + st.text.replace(/\n/g, ' / ') + '"');
-      parts.push('Font style: ' + FONTS[st.font].label);
-      parts.push('Position: ' + st.pos + ' (' + POS[st.pos].label + ')');
+      parts.push('Font: ' + fontName(st.font));
+      parts.push('Position: ' + posLabel(st.pos));
+      parts.push('Text size: ' + (fit.text ? fit.text.pct : st.textSize) + '% of standard');
     } else {
       parts.push('Engraving text: none');
     }
-    if (st.logo) parts.push('Logo: customer will send the logo file by WhatsApp or email');
+    if (st.logo) {
+      parts.push('Logo: position ' + posLabel(st.logoPos) + ', size ' + (fit.logo ? fit.logo.pct : st.logoSize) + '% of standard' +
+        (logoData ? ', previewed with "' + logoData.name.slice(0, 60) + '"' : '') + '. Customer will send the logo file by WhatsApp or email');
+    }
     if (st.notes) parts.push('Notes: ' + st.notes);
     parts.push('Designed on virtualleather.net');
     return parts.join(' | ');
@@ -508,14 +605,60 @@
     });
   }
 
+  // Show only the spots this style has, for the text and for the logo. The logo starts in the pocket
+  // where there is one, otherwise in the first spot the text isn't using.
   function syncPositions(st) {
-    var max = STYLES[st.style].positions;
-    var radios = form.querySelectorAll('input[name="position"]');
-    Array.prototype.forEach.call(radios, function (r) {
-      var hide = Number(r.value) > max;
-      r.disabled = hide;
-      r.closest('.opt').hidden = hide;
-      if (hide && r.checked) form.querySelector('input[name="position"][value="1"]').checked = true;
+    var list = positionsOf(st.style);
+    ['position', 'logoPos'].forEach(function (name) {
+      var radios = form.querySelectorAll('input[name="' + name + '"]'), ok = false;
+      Array.prototype.forEach.call(radios, function (r) {
+        var show = list.indexOf(r.value) !== -1;
+        r.disabled = !show;
+        r.closest('.opt').hidden = !show;
+        if (r.checked && !show) r.checked = false;
+        if (r.checked) ok = true;
+      });
+      if (ok) return;
+      var pick = name === 'position' ? '1' : ['pocket', '2', '1', '3', '4', '5', '6'].filter(function (p) {
+        return list.indexOf(p) !== -1 && p !== (val('position') || '1');
+      })[0];
+      var r = form.querySelector('input[name="' + name + '"][value="' + pick + '"]');
+      if (r) r.checked = true;
+    });
+  }
+
+  var sizeOut = { textSize: document.getElementById('text-size-out'), logoSize: document.getElementById('logo-size-out') };
+  var fitNote = { textSize: document.getElementById('text-size-fit'), logoSize: document.getElementById('logo-size-fit') };
+  var logoItem = document.getElementById('logo-item'), textItem = document.getElementById('text-item');
+  var logoPosError = document.getElementById('logo-pos-error');
+  function overlap(st) { return st.logo && st.text && st.pos === st.logoPos; }
+  // Keep each size slider within what fits its spot, so the % shown always matches the preview.
+  // Returns true if a slider had to come down (the preview is then redrawn).
+  function clampSizes(st) {
+    var changed = false;
+    [['textSize', st.textSize, fit.text], ['logoSize', st.logoSize, fit.logo]].forEach(function (s) {
+      var input = form.elements[s[0]], min = Number(input.min);
+      if (!s[2] || s[1] <= s[2].maxPct || s[1] <= min) return;
+      if (document.fonts && document.fonts.status === 'loading') return;
+      input.value = Math.max(min, Math.floor(s[2].maxPct / 10) * 10);
+      changed = changed || Number(input.value) !== s[1];
+    });
+    return changed;
+  }
+  function syncSizes(st) {
+    [['textSize', st.textSize, fit.text, 'text'], ['logoSize', st.logoSize, fit.logo, 'logo']].forEach(function (s) {
+      var input = form.elements[s[0]], step = Number(input.step);
+      var atFit = !!s[2] && s[1] + step > s[2].maxPct;
+      var shown = s[2] ? s[2].pct : s[1];
+      sizeOut[s[0]].textContent = shown + '%';
+      input.setAttribute('aria-valuetext', shown + '%');
+      Array.prototype.forEach.call(form.querySelectorAll('.size-btn[data-target="' + input.id + '"]'), function (b) {
+        b.disabled = Number(b.getAttribute('data-step')) < 0 ? s[1] <= Number(input.min) : s[1] >= Number(input.max) || atFit;
+      });
+      var onChest = (s[3] === 'text' ? st.pos : st.logoPos) === '1';
+      fitNote[s[0]].textContent = !atFit || s[1] >= Number(input.max) ? '' : s[3] === 'text'
+        ? 'That\'s the biggest that fits this spot. For bigger letters, use fewer letters' + (onChest ? ' or a second line.' : ', a second line or the chest (1).')
+        : 'That\'s the biggest that fits this spot.' + (onChest ? '' : ' For a bigger logo, pick a roomier spot such as the chest (1).');
     });
   }
 
@@ -526,10 +669,20 @@
     st = read();
     wingField.hidden = !st.wings;
     openerField.hidden = !st.opener;
+    logoItem.hidden = !st.logo;
+    if (!st.logo && active === 'logo') active = 'text';
+    textItem.classList.toggle('is-active', active === 'text');
+    logoItem.classList.toggle('is-active', active === 'logo');
     draw(st);
+    if (clampSizes(st)) { st = read(); draw(st); }
+    syncSizes(st);
+    logoPosError.textContent = overlap(st) ? 'Your text is already at this spot. Please pick another position for the logo.' : '';
     summaryEls.style.textContent = STYLES[st.style].name;
     summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
-    summaryEls.engraving.textContent = st.text ? '"' + st.text.replace(/\n/g, ' ') + '" · position ' + st.pos : (st.logo ? 'Logo (sent after order)' : 'None');
+    var eng = [];
+    if (st.text) eng.push('"' + st.text.replace(/\n/g, ' ') + '" · ' + FONTS[st.font].label + ' · ' + (st.pos === 'pocket' ? 'pocket' : 'position ' + st.pos));
+    if (st.logo) eng.push('logo · ' + (st.logoPos === 'pocket' ? 'pocket' : 'position ' + st.logoPos));
+    summaryEls.engraving.textContent = eng.length ? eng.join(' + ') : 'None';
     var ex = [];
     if (st.wings) ex.push('Wings (' + wingName(st) + ')'); if (st.opener) ex.push('Bottle opener (' + openerName(st) + ')'); if (st.grease) ex.push('Leather grease');
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
@@ -568,6 +721,116 @@
     }
   });
   form.addEventListener('change', update);
+
+  // What a tap on the preview moves: whichever of text / logo the customer is working on.
+  function setActive(which) {
+    if (active === which) return;
+    active = which;
+    update();
+  }
+  textItem.addEventListener('focusin', function () { setActive('text'); });
+  logoItem.addEventListener('focusin', function () { setActive('logo'); });
+  form.elements.logo.addEventListener('change', function () { setActive(this.checked ? 'logo' : 'text'); });
+
+  // Tap an empty spot to move what you're editing there; tap the text or logo to edit that one.
+  stage.addEventListener('click', function (e) {
+    var hit = e.target.closest ? e.target.closest('[data-item], [data-pos]') : null;
+    if (!hit) return;
+    var st = read();
+    if (hit.hasAttribute('data-item')) { setActive(hit.getAttribute('data-item')); return; }
+    var p = hit.getAttribute('data-pos');
+    if (active === 'text' && st.logo && st.logoPos === p) { setActive('logo'); return; }
+    if (active === 'logo' && st.text && st.pos === p) { setActive('text'); return; }
+    var r = form.querySelector('input[name="' + (active === 'logo' && st.logo ? 'logoPos' : 'position') + '"][value="' + p + '"]');
+    if (r && !r.disabled) { r.checked = true; update(); }
+  });
+
+  // - / + buttons beside each size slider.
+  Array.prototype.forEach.call(form.querySelectorAll('.size-btn'), function (b) {
+    b.addEventListener('click', function () {
+      var input = document.getElementById(b.getAttribute('data-target'));
+      var v = Math.min(Number(input.max), Math.max(Number(input.min), Number(input.value) + Number(b.getAttribute('data-step'))));
+      input.value = v;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+
+  // Logo preview: read the file on this device, trim empty margins, and decide how to "burn" it in.
+  var logoFile = document.getElementById('logo-file'), logoFileError = document.getElementById('logo-file-error');
+  logoFile.addEventListener('change', function () {
+    var f = logoFile.files && logoFile.files[0];
+    logoFileError.textContent = '';
+    if (!f) { logoData = null; update(); return; }
+    if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type)) {
+      logoFileError.textContent = 'Please choose a PNG, JPG, WebP or SVG image.'; logoFile.value = ''; return;
+    }
+    if (f.size > 15 * 1024 * 1024) {
+      logoFileError.textContent = 'That file is over 15 MB. Please choose a smaller one, or just send it to us after ordering.'; logoFile.value = ''; return;
+    }
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () {
+      logoData = prepareLogo(img, url, f.name);
+      if (logoData.src !== url) URL.revokeObjectURL(url);
+      if (!logoData.ok) logoFileError.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
+      setActive('logo');
+      update();
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      logoFileError.textContent = 'Sorry, we couldn\'t open that image. Please try another file, or send it to us after ordering.';
+      logoFile.value = '';
+    };
+    img.src = url;
+  });
+  function prepareLogo(img, url, name) {
+    var w = img.naturalWidth || 600, h = img.naturalHeight || 600, k = Math.min(1, 900 / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, cw, ch);
+    try {
+      var d = ctx.getImageData(0, 0, cw, ch).data, clear = 0, solid = 0, lum = 0, i;
+      for (i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) clear++;
+        else { solid++; lum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; }
+      }
+      // A light logo on a transparent background is engraved by its shape; anything else by its dark parts.
+      var mode = clear > cw * ch * 0.05 && solid && lum / solid > 0.6 ? 'alpha' : 'dark';
+      var x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+      for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) {
+        i = (y * cw + x) * 4;
+        var ink = mode === 'alpha' ? d[i + 3] >= 128 : d[i + 3] >= 128 && (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) < 200;
+        if (ink) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 < 0) return { src: c.toDataURL('image/png'), aspect: cw / ch, mode: mode, name: name, ok: false };
+      var pad = 2, cx0 = Math.max(0, x0 - pad), cy0 = Math.max(0, y0 - pad);
+      var tw = Math.min(cw, x1 + pad + 1) - cx0, th = Math.min(ch, y1 + pad + 1) - cy0;
+      var t = document.createElement('canvas'); t.width = tw; t.height = th;
+      t.getContext('2d').drawImage(c, cx0, cy0, tw, th, 0, 0, tw, th);
+      return { src: t.toDataURL('image/png'), aspect: tw / th, mode: mode, name: name, ok: true };
+    } catch (e) {
+      return { src: url, aspect: cw / ch, mode: 'dark', name: name, ok: true };
+    }
+  }
+
+  // Show each lettering choice in its own font once the designer is close to the screen, so the
+  // font files are only downloaded by people who scroll to it; re-measure the preview when fonts arrive.
+  function styleFontChoices() {
+    Array.prototype.forEach.call(form.querySelectorAll('input[name="font"]'), function (r) {
+      var f = FONTS[r.value], span = r.nextElementSibling;
+      if (!f || !span) return;
+      span.style.fontFamily = f.family;
+      span.style.fontWeight = f.weight;
+      span.style.fontSize = (1.05 * Math.min(f.scale, 1.5)).toFixed(2) + 'rem';
+    });
+  }
+  if ('IntersectionObserver' in window) {
+    var near = new IntersectionObserver(function (entries) {
+      if (entries.some(function (en) { return en.isIntersecting; })) { near.disconnect(); styleFontChoices(); }
+    }, { rootMargin: '600px 0px' });
+    near.observe(form);
+  } else styleFontChoices();
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { update(); });
 
   var MESSAGES = {
     height: 'Please enter the wearer\'s height, for example 180 cm or 5 ft 11 in.',
@@ -613,6 +876,11 @@
       return;
     }
     var st = read();
+    if (overlap(st)) {
+      setStatus('Your text and logo are in the same spot. Please pick another position for the logo.', 'error');
+      form.querySelector('input[name="logoPos"]:checked').focus();
+      return;
+    }
     var style = STYLES[st.style];
     var options = {
       'Main Color': COLORS[st.main].ecwid,

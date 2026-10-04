@@ -21,7 +21,7 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/styles.css?v=6">
+<link rel="stylesheet" href="/assets/css/styles.css?v=7">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"Virtual Leather","legalName":"Virtual Leather Intl","url":"https://virtualleather.net/","logo":"https://virtualleather.net/assets/img/logo-vl-512.png","email":"danielguanes@virtualleather.info","sameAs":["https://www.instagram.com/virtualleatherintl/","https://virtualleathershop.etsy.com/"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","telephone":"+447552809738","email":"danielguanes@virtualleather.info","availableLanguage":["English","Spanish"]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://virtualleather.net/#bbq-apron","name":"Personalised BBQ Leather Apron with Beer Holder","description":"Made-to-measure leather BBQ apron with adjustable straps, drink holder, tool loops and pocket. Engraved with your name, phrase or logo.","image":"https://virtualleather.net/assets/img/hero-bbq-1080.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619498562","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619498562"}},{"@type":"Product","@id":"https://virtualleather.net/#barber-apron","name":"Personalised Barber Leather Apron","description":"Made-to-measure leather barber apron with tool pockets, engraved with your shop name or logo.","image":"https://virtualleather.net/assets/img/p-619492033-800.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619492033","offers":{"@type":"Offer","price":"185.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/shop/#!/p/619492033"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you size the apron?","acceptedAnswer":{"@type":"Answer","text":"Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are adjustable."}},{"@type":"Question","name":"Will I see my design before you make it?","acceptedAnswer":{"@type":"Answer","text":"Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it."}},{"@type":"Question","name":"What can you engrave?","acceptedAnswer":{"@type":"Answer","text":"Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. Personalisation is included in the price."}},{"@type":"Question","name":"Do you ship worldwide?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number."}}]}]}</script>
 <script src="/assets/js/config.js?v=1"></script>
@@ -118,7 +118,7 @@
       <div class="preview">
         <span class="preview-tag" id="preview-tag" aria-hidden="true">BBQ apron</span>
         <div id="apron-preview" aria-live="polite"></div>
-        <p class="preview-note">Preview only. Leather is a natural material, so tone and grain vary from piece to piece. We'll send you a proof of the final layout before engraving.</p>
+        <p class="preview-note">Tap a numbered spot to move your text or logo there. Preview only. Leather is a natural material, so tone and grain vary from piece to piece. We'll send you a proof of the final layout before engraving.</p>
       </div>
 
       <div>
@@ -181,36 +181,87 @@
 
           <fieldset class="card panel">
             <legend><span class="num">4</span> Add your engraving</legend>
-            <p class="hint">Engraving is included. We engrave exactly what you type, so please check spelling and capitals. Leave the box empty if you'd like it plain.</p>
-            <div class="field">
-              <label for="engraving">Name or phrase (up to 3 lines)</label>
-              <textarea id="engraving" name="engraving" maxlength="40" rows="2" aria-describedby="engraving-hint engraving-count" placeholder="e.g. Grill Master Mike"></textarea>
-              <p class="hint" id="engraving-hint">Press Enter to start a new line.</p>
-              <p class="counter" id="engraving-count" aria-live="polite">0 / 40 characters</p>
-            </div>
-            <fieldset class="option-group">
-              <legend>Lettering style</legend>
-              <div class="options">
-                <label class="opt"><input type="radio" name="font" value="serif" checked><span style="font-family:Fraunces,serif;font-weight:700">Classic serif</span></label>
-                <label class="opt"><input type="radio" name="font" value="sans"><span style="font-weight:800">Modern bold</span></label>
-                <label class="opt"><input type="radio" name="font" value="script"><span style="font-family:'Great Vibes',cursive;font-size:1.25rem">Script</span></label>
+            <p class="hint">Engraving is included. We engrave exactly what you type, so please check spelling and capitals. Leave the text empty if you'd like it plain. Tip: tap a numbered spot on the preview to move what you're editing there.</p>
+            <fieldset class="engrave-item is-active" id="text-item">
+              <legend>Your text</legend>
+              <div class="field">
+                <label for="engraving">Name or phrase (up to 3 lines)</label>
+                <textarea id="engraving" name="engraving" maxlength="40" rows="2" aria-describedby="engraving-hint engraving-count" placeholder="e.g. Grill Master Mike"></textarea>
+                <p class="hint" id="engraving-hint">Press Enter to start a new line.</p>
+                <p class="counter" id="engraving-count" aria-live="polite">0 / 40 characters</p>
+              </div>
+              <fieldset class="option-group">
+                <legend>Lettering</legend>
+                <div class="options font-opts">
+                  <label class="opt"><input type="radio" name="font" value="montserrat" checked><span>Montserrat</span></label>
+                  <label class="opt"><input type="radio" name="font" value="anton"><span>Anton</span></label>
+                  <label class="opt"><input type="radio" name="font" value="opensans"><span>Open Sans</span></label>
+                  <label class="opt"><input type="radio" name="font" value="classic"><span>Classic</span></label>
+                  <label class="opt"><input type="radio" name="font" value="alexbrush"><span>Alex Brush</span></label>
+                  <label class="opt"><input type="radio" name="font" value="comforter"><span>Comforter</span></label>
+                  <label class="opt"><input type="radio" name="font" value="signature"><span>Signature</span></label>
+                  <label class="opt"><input type="radio" name="font" value="brush"><span>Brush</span></label>
+                  <label class="opt"><input type="radio" name="font" value="bangers"><span>Bangers</span></label>
+                  <label class="opt"><input type="radio" name="font" value="graffiti"><span>Graffiti</span></label>
+                </div>
+              </fieldset>
+              <fieldset class="option-group">
+                <legend>Position (numbers match the preview)</legend>
+                <div class="options">
+                  <label class="opt"><input type="radio" name="position" value="1" checked><span>1 · Chest</span></label>
+                  <label class="opt"><input type="radio" name="position" value="2"><span>2 · Under chest</span></label>
+                  <label class="opt"><input type="radio" name="position" value="3"><span>3 · Left</span></label>
+                  <label class="opt"><input type="radio" name="position" value="4"><span>4 · Right</span></label>
+                  <label class="opt"><input type="radio" name="position" value="5"><span>5 · Down left</span></label>
+                  <label class="opt"><input type="radio" name="position" value="6"><span>6 · Down right</span></label>
+                  <label class="opt"><input type="radio" name="position" value="pocket"><span>Pocket</span></label>
+                </div>
+              </fieldset>
+              <div class="size-field">
+                <div class="size-head"><label for="text-size">Text size</label><output id="text-size-out" for="text-size">100%</output></div>
+                <div class="size-row">
+                  <button type="button" class="size-btn" data-target="text-size" data-step="-10" aria-label="Make the text smaller">&minus;</button>
+                  <input type="range" id="text-size" name="textSize" min="50" max="150" step="10" value="100" aria-describedby="text-size-fit">
+                  <button type="button" class="size-btn" data-target="text-size" data-step="10" aria-label="Make the text bigger">+</button>
+                </div>
+                <p class="fit-note" id="text-size-fit" aria-live="polite"></p>
               </div>
             </fieldset>
-            <fieldset class="option-group">
-              <legend>Position on the apron (numbers match the preview)</legend>
-              <div class="options">
-                <label class="opt"><input type="radio" name="position" value="1" checked><span>1 · Chest, top</span></label>
-                <label class="opt"><input type="radio" name="position" value="2"><span>2 · Chest, below 1</span></label>
-                <label class="opt"><input type="radio" name="position" value="3"><span>3 · Middle left</span></label>
-                <label class="opt"><input type="radio" name="position" value="4"><span>4 · Middle right</span></label>
-                <label class="opt"><input type="radio" name="position" value="5"><span>5 · Bottom left</span></label>
-                <label class="opt"><input type="radio" name="position" value="6"><span>6 · Bottom right</span></label>
+            <label class="check"><input type="checkbox" name="logo"> <span><strong>Add a logo or image</strong> to engrave as well.</span></label>
+            <fieldset class="engrave-item sub-field" id="logo-item" hidden>
+              <legend>Your logo</legend>
+              <div class="field logo-file">
+                <label for="logo-file">Upload it to see it on the preview <span class="muted">(optional)</span></label>
+                <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-describedby="logo-hint logo-file-error">
+                <p class="hint" id="logo-hint">PNG, JPG, WebP or SVG, up to 15 MB. It stays on your device for this preview. After ordering, send us the original file by WhatsApp or email so we can engrave it sharply.</p>
+                <p class="error" id="logo-file-error" aria-live="polite"></p>
+              </div>
+              <fieldset class="option-group">
+                <legend>Logo position</legend>
+                <div class="options">
+                  <label class="opt"><input type="radio" name="logoPos" value="1"><span>1 · Chest</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="2"><span>2 · Under chest</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="3"><span>3 · Left</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="4"><span>4 · Right</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="5"><span>5 · Down left</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="6"><span>6 · Down right</span></label>
+                  <label class="opt"><input type="radio" name="logoPos" value="pocket"><span>Pocket</span></label>
+                </div>
+              </fieldset>
+              <p class="error" id="logo-pos-error" aria-live="polite"></p>
+              <div class="size-field">
+                <div class="size-head"><label for="logo-size">Logo size</label><output id="logo-size-out" for="logo-size">100%</output></div>
+                <div class="size-row">
+                  <button type="button" class="size-btn" data-target="logo-size" data-step="-10" aria-label="Make the logo smaller">&minus;</button>
+                  <input type="range" id="logo-size" name="logoSize" min="50" max="150" step="10" value="100" aria-describedby="logo-size-fit">
+                  <button type="button" class="size-btn" data-target="logo-size" data-step="10" aria-label="Make the logo bigger">+</button>
+                </div>
+                <p class="fit-note" id="logo-size-fit" aria-live="polite"></p>
               </div>
             </fieldset>
-            <label class="check"><input type="checkbox" name="logo"> <span>I also want a logo or image engraved. I'll send the file by WhatsApp or email after ordering.</span></label>
             <div class="field" style="margin:10px 0 0">
               <label for="notes">Anything else? <span class="muted">(optional)</span></label>
-              <textarea id="notes" name="notes" maxlength="300" rows="2" placeholder="e.g. second text in position 5, a date, or a gift note"></textarea>
+              <textarea id="notes" name="notes" maxlength="300" rows="2" placeholder="e.g. a second text in position 5, a date, or a gift note"></textarea>
             </div>
           </fieldset>
 
@@ -505,7 +556,7 @@
   </div>
 </section>
 
-<script src="/assets/js/designer.js?v=25" defer></script>
+<script src="/assets/js/designer.js?v=26" defer></script>
 
 </main>
 <footer class="site-footer">
