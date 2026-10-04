@@ -1,0 +1,92 @@
+// Fetches the shop's reviews through Etsy's official Open API (v3) and writes src/data/reviews.json,
+// so customers can read them on virtualleather.net without being sent to Etsy.
+//   ETSY_API_KEY="keystring:shared_secret" node tools/etsy-reviews.mjs   (npm run reviews)
+// The key lives only in the GitHub secret ETSY_API_KEY; the deploy workflow runs this before each
+// build (and every 6 hours). Without a key, or if Etsy can't be reached, the existing file is kept.
+//
+// We show the most recent written reviews whatever their rating (not a hand-picked selection), with
+// the shop's real average and count, and Etsy's required API notice next to them.
+import { writeFile } from 'node:fs/promises';
+
+const KEY = process.env.ETSY_API_KEY;
+const SHOP = process.env.ETSY_SHOP_NAME || 'virtualleathershop';
+const BASE = process.env.ETSY_API_BASE || 'https://openapi.etsy.com/v3/application';
+const SHOW = 12;
+
+if (!KEY) {
+  console.log('ETSY_API_KEY is not set: keeping src/data/reviews.json as it is.');
+  process.exit(0);
+}
+
+async function api(path) {
+  const res = await fetch(BASE + path, { headers: { 'x-api-key': KEY, accept: 'application/json' } });
+  if (!res.ok) throw new Error(`${path.split('?')[0]} returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+function plain(s) {
+  return String(s || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&(#x?[0-9a-f]+|\w+);/gi, (m, e) => {
+      if (e[0] === '#') return String.fromCodePoint(e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10));
+      return ENTITIES[e.toLowerCase()] ?? m;
+    })
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+// Etsy titles are long keyword lists; keep the first phrase.
+function shortTitle(t) {
+  const first = plain(t).split(/\s[|,–-]\s|\s\|\s|,/)[0].trim();
+  return first.length > 60 ? first.slice(0, 57).trimEnd() + '…' : first;
+}
+function monthYear(ts) {
+  return new Date(ts * 1000).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
+try {
+  const found = await api('/shops?shop_name=' + encodeURIComponent(SHOP));
+  const shop = (found.results || []).find((s) => String(s.shop_name).toLowerCase() === SHOP.toLowerCase()) || (found.results || [])[0];
+  if (!shop) throw new Error(`no Etsy shop called ${SHOP}`);
+
+  const all = [];
+  for (let offset = 0; offset < 500; offset += 100) {
+    const page = await api(`/shops/${shop.shop_id}/reviews?limit=100&offset=${offset}`);
+    all.push(...(page.results || []));
+    if (!page.results || page.results.length < 100) break;
+  }
+  const time = (r) => r.created_timestamp || r.create_timestamp || 0;
+  const written = all.filter((r) => plain(r.review)).sort((a, b) => time(b) - time(a)).slice(0, SHOW);
+
+  // Product names for the reviews shown (optional: reviews still show if this fails).
+  const titles = {};
+  const ids = [...new Set(written.map((r) => r.listing_id).filter(Boolean))];
+  if (ids.length) {
+    try {
+      const listings = await api('/listings/batch?listing_ids=' + ids.join(','));
+      for (const l of listings.results || []) titles[l.listing_id] = shortTitle(l.title);
+    } catch (e) {
+      console.warn('Could not fetch product names: ' + e.message);
+    }
+  }
+
+  const average = Number(shop.review_average);
+  const out = {
+    _comment: 'Written by tools/etsy-reviews.mjs from the Etsy API. Do not edit by hand: it is replaced on each deploy.',
+    source: 'etsy-api',
+    fetched: new Date().toISOString(),
+    etsyRating: average ? average.toFixed(1) : '',
+    etsyReviewCount: String(shop.review_count || all.length || ''),
+    reviews: written.map((r) => ({
+      rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
+      text: plain(r.review),
+      date: monthYear(time(r)),
+      item: titles[r.listing_id] || ''
+    }))
+  };
+  await writeFile('src/data/reviews.json', JSON.stringify(out, null, 2) + '\n');
+  console.log(`Saved ${out.reviews.length} Etsy reviews (shop average ${out.etsyRating || 'n/a'} from ${out.etsyReviewCount} reviews).`);
+} catch (e) {
+  console.warn('Could not fetch Etsy reviews (' + e.message + '). Keeping src/data/reviews.json as it is.');
+}

@@ -8,7 +8,8 @@
     "images": "node tools/images.mjs",
     "serve": "npx --yes http-server site -p 8080 -c-1",
     "check": "node tools/check.mjs",
-    "designs": "node tools/trace-designs.mjs"
+    "designs": "node tools/trace-designs.mjs",
+    "reviews": "node tools/etsy-reviews.mjs"
   },
   "devDependencies": {
     "@fontsource-variable/fraunces": "^5.0.0",

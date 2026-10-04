@@ -5,7 +5,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 ## Information needed from the owner
 - [ ] **GA4 Measurement ID** → `src/config.json` `ga4MeasurementId`
 - [ ] **Meta Pixel ID** → `src/config.json` `metaPixelId`
-- [ ] **Etsy reviews**: copy 6–10 genuine reviews (exact text, first name or initial, stars, date, item) and the shop's overall rating and review count into `src/data/reviews.json`. Etsy blocks automated copying, so this has to be done by hand. Only real reviews, word for word.
+- [ ] **Etsy reviews**: create a free Etsy API key and save it as the GitHub secret `ETSY_API_KEY` (steps in README, "Etsy reviews on the site"). Reviews then appear on the homepage automatically and refresh every 6 hours.
 - [ ] **Legal entity and country** (for example a UK sole trader or company). This decides which law the Terms, Privacy and Refund policies cite.
 - [ ] **Business address** (and company and VAT number, if any) → `src/config.json`. UK and EU distance-selling rules require a geographic address on the site.
 - [ ] **Production time** after proof approval and **delivery times** by region.

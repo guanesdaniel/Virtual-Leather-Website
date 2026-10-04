@@ -8,7 +8,8 @@
 //   {{page.key}}           value from the page's JSON header
 //   {{img name|alt|sizes|eager}}   responsive <img> for an image from tools/images.json
 //   {{products group}}     product cards for a group in src/data/products.json
-//   {{reviews}}            Etsy review cards from src/data/reviews.json
+//   {{reviews}}            Etsy review cards from src/data/reviews.json (see tools/etsy-reviews.mjs)
+//   {{#if reviews}}…{{/if reviews}}  kept only when there are reviews
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -57,17 +58,27 @@ function productCards(group) {
   }).join('\n');
 }
 
+// Review cards: the first six, then the rest behind "Show more reviews" (no JavaScript needed).
+function reviewCard(r) {
+  const n = Math.max(0, Math.min(5, Number(r.rating) || 0));
+  return `
+  <li class="card review">
+    <p class="stars" role="img" aria-label="${n} out of 5 stars">${'★'.repeat(n)}<span aria-hidden="true" class="stars-off">${'★'.repeat(5 - n)}</span></p>
+    <blockquote><p>${esc(r.text).replace(/\n+/g, '<br>')}</p></blockquote>
+    <p class="review-meta">${esc(r.name || 'Etsy buyer')}${r.date ? ` · ${esc(r.date)}` : ''}${r.item ? ` · ${esc(r.item)}` : ''}</p>
+  </li>`;
+}
 function reviews() {
   const list = reviewData.reviews || [];
   if (!list.length) return '';
-  return `<ul class="reviews" role="list">${list.map((r) => `
-  <li class="card review">
-    <p class="stars" aria-label="${esc(r.rating)} out of 5 stars">${'★'.repeat(Number(r.rating) || 0)}</p>
-    <blockquote><p>${esc(r.text)}</p></blockquote>
-    <p class="review-meta">${esc(r.name)}${r.date ? ` · ${esc(r.date)}` : ''}${r.item ? ` · ${esc(r.item)}` : ''} · <span>Etsy review</span></p>
-  </li>`).join('')}
-</ul>`;
+  const first = list.slice(0, 6), more = list.slice(6);
+  return `<ul class="reviews" role="list">${first.map(reviewCard).join('')}
+</ul>` + (more.length ? `
+<details class="more-reviews"><summary>Show more reviews</summary>
+<ul class="reviews" role="list">${more.map(reviewCard).join('')}
+</ul></details>` : '');
 }
+const hasReviews = (reviewData.reviews || []).length > 0;
 
 async function render(tpl, page, depth = 0) {
   if (depth > 5) throw new Error('Partial nesting too deep');
@@ -83,9 +94,11 @@ async function render(tpl, page, depth = 0) {
     .replace(/\{\{reviewsSummary\}\}/g, () => {
       const r = reviewData;
       return r.etsyRating && r.etsyReviewCount
-        ? `Rated <strong>${esc(r.etsyRating)} out of 5</strong> from ${esc(r.etsyReviewCount)} reviews on Etsy.`
-        : 'Read what our customers say on Etsy.';
+        ? `Rated <strong>${esc(r.etsyRating)} out of 5</strong> from ${esc(r.etsyReviewCount)} reviews on our Etsy shop.`
+        : '';
     })
+    // {{#if reviews}} … {{/if reviews}}: only kept when there are reviews to show.
+    .replace(/\{\{#if reviews\}\}([\s\S]*?)\{\{\/if reviews\}\}/g, (_, block) => (hasReviews ? block : ''))
     .replace(/\{\{site\.(\w+)\}\}/g, (_, k) => esc(site[k]))
     .replace(/\{\{page\.(\w+)\}\}/g, (_, k) => esc(page[k]))
     .replace(/\{\{raw page\.(\w+)\}\}/g, (_, k) => page[k] ?? '');
