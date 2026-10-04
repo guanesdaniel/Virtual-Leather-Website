@@ -296,8 +296,17 @@ fieldset.panel { margin: 0; min-width: 0; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-/* Script font for the designer preview only (downloaded only when used). */
+/* Engraving fonts for the designer (self-hosted, OFL / Apache licensed; each downloads only when used). */
 @font-face { font-family: "Great Vibes"; src: url(/assets/fonts/great-vibes-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Montserrat"; src: url(/assets/fonts/montserrat-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Anton"; src: url(/assets/fonts/anton-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Open Sans"; src: url(/assets/fonts/open-sans-latin-600-normal.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Playfair Display"; src: url(/assets/fonts/playfair-display-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Alex Brush"; src: url(/assets/fonts/alex-brush-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Comforter"; src: url(/assets/fonts/comforter-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Kaushan Script"; src: url(/assets/fonts/kaushan-script-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Bangers"; src: url(/assets/fonts/bangers-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Permanent Marker"; src: url(/assets/fonts/permanent-marker-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
 
 /* Fixes */
 [hidden] { display: none !important; }
@@ -334,3 +343,24 @@ fieldset.panel { margin: 0; min-width: 0; }
 .brand { gap: 12px; }
 .brand-mark { width: auto; height: 36px; color: var(--ink); }
 .sub-field { margin: 4px 0 12px 30px; }
+
+/* Designer: engraving items, font picker and size controls */
+.engrave-item { border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 4px 14px 12px; margin: 0 0 14px; background: rgba(255, 255, 255, .55); min-width: 0; transition: border-color .15s; }
+.engrave-item > legend { font-weight: 700; padding: 0 6px; margin-left: -6px; }
+.engrave-item.is-active { border-color: var(--ink); }
+.engrave-item .option-group { margin-bottom: 12px; }
+.font-opts .opt span { padding: 6px 14px; font-size: 1.05rem; line-height: 1.1; }
+.size-field { margin: 2px 0 4px; }
+.size-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; font-size: .95rem; }
+.size-head output { font-weight: 700; font-variant-numeric: tabular-nums; }
+.size-row { display: flex; align-items: center; gap: 10px; }
+.size-row input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.size-btn { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-size: 1.35rem; font-weight: 700; line-height: 1; cursor: pointer; }
+.size-btn:hover { border-color: var(--ink); }
+.size-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.size-btn:disabled { opacity: .4; cursor: default; }
+.fit-note { margin: 2px 0 0; font-size: .87rem; color: var(--muted); }
+.fit-note:empty { display: none; }
+.logo-file input[type="file"] { width: 100%; font: inherit; padding: 10px; border: 1.5px dashed #cbbba8; border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
+.logo-file input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#apron-preview [data-pos] { cursor: pointer; }
