@@ -1,0 +1,71 @@
+{
+  "_comment": "Real photos shown in the designer for each apron style, taken from that apron's Ecwid listing (photo number = its position in the listing, from 0). After editing, run `npm run images` then `npm run build`.",
+  "bbq": {
+    "id": "619498562",
+    "about": "An adjustable leather beer holder keeps your drink to hand while you cook, with tool loops, a pocket and adjustable straps for a secure fit. Made to measure, with full personalisation.",
+    "photos": [
+      [0, "Man wearing a tan BBQ apron engraved PAUL SMITH, with a bottle in the beer holder"],
+      [1, "Tan BBQ apron engraved with the Grill Master design and the 'If you can read this, get me a beer' circle"],
+      [4, "Close-up of the leather beer holder holding a bottle"],
+      [5, "Close-up of the tan pocket and beer holder on a black apron"],
+      [9, "Back view showing the crossed leather straps"],
+      [6, "Dark brown BBQ apron with a stag logo engraved on the chest"],
+      [7, "Black BBQ apron engraved FBS"],
+      [10, "Tan BBQ apron laid flat, showing the pocket, tool loops and beer holder"]
+    ]
+  },
+  "barber": {
+    "id": "619492033",
+    "about": "Tool loops for scissors and combs, a pocket and a side ring, with your shop's logo or name engraved. Made to measure.",
+    "photos": [
+      [3, "Barber wearing a dark brown apron engraved Best Barber Mauricio, with scissors in the tool loops"],
+      [0, "Black barber apron with a tan pocket and tool loops, worn"],
+      [2, "Dark brown barber apron with a round engraved logo and a black pocket"],
+      [4, "Black barber apron with a tan pocket and an engraved logo"],
+      [5, "Tan barber apron with dark brown pockets and an engraved logo"],
+      [7, "Dark brown barber apron engraved Best Barber Mauricio"],
+      [8, "Black barber apron engraved PRÄMIE"],
+      [6, "Three barber aprons with engraved logos, side by side"]
+    ]
+  },
+  "simple": {
+    "id": "619505538",
+    "about": "A clean bib apron with a front pocket for kitchens, cafés and studios, in premium leather and made to measure for comfort.",
+    "photos": [
+      [1, "Woman wearing a tan apron with a black pocket and an engraved logo"],
+      [2, "Man wearing a black apron with a tan pocket and an engraved logo"],
+      [0, "Close-up of a tan apron engraved PRIORITY"],
+      [3, "Back view showing the crossed leather straps"],
+      [4, "Dark brown apron with a tan pocket"],
+      [6, "Dark brown apron engraved Campari"],
+      [9, "Tan apron engraved S. Austin"],
+      [12, "Black apron with a tan pocket"]
+    ]
+  },
+  "split": {
+    "id": "619501025",
+    "about": "A split-leg cut with leg straps, for welders, smiths and tattoo artists who work seated or on the move. Premium leather, made to measure.",
+    "photos": [
+      [0, "Smith wearing a black split-leg apron in his forge"],
+      [1, "Black split-leg apron with tan pockets, laid flat"],
+      [2, "Close-up of the tan chest pocket holding tools"],
+      [4, "Split-leg apron worn, showing the pockets and leg split"],
+      [5, "Smith wearing the split-leg apron in his workshop"],
+      [6, "Dark brown split-leg apron engraved NM"],
+      [7, "Black split-leg apron with brown pockets"]
+    ]
+  },
+  "wood": {
+    "id": "619498560",
+    "about": "For carpenters and makers: a chest pocket, a front pocket open on both sides for your hands, a hammer loop and a bottom pocket. Made to measure.",
+    "photos": [
+      [0, "Man wearing a tan woodworking apron with dark brown pockets"],
+      [2, "Woodworking apron worn, showing the chest pocket and D-ring"],
+      [3, "Close-up of the chest pocket holding a tool"],
+      [4, "Hammer hanging in the side hammer loop"],
+      [5, "Woodworking apron worn with a hammer in the loop"],
+      [6, "Woodworking apron in a workshop, with a hand in the front pocket"],
+      [7, "Front pocket and hammer loop in use"]
+    ]
+  }
+}

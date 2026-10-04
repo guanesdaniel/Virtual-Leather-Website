@@ -943,6 +943,8 @@
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
+    // Real photos and description of the chosen apron, under the preview.
+    Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== st.style; });
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(waMessage(st));
   }
 
@@ -1208,6 +1210,7 @@
         .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; });
     }).then(function () {
       setStatus('');
+      showLogoStep(st);
       form.hidden = true;
       added.hidden = false;
       added.querySelector('h3').focus();
@@ -1217,6 +1220,56 @@
       if (waLink) waLink.focus();
     }).then(function () { submit.disabled = false; });
   });
+
+  // Logo files can't travel with the cart (adding from this page carries text and choices only), so
+  // when a spot uses a logo, the last step is sending the file on WhatsApp or by email.
+  function showLogoStep(st) {
+    var box = document.getElementById('logo-next');
+    if (!box) return;
+    var spots = positionsOf(st.style).filter(function (p) { return st.slots[p].mode === 'logo'; });
+    box.hidden = !spots.length;
+    if (!spots.length) return;
+    var where = spots.map(spotName).join(' and ');
+    var text = 'Hi Virtual Leather! I\'ve just added a ' + STYLES[st.style].name + ' to my cart on your website. Here is my logo for ' + where + ':';
+    document.getElementById('logo-next-where').textContent = where;
+    document.getElementById('logo-wa').href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(text);
+    document.getElementById('logo-mail').href = 'mailto:' + C.email + '?subject=' + encodeURIComponent('My logo for my apron order') +
+      '&body=' + encodeURIComponent(text + '\n\n(Logo file attached.)\n\nName on the order: ');
+  }
+
+  // Photo viewer for the real photos under the preview.
+  var viewer = document.getElementById('photo-viewer'), viewerImg = document.getElementById('photo-viewer-img');
+  var viewerCap = document.getElementById('photo-viewer-caption'), viewerList = [], viewerAt = 0;
+  function showPhoto(i) {
+    viewerAt = (i + viewerList.length) % viewerList.length;
+    var b = viewerList[viewerAt];
+    viewerImg.src = b.getAttribute('data-full');
+    viewerImg.alt = b.getAttribute('data-alt');
+    viewerCap.textContent = b.getAttribute('data-alt');
+  }
+  if (viewer && viewer.showModal) {
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('.gallery-thumb') : null;
+      if (!t) return;
+      viewerList = Array.prototype.slice.call(t.closest('.gallery-strip').querySelectorAll('.gallery-thumb'));
+      showPhoto(viewerList.indexOf(t));
+      viewer.showModal();
+    });
+    viewer.addEventListener('click', function (e) {
+      if (e.target === viewer || e.target.hasAttribute('data-photo-close')) viewer.close();
+      else if (e.target.hasAttribute('data-photo-step')) showPhoto(viewerAt + Number(e.target.getAttribute('data-photo-step')));
+    });
+    viewer.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') showPhoto(viewerAt + 1);
+      if (e.key === 'ArrowLeft') showPhoto(viewerAt - 1);
+    });
+  } else {
+    // Older browsers without <dialog>: open the big photo on its own.
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('.gallery-thumb') : null;
+      if (t) window.open(t.getAttribute('data-full'), '_blank', 'noopener');
+    });
+  }
 
   document.getElementById('designer-again').addEventListener('click', function () {
     added.hidden = true; form.hidden = false;

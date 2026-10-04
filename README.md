@@ -46,6 +46,9 @@ npm run serve        # preview at http://localhost:8080
 
 `npm run images` re-downloads product photos from Ecwid and converts them to WebP. Edit the list in `tools/images.mjs` first.
 
+### One way to order an apron
+Aprons that the designer makes (the products with a `"designer"` style in `src/data/products.json`) are ordered only through the designer. Their homepage cards open it, and the shop's own page for them (`/shop/#!/p/<id>`, including links from inside the shop) redirects to `/?style=<style>#design` with that apron chosen. Under the preview, the designer shows that apron's description and real photos from its Ecwid listing (`src/data/gallery.json`; run `npm run images` after changing it). Logo files can't travel with the cart, so when a design uses a logo, "Added to your cart" asks the customer to send the file on WhatsApp or by email. Other products (bags, knife rolls, extras, the patterned BBQ apron and the 2-apron bundle) still open in the shop.
+
 ### Apron designer: engraving spots and suggested designs
 
 The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none) and which it starts on. The BBQ apron has the full set; other styles get text or a logo until they're rolled out.
