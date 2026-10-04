@@ -13,6 +13,7 @@
  *   purchase         -> Purchase
  *   generate_lead    -> Contact      (WhatsApp / email clicks)
  *   customize_product-> CustomizeProduct
+ *   select_content   -> (GA4 only: suggested designs picked, logos uploaded)
  * Every Meta event gets a unique eventID so a future Conversions API
  * integration can de-duplicate browser and server events.
  * Add ?vl_debug=1 to any URL to log events in the browser console.
@@ -108,7 +109,8 @@
   var META_MAP = {
     view_item: 'ViewContent', add_to_cart: 'AddToCart', begin_checkout: 'InitiateCheckout',
     purchase: 'Purchase', generate_lead: 'Contact', customize_product: 'CustomizeProduct',
-    view_cart: null, select_item: null, remove_from_cart: null, select_style: null
+    view_cart: null, select_item: null, remove_from_cart: null, select_style: null,
+    select_content: null   // designer engagement: GA4 only, kept out of Meta's optimisation signals
   };
 
   /* params: GA4-style. { value, currency, items:[{item_id,item_name,price,quantity}], ... } */
