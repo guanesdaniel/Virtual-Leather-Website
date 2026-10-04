@@ -110,7 +110,8 @@
     view_item: 'ViewContent', add_to_cart: 'AddToCart', begin_checkout: 'InitiateCheckout',
     purchase: 'Purchase', generate_lead: 'Contact', customize_product: 'CustomizeProduct',
     view_cart: null, select_item: null, remove_from_cart: null, select_style: null,
-    select_content: null   // designer engagement: GA4 only, kept out of Meta's optimisation signals
+    select_content: null,  // designer engagement: GA4 only, kept out of Meta's optimisation signals
+    share: null            // design picture shared or saved: GA4 only
   };
 
   /* params: GA4-style. { value, currency, items:[{item_id,item_name,price,quantity}], ... } */

@@ -89,6 +89,7 @@
       <div class="preview">
         <span class="preview-tag" id="preview-tag" aria-hidden="true">BBQ apron</span>
         <div id="apron-preview" aria-live="polite"></div>
+        <p class="shared-note" id="design-shared" hidden>You're looking at a shared design. Change anything you like before ordering.</p>
         <p class="preview-note">Tap a numbered spot to move your text or logo there. Preview only. Leather is a natural material, so tone and grain vary from piece to piece. We'll send you a proof of the final layout before engraving.</p>
       </div>
 
@@ -205,6 +206,8 @@
               <li>Tracking number sent when it ships</li>
             </ul>
             <a class="alt-link" id="design-whatsapp" href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="designer">Prefer to talk? Send this design to us on WhatsApp</a>
+            <button type="button" class="alt-link link-btn" id="design-picture">Save a picture of your design</button>
+            <p class="pic-status" id="design-picture-status" role="status"></p>
           </div>
         </form>
 
@@ -351,4 +354,4 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=31" defer></script>
+<script src="/assets/js/designer.js?v=32" defer></script>
