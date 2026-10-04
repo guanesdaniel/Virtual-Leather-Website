@@ -18,7 +18,8 @@
   var FREE_ENGRAVINGS = 2, ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
 
   var STYLES = {
-    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
+    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)',
+              patterned: 738486114 },   // the patchwork ("Patterned") version is its own Ecwid product
     barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' },
@@ -355,6 +356,31 @@
     rivet(g, 581, 95, 8); rivet(g, 619, 95, 8);
   }
 
+  // Patterned finish: the body is a patchwork of stitched leather panels, each a slightly different
+  // shade. Seams run between the engraving spots (chest piece in one, then rows of panels).
+  function patchwork(g, main) {
+    var rows = [[220, 700, []], [700, 1100, [600]], [1100, 1400, [330, 600]], [1400, 1760, [420, 780]]];
+    var tones = [null, ['hi', .18], ['edge', .14], ['hi', .1], ['edge', .2], ['hi', .24], ['edge', .1], ['hi', .14]];
+    var k = 0, seams = [];
+    rows.forEach(function (r, ri) {
+      var xs = [0].concat(r[2], [W]);
+      for (var i = 0; i < xs.length - 1; i++, k++) {
+        var t = tones[k % tones.length];
+        if (t) el('rect', { x: xs[i], y: r[0], width: xs[i + 1] - xs[i], height: r[1] - r[0], fill: main[t[0]], opacity: t[1] }, g);
+      }
+      if (ri) seams.push('M0,' + r[0] + ' H' + W);
+      r[2].forEach(function (x) { seams.push('M' + x + ',' + r[0] + ' V' + r[1]); });
+    });
+    var d = seams.join(' ');
+    el('path', { d: d, fill: 'none', stroke: main.edge, 'stroke-width': 5, opacity: '.8' }, g);
+    el('path', { d: d, fill: 'none', stroke: main.hi, 'stroke-width': 2, opacity: '.5', transform: 'translate(2 3)' }, g);
+    // Stitching on both sides of every seam.
+    [-11, 11].forEach(function (o) {
+      var sd = seams.map(function (s) { return /H/.test(s) ? s.replace(/^M0,(\d+)/, function (m, y) { return 'M0,' + (Number(y) + o); }) : s.replace(/^M(\d+),/, function (m, x) { return 'M' + (Number(x) + o) + ','; }); }).join(' ');
+      el('path', { d: sd, fill: 'none', stroke: 'rgba(255,236,210,.42)', 'stroke-width': 2.5, 'stroke-dasharray': '9 8' }, g);
+    });
+  }
+
   function draw(st) {
     var style = STYLES[st.style], main = COLORS[st.main], acc = COLORS[st.acc];
     // Engraving on the pocket is burned into the accessory leather, everywhere else into the apron body.
@@ -362,7 +388,7 @@
     stage.textContent = '';
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'apron-title apron-desc' }, stage);
     el('title', { id: 'apron-title' }, svg).textContent = 'Preview of your ' + style.name;
-    el('desc', { id: 'apron-desc' }, svg).textContent = main.label + ' leather with ' + acc.label.toLowerCase() + ' accessories and black straps' +
+    el('desc', { id: 'apron-desc' }, svg).textContent = main.label + (st.patterned ? ' patterned (patchwork) leather' : ' leather') + ' with ' + acc.label.toLowerCase() + ' accessories and black straps' +
       (st.wings ? ', ' + wingName(st) + ' leather wings' : '') + (st.opener ? ', bottle opener with ' + openerName(st) + ' leather tab' : '') + (st.grease ? ', with a tin of leather care grease and cloth' : '') +
       engravingSummary(st, ', engraved: ', ', no engraving') + '.';
 
@@ -400,6 +426,7 @@
     var tex = el('g', { 'clip-path': 'url(#bibclip)' }, svg);
     el('rect', { x: 0, y: 0, width: W, height: H, filter: 'url(#mottle)' }, tex);
     el('rect', { x: 0, y: 0, width: W, height: H, filter: 'url(#grain)', opacity: '.5' }, tex);
+    if (st.patterned) patchwork(tex, main);
     el('path', { d: BIB, fill: 'none', stroke: main.edge, 'stroke-width': 4 }, svg);
 
     // The two straps lie on top of the apron, pinned with two rivets each, with metal sliders.
@@ -793,6 +820,8 @@
       wings: val('wings'), wingColor: val('wingColor'), opener: val('opener'), openerColor: val('openerColor'), grease: val('grease'),
       slots: {}
     };
+    // Patterned (patchwork panels) only where the style has that version.
+    st.patterned = val('finish') === 'patterned' && !!STYLES[st.style].patterned;
     SLOT_KEYS.forEach(function (p) {
       var design = val('design-' + p), fields = {};
       ((DESIGNS[design] || {}).fields || []).forEach(function (f) { fields[f.key] = val('d-' + f.key + '-' + p); });
@@ -838,6 +867,7 @@
     if (eng.extra) parts.push('Engravings: ' + eng.count + ' (' + FREE_ENGRAVINGS + ' included + ' + eng.extra + ' extra)');
     var z = apronSize(st.height, st.weight);
     if (z) parts.push('Size guide: ' + z.width + ' x ' + z.length + ' cm (pattern ' + z.pattern + (z.letter ? ' ' + z.letter : '') + ')');
+    if (st.patterned) parts.push('Finish: patterned (patchwork panels)');
     if (st.notes) parts.push('Notes: ' + st.notes);
     parts.push('Designed on virtualleather.net' + (ref ? ' (ref ' + ref + ')' : ''));
     return parts.join(' | ');
@@ -849,6 +879,7 @@
     total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag'),
     engravings: document.getElementById('sum-engravings'), engravingsDt: document.getElementById('sum-engravings-dt')
   };
+  var finishField = document.getElementById('finish-field');
   var wingField = document.getElementById('wing-color-field');
   var openerField = document.getElementById('opener-color-field');
   var waLink = document.getElementById('design-whatsapp');
@@ -889,7 +920,7 @@
     var lines = [], hasLogo = false, extras = [];
     var bigChest = POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && (st.slots['1'].mode === 'design' || st.slots['1'].mode === 'logo');
     lines.push('Apron: ' + STYLES[st.style].name);
-    lines.push('Leather: ' + COLORS[st.main].label + ', with ' + COLORS[st.acc].label.toLowerCase() + ' accessories');
+    lines.push('Leather: ' + COLORS[st.main].label + (st.patterned ? ', patterned (patchwork panels)' : '') + ', with ' + COLORS[st.acc].label.toLowerCase() + ' accessories');
     var z = apronSize(st.height, st.weight);
     if (st.height) lines.push('Wearer: ' + st.height + (st.weight ? ', ' + st.weight : '') + (z ? ' (about ' + sizeLabel(z) + ')' : ''));
     positionsOf(st.style).forEach(function (p) {
@@ -1055,7 +1086,8 @@
     syncSizes(st);
     syncPrices(st);
     summaryEls.style.textContent = STYLES[st.style].name;
-    summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
+    summaryEls.colors.textContent = COLORS[st.main].label + (st.patterned ? ', patterned' : '') + ' / ' + COLORS[st.acc].label;
+    finishField.hidden = !STYLES[st.style].patterned;
     syncSize(st);
     summaryEls.engraving.textContent = engravingSummary(st, '', 'None');
     var ex = [];
@@ -1067,7 +1099,9 @@
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
     // Real photos and description of the chosen apron, under the preview.
-    Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== st.style; });
+    // (the patterned version has its own photos)
+    var galleryKey = st.patterned && document.querySelector('.style-gallery[data-style="' + st.style + '-patterned"]') ? st.style + '-patterned' : st.style;
+    Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== galleryKey; });
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(waMessage(st));
   }
 
@@ -1076,9 +1110,9 @@
   // Ecwid product ID so Meta can match it to the catalogue. Suggested designs and logo uploads are
   // GA4-only select_content events, to see which designs customers like.
   var viewed = {}, designerSeen = false, picked = {};
-  function itemFor(styleKey) {
-    var s = STYLES[styleKey];
-    return { item_id: String(s.id), item_name: s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
+  function itemFor(styleKey, patterned) {
+    var s = STYLES[styleKey], id = patterned && s.patterned ? s.patterned : s.id;
+    return { item_id: String(id), item_name: (patterned && s.patterned ? 'Patterned ' : '') + s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
   }
   function trackView(styleKey) {
     if (!designerSeen || viewed[styleKey] || !VL.track) return;
@@ -1131,7 +1165,7 @@
     if (!customised) {
       customised = true;
       var st = read();
-      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style)] });
+      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style, st.patterned)] });
     }
     // A suggested design chosen (by switching a spot to designs, or picking another design)
     if (n.indexOf('mode-') === 0 || n.indexOf('design-') === 0) {
@@ -1433,7 +1467,7 @@
   }
   // What goes in the cart for a design: the apron, then its extras (Ecwid product IDs and options).
   function cartLines(st, options) {
-    var lines = [{ id: STYLES[st.style].id, options: options, qty: 1 }], n = engravings(st).extra;
+    var lines = [{ id: st.patterned ? STYLES[st.style].patterned : STYLES[st.style].id, options: options, qty: 1 }], n = engravings(st).extra;
     if (st.wings) lines.push({ id: 688211109, options: { Color: COLORS[wingColor(st)].addon }, qty: 1 });
     if (st.opener) lines.push({ id: 619483308, options: { Color: COLORS[openerColor(st)].addon }, qty: 1 });
     if (st.grease) lines.push({ id: 619498559, options: {}, qty: 1 });
@@ -1618,9 +1652,13 @@
   });
 
   VL.designer = {
-    setStyle: function (s) {
+    // finish: 'patterned' or 'plain' (optional)
+    setStyle: function (s, finish) {
       var r = form.querySelector('input[name="style"][value="' + s + '"]');
-      if (r) { r.checked = true; update(); }
+      if (r) r.checked = true;
+      var f = finish && form.querySelector('input[name="finish"][value="' + finish + '"]');
+      if (f) f.checked = true;
+      if (r || f) update();
     }
   };
   // Deep link: /#design?style=barber is not valid hash syntax, so use data-style buttons or ?style=
@@ -1641,8 +1679,8 @@
       history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])edit=[^&]*&?/, '$1').replace(/[?&]$/, '') + location.hash);
     }
   }
-  var qs = /[?&]style=(\w+)/.exec(location.search);
-  if (qs) VL.designer.setStyle(qs[1]);
+  var qs = /[?&]style=(\w+)/.exec(location.search), qf = /[?&]finish=(\w+)/.exec(location.search);
+  if (qs) VL.designer.setStyle(qs[1], qf && qf[1]);
 
   update();
 })();
