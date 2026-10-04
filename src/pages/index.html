@@ -28,7 +28,7 @@
       {
         "@type": "FAQPage",
         "mainEntity": [
-          { "@type": "Question", "name": "How do you size the apron?", "acceptedAnswer": { "@type": "Answer", "text": "Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are adjustable." } },
+          { "@type": "Question", "name": "How do you size the apron?", "acceptedAnswer": { "@type": "Answer", "text": "Every apron is made to measure from the wearer's height and weight. Our standard size is 56 × 76 cm (width × length) for 1.70 to 1.75 m. Shorter people get a shorter apron (from 70 cm long), taller people a longer one (up to 90 cm), and a larger build gets our wider cut (60 cm). The neck and waist straps are adjustable." } },
           { "@type": "Question", "name": "Will I see my design before you make it?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it." } },
           { "@type": "Question", "name": "What can you engrave?", "acceptedAnswer": { "@type": "Answer", "text": "Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. {{#if extraEngraving}}Two engravings are included in the price (the chest, spots 1 and 2, counts as one), and each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}}" } },
           { "@type": "Question", "name": "Do you have discounts or special offers?", "acceptedAnswer": { "@type": "Answer", "text": "Offers, and prices for business, team and multi-apron orders, are agreed directly with us. Message us on WhatsApp or email and we'll talk it through." } },
@@ -178,6 +178,7 @@
                 <input id="weight" name="weight" type="text" required maxlength="20" autocomplete="off" placeholder="e.g. 85 kg or 187 lb" aria-describedby="weight-error">
                 <p class="error" id="weight-error" aria-live="polite"></p>
               </div>
+              <p class="size-note" id="size-note" aria-live="polite" hidden></p>
               <div class="field">
                 <label for="email">Your email <span aria-hidden="true">*</span></label>
                 <input id="email" name="email" type="email" required maxlength="120" autocomplete="email" aria-describedby="email-error" placeholder="e.g. name@example.com">
@@ -197,6 +198,7 @@
             <dl>
               <dt>Style</dt><dd id="sum-style"></dd>
               <dt>Leather</dt><dd id="sum-colors"></dd>
+              <dt id="sum-size-dt" hidden>Size</dt><dd id="sum-size" hidden></dd>
               <dt>Engraving</dt><dd id="sum-engraving"></dd>
               <dt>Extras</dt><dd id="sum-extras"></dd>
               <dt id="sum-engravings-dt" hidden>Extra engravings</dt><dd id="sum-engravings" hidden></dd>
@@ -351,7 +353,7 @@
       <h2 id="faq-title">Questions, answered.</h2>
     </div>
     <div class="faq">
-      <details><summary>How do you size the apron?</summary><div><p>Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are also adjustable.</p></div></details>
+      <details><summary>How do you size the apron?</summary><div><p>Every apron is made to measure from the wearer's height and weight. Our standard size is 56 × 76 cm (width × length) for 1.70 to 1.75 m. Shorter people get a shorter apron (from 70 cm long), taller people a longer one (up to 90 cm), and a larger build gets our wider cut (60 cm). The neck and waist straps are also adjustable, and the designer shows the size we'll cut as you type.</p></div></details>
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before production we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
       <details><summary>What can you engrave, and where?</summary><div><p>Names, short phrases, dates, monograms and logos. There are six engraving positions, plus the pocket on the BBQ apron (two on the split-leg and woodworking aprons), shown as numbers in the designer preview. {{#if extraEngraving}}Two engravings are included in the price, and the chest (spots 1 and 2) counts as one. Each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}} Send logos as PNG, JPG, PDF or SVG.</p></div></details>
       <details><summary>Which leather colours can I choose?</summary><div><p>Black, tan (light brown) and dark brown. Pick one for the body of the apron and one for the straps, loops and pockets. Leather is a natural material, so tone and grain vary a little from piece to piece.</p></div></details>
@@ -377,4 +379,4 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=38" defer></script>
+<script src="/assets/js/designer.js?v=39" defer></script>

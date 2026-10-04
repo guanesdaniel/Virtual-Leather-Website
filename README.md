@@ -63,6 +63,16 @@ The designer remembers each design on the customer's own device (browser storage
 
 Each design gets a reference (for example `VL-7K2P`) at the end of its order description and in the "send your logo" message, so a logo file can be matched to its order. Saved designs are dropped once the apron leaves the cart, cleared when an order is placed, and deleted after 30 days. The code is `VL.saved` in `main.js` and the "Saved designs" part of `designer.js`.
 
+### Apron sizes
+The designer works out the size we'll cut from the wearer's height and weight, using the workshop's production patterns (`PATTERNS` in `designer.js`; the same for every apron style). It accepts centimetres, metres, feet and inches, kilos, pounds and stone.
+- **S, up to 1.69 m:** 55.4 cm wide, 70 to 74 cm long.
+- **Normal, 1.70 to 1.75 m:** 56 × 76 cm.
+- **X, from 1.76 m:** 56 cm wide, 77 to 90 cm long.
+- **BMI of 30 or more:** the wider "OB" version of the pattern, 60 cm wide. Letter M up to 1.79 m, X from 1.80 m.
+- **In-between heights:** the nearest pattern, or the longer one when exactly halfway.
+
+Step 5 and the summary show the size to the customer, without mentioning BMI. The order description adds "Size guide: 56 x 81 cm (pattern 1.80 X)" for the workshop, and the WhatsApp message includes it too.
+
 ### Engraving price
 Each apron includes 2 engravings, and the chest (spots 1 and 2) counts as one. Each extra spot is $5, whatever is on it (text, a suggested design or a logo). The designer counts the spots in use, shows "Included" or "+$5" beside each one, adds the extras to the total and puts that many **Extra engraving** items in the cart (one Ecwid product at $5).
 

@@ -727,6 +727,64 @@
   }
   applyDefaults(val('style') || 'bbq', true);
 
+  /* ---------- Apron size (production patterns) ----------
+   * The size we cut, from the wearer's height, using the workshop's patterns (width x length, cm):
+   * S up to 1.69 m (55.4 wide, 70-74 long), "normal" 1.70-1.75 m (56 x 76), X from 1.76 m (56 wide,
+   * 77-90 long). With a BMI of 30 or more we cut the wider "OB" version of the same pattern: 60 cm wide,
+   * letter M up to 1.79 m and X from 1.80 m. In-between heights take the nearest pattern (the longer one
+   * when it's halfway). The same rule applies to every apron style. */
+  var PATTERNS = [   // [up to cm, pattern, letter, width, length]
+    [162, '1.60', 'S', 55.4, 70], [166, '1.65', 'S', 55.4, 72], [169, '1.68', 'S', 55.4, 74],
+    [175, 'normal', '', 56, 76], [177, '1.77', 'X', 56, 77], [178, '1.78', 'X', 56, 80],
+    [181, '1.80', 'X', 56, 81], [183, '1.83', 'X', 56, 82], [185, '1.85', 'X', 56, 84],
+    [186, '1.86', 'X', 56, 85], [188, '1.88', 'X', 56, 86], [190, '1.90', 'X', 56, 87],
+    [193, '1.92', 'X', 56, 88], [Infinity, '1.96/2.00', 'X', 56, 90]
+  ];
+  function num(s) { return parseFloat(String(s).replace(',', '.')); }
+  // Height in cm from what the customer typed: "180", "180 cm", "1.80 m", "1,80", "5'11", "5 ft 11 in",
+  // "5ft11", "71 in". imperial: true when given in feet or inches.
+  function parseHeight(text) {
+    var t = String(text || '').toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').trim(), m;
+    if (!t) return null;
+    if ((m = /^(\d)\s*(?:'|ft|feet|foot)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:"|''|in|inch|inches)?)?$/.exec(t))) {
+      return { cm: (Number(m[1]) * 12 + (m[2] ? num(m[2]) : 0)) * 2.54, imperial: true };
+    }
+    if ((m = /^(\d{2,3}(?:[.,]\d+)?)\s*(?:"|''|in|inch|inches)$/.exec(t))) return { cm: num(m[1]) * 2.54, imperial: true };
+    if ((m = /^(\d(?:[.,]\d{1,2})?)\s*(?:m|mt|mts|meters?|metres?)?$/.exec(t))) {
+      var v = num(m[1]);
+      if (v >= 1.2 && v <= 2.5) return { cm: v * 100, imperial: false };
+      // "5.11" with no unit: 5 ft 11 in
+      if (!/m/.test(t) && v >= 4 && v < 8) { var parts = m[1].split(/[.,]/), inch = parts[1] ? Number(parts[1]) : 0; if (inch < 12) return { cm: (Number(parts[0]) * 12 + inch) * 2.54, imperial: true }; }
+      return null;
+    }
+    if ((m = /^(\d{3}(?:[.,]\d+)?)\s*(?:cm|cms|centimet(?:er|re)s?)?$/.exec(t))) { var c = num(m[1]); return c >= 120 && c <= 250 ? { cm: c, imperial: false } : null; }
+    return null;
+  }
+  // Weight in kg: "85", "85 kg", "187 lb", "187 lbs", "13 st", "13 st 5 lb". No unit: pounds when the
+  // height was given in feet and inches, otherwise kilos.
+  function parseWeight(text, imperial) {
+    var t = String(text || '').toLowerCase().trim(), m;
+    if (!t) return null;
+    if ((m = /^(\d{1,2})\s*(?:st|stone)s?\s*(?:(\d{1,2})\s*(?:lb|lbs|pounds?)?)?$/.exec(t))) return (Number(m[1]) * 14 + (m[2] ? Number(m[2]) : 0)) * 0.45359237;
+    if ((m = /^(\d{2,3}(?:[.,]\d+)?)\s*(kg|kgs|kilos?|kilograms?|lb|lbs|pounds?)?$/.exec(t))) {
+      var v = num(m[1]), lb = m[2] ? /^(lb|pound)/.test(m[2]) : imperial;
+      var kg = lb ? v * 0.45359237 : v;
+      return kg >= 30 && kg <= 300 ? kg : null;
+    }
+    return null;
+  }
+  // { width, length, pattern, letter, wide, heightCm } or null when the height can't be read.
+  function apronSize(heightText, weightText) {
+    var h = parseHeight(heightText);
+    if (!h) return null;
+    var cm = Math.round(h.cm), kg = parseWeight(weightText, h.imperial), row = PATTERNS[0];
+    for (var i = 0; i < PATTERNS.length; i++) { row = PATTERNS[i]; if (cm <= row[0]) break; }
+    var wide = kg != null && kg / Math.pow(h.cm / 100, 2) >= 30;
+    return { width: wide ? 60 : row[3], length: row[4], pattern: row[1] + (wide ? ' OB' : ''),
+      letter: wide ? (cm <= 179 ? 'M' : 'X') : row[2], wide: wide, heightCm: cm, imperial: h.imperial };
+  }
+  function sizeLabel(z) { return String(z.width) + ' × ' + z.length + ' cm'; }
+
   /* ---------- State, summary, validation ---------- */
   function read() {
     var st = {
@@ -778,6 +836,8 @@
     if (!parts.length) parts.push('Engraving: none');
     var eng = engravings(st);
     if (eng.extra) parts.push('Engravings: ' + eng.count + ' (' + FREE_ENGRAVINGS + ' included + ' + eng.extra + ' extra)');
+    var z = apronSize(st.height, st.weight);
+    if (z) parts.push('Size guide: ' + z.width + ' x ' + z.length + ' cm (pattern ' + z.pattern + (z.letter ? ' ' + z.letter : '') + ')');
     if (st.notes) parts.push('Notes: ' + st.notes);
     parts.push('Designed on virtualleather.net' + (ref ? ' (ref ' + ref + ')' : ''));
     return parts.join(' | ');
@@ -830,6 +890,8 @@
     var bigChest = POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && (st.slots['1'].mode === 'design' || st.slots['1'].mode === 'logo');
     lines.push('Apron: ' + STYLES[st.style].name);
     lines.push('Leather: ' + COLORS[st.main].label + ', with ' + COLORS[st.acc].label.toLowerCase() + ' accessories');
+    var z = apronSize(st.height, st.weight);
+    if (st.height) lines.push('Wearer: ' + st.height + (st.weight ? ', ' + st.weight : '') + (z ? ' (about ' + sizeLabel(z) + ')' : ''));
     positionsOf(st.style).forEach(function (p) {
       var sl = st.slots[p], size = (fit[p] ? fit[p].pct : sl.size), bigger = size !== 100 ? ', size ' + size + '%' : '';
       if (sl.mode === 'text' && sl.text) {
@@ -926,6 +988,21 @@
     });
   }
 
+  // The size we'll cut, shown under height and weight and in the summary.
+  var sizeNote = document.getElementById('size-note'), sumSize = document.getElementById('sum-size'), sumSizeDt = document.getElementById('sum-size-dt');
+  function syncSize(st) {
+    var z = apronSize(st.height, st.weight);
+    sumSize.hidden = sumSizeDt.hidden = sizeNote.hidden = !z;
+    if (!z) return;
+    sumSize.textContent = sizeLabel(z);
+    // In feet and inches too when that's how the height was given.
+    var inches = function (c) { return Math.round(c / 2.54); }, ft = Math.floor(z.heightCm / 30.48), inch = Math.round(z.heightCm / 2.54 - ft * 12);
+    var text = 'We\'ll cut this apron to about ' + sizeLabel(z) + (z.imperial ? ' (' + inches(z.width) + ' × ' + inches(z.length) + ' in)' : '') +
+      ', width × length, for a height of ' + (z.imperial ? ft + ' ft ' + inch + ' in' : (z.heightCm / 100).toFixed(2) + ' m') +
+      (z.wide ? ', in our wider cut' : '') + '. The neck and waist straps adjust.';
+    if (sizeNote.textContent !== text) sizeNote.textContent = text;
+  }
+
   // Price tag beside each spot in use: "Included", or "+$5" once the included engravings are used up.
   function syncPrices(st) {
     var tags = engravings(st).tags;
@@ -979,6 +1056,7 @@
     syncPrices(st);
     summaryEls.style.textContent = STYLES[st.style].name;
     summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
+    syncSize(st);
     summaryEls.engraving.textContent = engravingSummary(st, '', 'None');
     var ex = [];
     if (st.wings) ex.push('Wings (' + wingName(st) + ')'); if (st.opener) ex.push('Bottle opener (' + openerName(st) + ')'); if (st.grease) ex.push('Leather grease');
