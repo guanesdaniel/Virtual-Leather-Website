@@ -344,12 +344,19 @@ fieldset.panel { margin: 0; min-width: 0; }
 .brand-mark { width: auto; height: 36px; color: var(--ink); }
 .sub-field { margin: 4px 0 12px 30px; }
 
-/* Designer: engraving items, font picker and size controls */
-.engrave-item { border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 4px 14px 12px; margin: 0 0 14px; background: rgba(255, 255, 255, .55); min-width: 0; transition: border-color .15s; }
-.engrave-item > legend { font-weight: 700; padding: 0 6px; margin-left: -6px; }
-.engrave-item.is-active { border-color: var(--ink); }
-.engrave-item .option-group { margin-bottom: 12px; }
+/* Designer: engraving spots, font picker, suggested designs and size controls */
+.slot { border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 4px 14px 12px; margin: 0 0 14px; background: rgba(255, 255, 255, .55); min-width: 0; transition: border-color .15s; }
+.slot > legend { font-weight: 700; padding: 0 6px; margin-left: -6px; display: flex; align-items: center; gap: 8px; }
+.slot-num { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: .85rem; }
+.slot.is-active { border-color: var(--ink); }
+.slot .slot-hint { margin: 2px 0 8px; }
+.slot .mode-opts { margin: 4px 0 12px; }
+.slot .option-group { margin-bottom: 12px; }
+.slot-body .field { margin-bottom: 10px; }
 .font-opts .opt span { padding: 6px 14px; font-size: 1.05rem; line-height: 1.1; }
+.design-opt > span { flex-direction: column; gap: 6px; padding: 10px 14px; border-radius: 14px; max-width: 200px; text-align: center; font-size: .88rem; line-height: 1.25; }
+.design-thumb { display: block; width: 96px; height: 96px; }
+.design-thumb svg { width: 100%; height: 100%; }
 .size-field { margin: 2px 0 4px; }
 .size-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; font-size: .95rem; }
 .size-head output { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -363,4 +370,4 @@ fieldset.panel { margin: 0; min-width: 0; }
 .fit-note:empty { display: none; }
 .logo-file input[type="file"] { width: 100%; font: inherit; padding: 10px; border: 1.5px dashed #cbbba8; border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
 .logo-file input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-#apron-preview [data-pos] { cursor: pointer; }
+#apron-preview [data-slot] { cursor: pointer; }
