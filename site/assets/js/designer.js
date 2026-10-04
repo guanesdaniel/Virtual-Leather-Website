@@ -915,6 +915,36 @@
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(waMessage(st));
   }
 
+  // Analytics. The designer is the product page for each apron, so seeing it (and switching style)
+  // counts as viewing that apron: GA4 view_item / Meta ViewContent, once per style per visit, with the
+  // Ecwid product ID so Meta can match it to the catalogue. Suggested designs and logo uploads are
+  // GA4-only select_content events, to see which designs customers like.
+  var viewed = {}, designerSeen = false, picked = {};
+  function itemFor(styleKey) {
+    var s = STYLES[styleKey];
+    return { item_id: String(s.id), item_name: s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
+  }
+  function trackView(styleKey) {
+    if (!designerSeen || viewed[styleKey] || !VL.track) return;
+    viewed[styleKey] = true;
+    VL.track('view_item', { currency: C.currency, value: PRICE, items: [itemFor(styleKey)] });
+  }
+  function trackPick(type, id, spot) {
+    var key = type + ':' + id + ':' + spot;
+    if (picked[key] || !VL.track) return;
+    picked[key] = true;
+    VL.track('select_content', { content_type: type, content_id: id, engraving_spot: spot, item_id: String(STYLES[val('style') || 'bbq'].id) });
+  }
+  if ('IntersectionObserver' in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      if (!entries.some(function (en) { return en.isIntersecting; })) return;
+      seen.disconnect();
+      designerSeen = true;
+      trackView(val('style') || 'bbq');
+    }, { threshold: 0.25 });
+    seen.observe(stage);
+  }
+
   var customised = false;
   // Wing and opener colours follow the accessory colour until the customer picks one themselves.
   var colourPicked = { wingColor: false, openerColor: false };
@@ -931,7 +961,7 @@
     var n = e.target.name || '';
     if (colourPicked.hasOwnProperty(n)) colourPicked[n] = true;
     if (n === 'acc') followAccessory();
-    if (n === 'style') applyDefaults(e.target.value, false);
+    if (n === 'style') { applyDefaults(e.target.value, false); trackView(e.target.value); }
     if (n.indexOf('mode-') === 0) modeTouched[n.slice(5)] = true;
     if (n.indexOf('text-') === 0) {
       var maxLines = planFor(val('style') || 'bbq', n.slice(5)).lines || 3, lines = e.target.value.split('\n');
@@ -945,8 +975,12 @@
     if (!customised) {
       customised = true;
       var st = read();
-      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE,
-        items: [{ item_id: String(STYLES[st.style].id), item_name: STYLES[st.style].name, price: PRICE }] });
+      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style)] });
+    }
+    // A suggested design chosen (by switching a spot to designs, or picking another design)
+    if (n.indexOf('mode-') === 0 || n.indexOf('design-') === 0) {
+      var spot = n.slice(n.indexOf('-') + 1);
+      if (val('mode-' + spot) === 'design' && val('design-' + spot)) trackPick('engraving_design', val('design-' + spot), spot);
     }
   });
   form.addEventListener('change', update);
@@ -1001,6 +1035,7 @@
       logos[p] = prepareLogo(img, url, f.name);
       if (logos[p].src !== url) URL.revokeObjectURL(url);
       if (!logos[p].ok) err.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
+      trackPick('logo_upload', 'customer_logo', p);
       update();
     };
     img.onerror = function () {

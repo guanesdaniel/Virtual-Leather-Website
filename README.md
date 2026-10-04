@@ -71,6 +71,8 @@ All tracking is **consent-first**. GA4 and the Meta Pixel load only after the vi
 | When | GA4 event | Meta event |
 |---|---|---|
 | Someone starts using the designer | `customize_product` | `CustomizeProduct` |
+| Someone sees the designer, or switches apron style (once per style per visit) | `view_item` | `ViewContent` |
+| A suggested design is picked, or a logo uploaded, in the designer | `select_content` (`content_type`, `content_id`, `engraving_spot`) | not sent |
 | Someone views a product in the shop | `view_item` | `ViewContent` |
 | Item added to cart (designer or shop) | `add_to_cart` | `AddToCart` |
 | Checkout opened | `begin_checkout` | `InitiateCheckout` |
@@ -83,6 +85,7 @@ All tracking is **consent-first**. GA4 and the Meta Pixel load only after the vi
 3. Put it in `src/config.json` → `ga4MeasurementId`, then rebuild.
 4. In GA4 → *Admin → Events*, mark `purchase` and `generate_lead` as **key events**.
 5. Optional: link Google Ads and Search Console in GA4 → *Admin → Product links*.
+6. To see which suggested designs and engraving spots customers use, register `engraving_spot` as an event-scoped **custom dimension** (*Admin → Custom definitions*). `content_type` and `content_id` are standard for `select_content`.
 
 ### Set up the Meta Pixel and ads
 1. In Meta **Events Manager**, create or choose a dataset (Pixel) and copy its ID into `src/config.json` → `metaPixelId`.
