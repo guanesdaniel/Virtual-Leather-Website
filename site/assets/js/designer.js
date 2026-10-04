@@ -534,7 +534,7 @@
   function drawEngraving(svg, defs, st, main, acc) {
     function inkFor(p) { return p === 'pocket' ? acc : main; }   // the pocket is accessory leather
     var spots = positionsOf(st.style);
-    var guides = el('g', { 'aria-hidden': 'true', 'class': 'guides' }, svg);
+    var guides = el('g', { 'aria-hidden': 'true' }, svg);
     fit = {};
     spots.forEach(function (p) {
       var q = boxFor(st, p), sl = st.slots[p], on = p === active;
@@ -592,7 +592,7 @@
       try {
         var bb = activeG.getBBox();
         el('rect', { x: bb.x - 14, y: bb.y - 10, width: bb.width + 28, height: bb.height + 20, rx: 10, fill: 'none',
-          stroke: 'rgba(255,255,255,.85)', 'stroke-width': 3, 'stroke-dasharray': '10 8', 'pointer-events': 'none', 'aria-hidden': 'true', 'class': 'edit-outline' }, svg);
+          stroke: 'rgba(255,255,255,.85)', 'stroke-width': 3, 'stroke-dasharray': '10 8', 'pointer-events': 'none', 'aria-hidden': 'true' }, svg);
       } catch (e) { /* not rendered yet */ }
     }
   }
@@ -772,7 +772,7 @@
     var parts = slotLines(st, false);
     if (!parts.length) parts.push('Engraving: none');
     if (st.notes) parts.push('Notes: ' + st.notes);
-    parts.push('Design link: ' + designLink(st));
+    parts.push('Designed on virtualleather.net');
     return parts.join(' | ');
   }
 
@@ -795,16 +795,13 @@
   function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0); }
 
   function waMessage(st) {
-    var hasLogo = positionsOf(st.style).some(function (p) { return st.slots[p].mode === 'logo'; });
-    return 'Hi Virtual Leather! I designed an apron on your website.\n\n' +
-      '*See my design:* ' + designLink(st) + '\n\n' +
+    return 'Hi Virtual Leather! I designed an apron on your website:\n' +
       '- Style: ' + STYLES[st.style].name + '\n' +
       '- Main leather: ' + COLORS[st.main].label + '\n' +
       '- Accessories: ' + COLORS[st.acc].label + '\n' +
       '- ' + describe(st).split(' | ').slice(0, -1).join('\n- ') + '\n' +
       (st.wings ? '- Extra: leather wings (' + wingName(st) + ')\n' : '') + (st.opener ? '- Extra: bottle opener (' + openerName(st) + ')\n' : '') + (st.grease ? '- Extra: protective leather grease 50 ml\n' : '') +
-      (hasLogo ? '\nI\'ll send my logo file in this chat.\n' : '') +
-      '\nCan you help me finish my order?';
+      'Can you help me finish my order?';
   }
 
   // Extras offered per style (default: all). The barber apron has no bottle opener.
@@ -1104,169 +1101,6 @@
   } else styleFontChoices();
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { drawThumbs(); update(); });
 
-  /* ---------- Shareable design: a link that reopens it, and a picture of it ---------- */
-  // The design (no contact details, no logo files) is packed into the link after "#d=". Browsers never
-  // send that part to a server; opening the link restores the design here.
-  function packDesign(st) {
-    var o = { v: 1, s: st.style, m: st.main, a: st.acc, x: [st.wings ? 1 : 0, st.opener ? 1 : 0, st.grease ? 1 : 0], p: {} };
-    if (st.wings) o.wc = wingColor(st);
-    if (st.opener) o.oc = openerColor(st);
-    // Only spots in use are listed (the rest are empty), to keep the link short.
-    positionsOf(st.style).forEach(function (p) {
-      var sl = st.slots[p], e = { m: sl.mode };
-      if (sl.mode === 'none') return;
-      if (sl.size !== 100) e.z = sl.size;
-      if (sl.mode === 'text') { e.t = sl.text; e.f = sl.font; }
-      if (sl.mode === 'design') {
-        e.d = sl.design;
-        if (((DESIGNS[sl.design] || {}).fields || []).length) { e.df = sl.dfont; e.v = sl.fields; }
-      }
-      o.p[p] = e;
-    });
-    return o;
-  }
-  function toB64url(str) {
-    var bytes = new TextEncoder().encode(str), bin = '';
-    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-  function fromB64url(code) {
-    var bin = atob(code.replace(/-/g, '+').replace(/_/g, '/')), bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  }
-  function designLink(st) { return (C.siteUrl || location.origin) + '/#d=' + toB64url(JSON.stringify(packDesign(st))); }
-
-  function setChoice(name, value) {
-    var r = value == null ? null : form.querySelector('input[name="' + name + '"][value="' + String(value).replace(/["\\]/g, '') + '"]');
-    if (!r || r.disabled) return false;
-    r.checked = true;
-    return true;
-  }
-  function applyDesign(o) {
-    if (!o || o.v !== 1 || !STYLES[o.s]) return false;
-    setChoice('style', o.s);
-    applyDefaults(o.s, true);
-    setChoice('main', o.m); setChoice('acc', o.a);
-    ALL_EXTRAS.forEach(function (n, i) { if (form.elements[n]) form.elements[n].checked = !!(o.x && o.x[i]); });
-    followAccessory();
-    if (o.wc && o.wc !== o.a && setChoice('wingColor', o.wc)) colourPicked.wingColor = true;
-    if (o.oc && o.oc !== o.a && setChoice('openerColor', o.oc)) colourPicked.openerColor = true;
-    update();   // enables this style's spots and choices
-    positionsOf(o.s).forEach(function (p) {   // spots not in the link are empty
-      if (!(o.p && o.p[p])) { setChoice('mode-' + p, 'none'); modeTouched[p] = true; }
-    });
-    Object.keys(o.p || {}).forEach(function (p) {
-      var e = o.p[p];
-      if (SLOT_KEYS.indexOf(p) === -1 || !e || !setChoice('mode-' + p, e.m)) return;
-      modeTouched[p] = true;
-      if (e.z) form.elements['size-' + p].value = e.z;
-      if (e.t != null) form.elements['text-' + p].value = String(e.t).slice(0, 40);
-      if (e.f) setChoice('font-' + p, e.f);
-      if (e.d) setChoice('design-' + p, e.d);
-      if (e.df) setChoice('dfont-' + p, e.df);
-      Object.keys(e.v || {}).forEach(function (k) {
-        var input = form.elements['d-' + k + '-' + p];
-        if (input) input.value = String(e.v[k]).slice(0, input.maxLength > 0 ? input.maxLength : 40);
-      });
-    });
-    update();
-    return true;
-  }
-
-  // A picture of the preview (without the editing guides), with the fonts embedded so the lettering
-  // comes out right, plus a caption. Phones that can share files open the share sheet (WhatsApp
-  // included); other devices download it.
-  var FONT_FILES = {
-    'Inter': 'inter-latin-wght-normal', 'Montserrat': 'montserrat-latin-700-normal', 'Anton': 'anton-latin-400-normal',
-    'Open Sans': 'open-sans-latin-600-normal', 'Playfair Display': 'playfair-display-latin-700-normal',
-    'Alex Brush': 'alex-brush-latin-400-normal', 'Comforter': 'comforter-latin-400-normal', 'Great Vibes': 'great-vibes-latin-400-normal',
-    'Kaushan Script': 'kaushan-script-latin-400-normal', 'Bangers': 'bangers-latin-400-normal', 'Permanent Marker': 'permanent-marker-latin-400-normal'
-  };
-  function embeddedFonts(svg) {
-    var used = {};
-    Array.prototype.forEach.call(svg.querySelectorAll('[font-family]'), function (n) {
-      n.getAttribute('font-family').split(',').forEach(function (f) {
-        f = f.trim().replace(/^["']|["']$/g, '');
-        if (FONT_FILES[f]) used[f] = true;
-      });
-    });
-    return Promise.all(Object.keys(used).map(function (f) {
-      return fetch('/assets/fonts/' + FONT_FILES[f] + '.woff2').then(function (r) { return r.blob(); }).then(function (b) {
-        return new Promise(function (resolve) {
-          var fr = new FileReader();
-          fr.onload = function () { resolve('@font-face{font-family:"' + f + '";src:url(' + fr.result + ') format("woff2");font-weight:1 1000;}'); };
-          fr.onerror = function () { resolve(''); };
-          fr.readAsDataURL(b);
-        });
-      }).catch(function () { return ''; });
-    }));
-  }
-  function designPicture(st) {
-    var svg = stage.querySelector('svg').cloneNode(true);
-    svg.setAttribute('xmlns', NS);
-    svg.setAttribute('width', W); svg.setAttribute('height', H);
-    Array.prototype.forEach.call(svg.querySelectorAll('.guides, .edit-outline, title, desc'), function (n) { n.parentNode.removeChild(n); });
-    return embeddedFonts(svg).then(function (faces) {
-      var style = document.createElementNS(NS, 'style');
-      style.textContent = faces.join('');
-      svg.insertBefore(style, svg.firstChild);
-      var url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
-      return new Promise(function (resolve, reject) {
-        var img = new Image();
-        img.onload = function () {
-          var k = 0.6, c = document.createElement('canvas'), ctx = c.getContext('2d');
-          c.width = W * k; c.height = H * k + 96;
-          ctx.fillStyle = '#f3ece2'; ctx.fillRect(0, 0, c.width, c.height);
-          ctx.drawImage(img, 0, 0, W * k, H * k);
-          URL.revokeObjectURL(url);
-          ctx.textAlign = 'center'; ctx.fillStyle = '#2b1d16'; ctx.font = '600 22px Inter, Arial, sans-serif';
-          ctx.fillText(STYLES[st.style].name + ' · ' + COLORS[st.main].label + ' / ' + COLORS[st.acc].label, c.width / 2, H * k + 40);
-          ctx.fillStyle = '#6b5a4e'; ctx.font = '16px Inter, Arial, sans-serif';
-          ctx.fillText('Designed on virtualleather.net · preview, final proof sent before we make it', c.width / 2, H * k + 70);
-          try { c.toBlob(function (b) { b ? resolve(b) : reject(new Error('no picture')); }, 'image/jpeg', 0.9); }
-          catch (e) { reject(e); }
-        };
-        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('render failed')); };
-        img.src = url;
-      });
-    });
-  }
-  var picBtn = document.getElementById('design-picture'), picStatus = document.getElementById('design-picture-status'), picCache = null;
-  var canShareFiles = false;
-  try { canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.jpg', { type: 'image/jpeg' })] })); } catch (e) { /* no file sharing */ }
-  if (picBtn) {
-    picBtn.textContent = canShareFiles ? 'Share a picture of your design' : 'Save a picture of your design';
-    picBtn.addEventListener('click', function () {
-      var st = read();
-      var key = JSON.stringify(packDesign(st)) + '|' + Object.keys(logos).map(function (p) { return p + logos[p].name; }).join();
-      var ready = picCache && picCache.key === key;
-      if (!ready) { picBtn.disabled = true; picStatus.textContent = 'Preparing your picture…'; }
-      (ready ? Promise.resolve(picCache.file) : designPicture(st).then(function (blob) {
-        var file = new File([blob], 'virtual-leather-apron-design.jpg', { type: 'image/jpeg' });
-        picCache = { key: key, file: file };
-        return file;
-      })).then(function (file) {
-        picBtn.disabled = false;
-        picStatus.textContent = '';
-        if (canShareFiles) return navigator.share({ files: [file], text: 'My Virtual Leather apron design: ' + designLink(st) }).then(function () { return 'share_sheet'; });
-        var a = document.createElement('a'), href = URL.createObjectURL(file);
-        a.href = href; a.download = file.name; document.body.appendChild(a); a.click();
-        setTimeout(function () { URL.revokeObjectURL(href); a.parentNode.removeChild(a); }, 1000);
-        picStatus.textContent = 'Picture saved. You can attach it in WhatsApp or by email.';
-        return 'download';
-      }).then(function (method) {
-        if (VL.track) VL.track('share', { method: method, content_type: 'design_picture', item_id: String(STYLES[st.style].id) });
-      }).catch(function (err) {
-        picBtn.disabled = false;
-        if (err && err.name === 'AbortError') { picStatus.textContent = ''; return; }   // share sheet closed
-        picStatus.textContent = err && err.name === 'NotAllowedError' && picCache
-          ? 'Your picture is ready. Tap the button again to share it.'
-          : 'Sorry, this browser couldn\'t make the picture. A screenshot of the preview works too.';
-      });
-    });
-  }
-
   var MESSAGES = {
     height: 'Please enter the wearer\'s height, for example 180 cm or 5 ft 11 in.',
     weight: 'Please enter the wearer\'s weight, for example 85 kg or 187 lb.',
@@ -1375,16 +1209,4 @@
   if (qs) VL.designer.setStyle(qs[1]);
 
   update();
-
-  // Opened from a design link (#d=...): restore that design and bring the designer into view.
-  var shared = /^#d=([A-Za-z0-9_-]+)$/.exec(location.hash);
-  if (shared) {
-    try {
-      if (applyDesign(JSON.parse(fromB64url(shared[1])))) {
-        var note = document.getElementById('design-shared');
-        if (note) note.hidden = false;
-        setTimeout(function () { var sec = document.getElementById('design'); if (sec) sec.scrollIntoView(); }, 0);
-      }
-    } catch (e) { /* not a valid design link: start with the usual design */ }
-  }
 })();
