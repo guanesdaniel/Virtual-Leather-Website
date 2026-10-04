@@ -2,7 +2,7 @@
 # The domain virtualleather.net (registered at Hostinger) points to GitHub Pages through DNS records;
 # see README "Publishing". Pull requests only build and check.
 # Etsy reviews are fetched before each build (when the ETSY_API_KEY secret is set) and refreshed
-# every 6 hours by the schedule below.
+# every 6 hours by the schedule below; if Etsy can't be reached, the reviews already on the site are kept.
 name: Build and deploy
 
 on:
@@ -30,6 +30,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Start from the reviews already on the site, so they stay up if Etsy can't be reached below.
+      - name: Start from the published reviews
+        if: github.event_name != 'pull_request'
+        run: |
+          if git fetch -q --depth=1 origin gh-pages && git show FETCH_HEAD:assets/data/reviews.json > "$RUNNER_TEMP/reviews.json"; then
+            mv "$RUNNER_TEMP/reviews.json" src/data/reviews.json && echo "Starting from the reviews on the site."
+          else
+            echo "No published reviews yet."
+          fi
       - name: Fetch Etsy reviews (official Etsy API; skipped without the ETSY_API_KEY secret)
         if: github.event_name != 'pull_request'
         run: npm run reviews

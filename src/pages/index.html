@@ -48,7 +48,8 @@
         <a class="btn btn-light" href="#design">Design your apron</a>
         <p class="hero-price" style="margin:0"><strong>From $185</strong> · {{#if extraEngraving}}2 engravings included{{else}}engraving included{{/if extraEngraving}}</p>
       </div>
-      <ul class="hero-facts" role="list">
+{{#if reviews}}      {{reviewsBadge}}
+{{/if reviews}}      <ul class="hero-facts" role="list">
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Made to measure</li>
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Name or logo engraving included</li>
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Design proof before we make it</li>
