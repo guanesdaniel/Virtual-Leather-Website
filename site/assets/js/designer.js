@@ -142,37 +142,22 @@
   // is drawn live in the lettering they choose. To add a design: give it an entry here (artwork as SVG
   // paths, or an image drawn with el('image')) and list its key in a spot's designs above.
   var DESIGNS = {
+    // The owner's Grill Master artwork (forks, flame, "Grill Master"), traced into design-art.js by
+    // tools/trace-designs.mjs. Only the name and the Est. year change; they sit where the original's were.
     grillmaster: {
-      label: 'Grill Master', aspect: 1, defFont: 'classic',
+      label: 'Grill Master', aspect: 1388 / 1497, defFont: 'classic',
       fields: [
-        { key: 'name', label: 'Name', required: true, max: 14, placeholder: 'e.g. MIKE', sample: 'MIKE', blank: 'YOUR NAME' },
-        { key: 'year', label: 'Est. year', max: 4, placeholder: 'e.g. 1986', sample: '1986', blank: 'YEAR', numeric: true }
+        { key: 'name', label: 'Name', required: true, max: 18, placeholder: 'e.g. MIKE', sample: 'MIKE' },
+        { key: 'year', label: 'Est. year', max: 4, placeholder: 'e.g. 1986', sample: '1986', numeric: true }
       ],
       draw: function (g, o) {
-        var ink = { fill: o.ink }, line = { fill: 'none', stroke: o.ink, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
-        // Flame
-        el('path', { d: 'M500,345 C440,345 395,305 398,250 C400,205 425,185 430,150 C445,175 450,195 462,205 C460,150 475,100 505,30 ' +
-          'C520,90 560,120 560,180 C568,160 572,145 572,120 C600,160 610,200 605,250 C600,310 560,345 500,345 Z ' +
-          'M500,318 C470,316 452,293 455,266 C458,238 478,226 482,198 C495,223 520,238 522,268 C524,298 520,316 500,318 Z',
-          fill: o.ink, 'fill-rule': 'evenodd' }, g);
-        // Two crossed forks above, two crossed handles below (mirrored left/right)
-        [1, -1].forEach(function (sg) {
-          var X = function (x) { return sg > 0 ? x : 1000 - x; };
-          var fork = el('g', line, g);
-          el('path', { d: 'M' + X(372) + ',338 L' + X(182) + ',148', 'stroke-width': 20 }, fork);
-          el('path', { d: 'M' + X(123) + ',37 L' + X(201) + ',115 Q' + X(196) + ',161 ' + X(150) + ',166 L' + X(72) + ',88', 'stroke-width': 17 }, fork);
-          var tool = el('g', line, g);
-          el('path', { d: 'M' + X(340) + ',632 L' + X(205) + ',790', 'stroke-width': 15 }, tool);
-          el('path', { d: 'M' + X(205) + ',790 L' + X(96) + ',905', 'stroke-width': 46 }, tool);
-        });
-        // Est. YEAR, NAME, Grill Master
-        var serif = '"Playfair Display", Georgia, serif';
-        textFit(g, { x: 150, y: 428, anchor: 'start', size: 46, family: serif, weight: 700 }, o.year ? 'Est.' : 'Est.', o.ink, o.year ? 1 : 0.4);
-        textFit(g, { x: 850, y: 428, anchor: 'end', size: 46, family: serif, weight: 700 }, o.year || 'YEAR', o.ink, o.year ? 1 : 0.4);
-        var nf = FONTS[o.font] || FONTS.classic;
-        textFit(g, { x: 500, y: 605, size: 225 * nf.scale, maxW: 790, family: nf.family, weight: nf.weight }, o.name || 'YOUR NAME', o.ink, o.name ? 1 : 0.4);
-        textFit(g, { x: 500, y: 790, size: 150, maxW: 330, family: FONTS.brush.family, weight: 400 }, 'Grill', o.ink, 1);
-        textFit(g, { x: 500, y: 965, size: 175, maxW: 760, family: FONTS.brush.family, weight: 400 }, 'Master', o.ink, 1);
+        var art = (window.VL_DESIGN_ART || {}).grillmaster;
+        if (art) el('path', { d: art.d, fill: o.ink, transform: 'scale(' + (1000 / art.w).toFixed(5) + ')' }, g);
+        var serif = '"Playfair Display", Georgia, serif', nf = FONTS[o.font] || FONTS.classic;
+        textFit(g, { x: 134, y: 407, anchor: 'start', size: 45, family: serif, weight: 700 }, 'EST.', o.ink, o.year ? 1 : 0.4);
+        textFit(g, { x: 890, y: 408, anchor: 'end', size: 45, family: serif, weight: 700 }, o.year || 'YEAR', o.ink, o.year ? 1 : 0.4);
+        // The name sits on the original's baseline, as big as the gap between the artwork allows.
+        textFit(g, { x: 500, y: 559, size: 132 * nf.scale, maxW: 940, family: nf.family, weight: nf.weight }, o.name || 'YOUR NAME', o.ink, o.name ? 1 : 0.4);
       }
     },
     beer: {
