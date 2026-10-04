@@ -1,6 +1,6 @@
 [
   {"id": "619498562", "group": "aprons", "name": "BBQ Leather Apron with Beer Holder", "price": 185, "summary": "Our grill apron with an adjustable leather drink holder, tool loops and a pocket. Made to measure.", "designer": "bbq"},
-  {"id": "738486114", "group": "aprons", "name": "Patterned BBQ Leather Apron with Drink Holder", "price": 185, "summary": "The beer-holder BBQ apron made from a patchwork of leather panels. Made to measure.", "designer": "bbq", "finish": "patterned"},
+  {"id": "738486114", "group": "aprons", "name": "Patterned BBQ Leather Apron with Drink Holder", "price": 185, "summary": "The beer-holder BBQ apron made from a patchwork of leather panels. Made to measure.", "designer": "bbqpattern"},
   {"id": "619492033", "group": "aprons", "name": "Barber Leather Apron", "price": 185, "summary": "Built for the chair: tool loops, pocket and your shop's logo or name engraved.", "designer": "barber"},
   {"id": "619505538", "group": "aprons", "name": "Simple Leather Apron", "price": 185, "summary": "A clean bib apron for kitchens, cafés and studios, with your name or logo.", "designer": "simple"},
   {"id": "619501025", "group": "aprons", "name": "Split-Leg Forging & Tattoo Apron", "price": 185, "summary": "Split-leg cut for welders, smiths and tattoo artists who work seated or moving.", "designer": "split"},

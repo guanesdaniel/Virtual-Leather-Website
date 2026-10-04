@@ -47,7 +47,7 @@ npm run serve        # preview at http://localhost:8080
 `npm run images` re-downloads product photos from Ecwid and converts them to WebP. Edit the list in `tools/images.mjs` first.
 
 ### One way to order an apron
-Aprons that the designer makes (the products with a `"designer"` style in `src/data/products.json`) are ordered only through the designer. Their homepage cards open it, and the shop's own page for them (`/shop/#!/p/<id>`, including links from inside the shop) redirects to `/?style=<style>#design` with that apron chosen. Under the preview, the designer shows that apron's description and real photos from its Ecwid listing (`src/data/gallery.json`; run `npm run images` after changing it). Logo files can't travel with the cart, so when a design uses a logo, "Added to your cart" asks the customer to send the file on WhatsApp or by email. The patterned BBQ apron (`738486114`) is the BBQ apron's **Finish: Patterned** choice in the designer: its preview shows the patchwork panels, its card and shop page open the designer with it chosen, and the cart gets that product. Other products (bags, knife rolls, extras) still open in the shop. Business, team and multi-apron orders, and any offers, are agreed directly on WhatsApp or by email (the "Business orders" section and the FAQ say so).
+Aprons that the designer makes (the products with a `"designer"` style in `src/data/products.json`) are ordered only through the designer. Their homepage cards open it, and the shop's own page for them (`/shop/#!/p/<id>`, including links from inside the shop) redirects to `/?style=<style>#design` with that apron chosen. Under the preview, the designer shows that apron's description and real photos from its Ecwid listing (`src/data/gallery.json`; run `npm run images` after changing it). Logo files can't travel with the cart, so when a design uses a logo, "Added to your cart" asks the customer to send the file on WhatsApp or by email. The patterned BBQ apron (`738486114`) is its own style in the designer, **BBQ Pattern** (`bbqpattern`), next to **BBQ & Grill**: the BBQ apron's shape with the patchwork panels, engraved only on the chest (spot 1: text, Grill Master or a logo; spot 2: a line of text, or none for a bigger chest) and the pocket. Its card and shop page open the designer with it chosen, and the cart gets that product. Older links (`?style=bbq&finish=patterned`) and designs saved before the split still open it. Other products (bags, knife rolls, extras) still open in the shop. Business, team and multi-apron orders, and any offers, are agreed directly on WhatsApp or by email (the "Business orders" section and the FAQ say so).
 
 ### Apron designer: engraving spots and suggested designs
 
@@ -55,13 +55,14 @@ The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLO
 
 | Apron | Spots | Notes |
 |---|---|---|
-| BBQ | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket |
+| BBQ & Grill | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket |
+| BBQ Pattern | 1–2 + pocket | the BBQ apron in patchwork leather: chest and pocket only |
 | Barber | 1–6 + pocket | 3 = above the scissor loops, 4 = above the pocket |
 | Simple | 1–6 + centre pocket | 3 and 4 above the pocket |
 | Split-leg | 1–4 + chest pocket | 3 = beside the chest pocket, 4 = bottom of the left leg ("Left leg") |
 | Woodworking | 1–2 + chest pocket | |
 
-On every apron, "None" comes first, every spot takes text or a logo at an adjustable size, and removing spot 2 makes the chest logo or design bigger. Grill Master is suggested for the chest on the BBQ and simple aprons.
+On every apron, "None" comes first, every spot takes text or a logo at an adjustable size, and removing spot 2 makes the chest logo or design bigger. Grill Master is suggested for the chest on the BBQ (both) and simple aprons.
 
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 

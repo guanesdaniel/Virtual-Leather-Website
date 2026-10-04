@@ -14,8 +14,8 @@
   // comes with an apron). Their shop pages open the designer instead.
   function designerUrl(id) {
     if (C.extraEngravingId && String(id) === String(C.extraEngravingId)) return '/#design';
-    var style = designerStyle(id), finish = ((C.products || {})[String(id)] || {}).finish;
-    return style ? '/?style=' + encodeURIComponent(style) + (finish ? '&finish=' + finish : '') + '#design' : '';
+    var style = designerStyle(id);
+    return style ? '/?style=' + encodeURIComponent(style) + '#design' : '';
   }
   var linked = /^#!\/(?:p\/(\d+)|[^?#]*?-p(\d+))(?:[\/?&]|$)/.exec(location.hash);
   if (linked && document.getElementById('my-store-' + C.ecwidStoreId) && designerUrl(linked[1] || linked[2])) {
@@ -81,9 +81,14 @@
     } else if (kind === 'select_item') {
       track('select_item', { items: [productInfo(el.getAttribute('data-id'))] });
     } else if (kind === 'select_style') {
-      var style = el.getAttribute('data-style'), finish = el.getAttribute('data-finish') || 'plain';
-      if (style && VL.designer) VL.designer.setStyle(style, finish);
-      else if (style) { e.preventDefault(); location.href = '/?style=' + encodeURIComponent(style) + (finish !== 'plain' ? '&finish=' + finish : '') + '#design'; }
+      var style = el.getAttribute('data-style');
+      if (style && VL.designer) {
+        VL.designer.setStyle(style);
+        // Stay on this page: its address can carry tags (like ?fbclid= from an ad), and following "/#design"
+        // would load the page again without them, and without the apron just chosen.
+        if (el.getAttribute('href') === '/#design') el.setAttribute('href', location.pathname + location.search + '#design');
+      }
+      else if (style) { e.preventDefault(); location.href = '/?style=' + encodeURIComponent(style) + '#design'; }
     }
   });
 

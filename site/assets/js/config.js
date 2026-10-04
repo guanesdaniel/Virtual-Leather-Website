@@ -73,8 +73,7 @@ window.VL_CONFIG = {
       "name": "Patterned BBQ Leather Apron with Drink Holder",
       "price": 185,
       "group": "aprons",
-      "designer": "bbq",
-      "finish": "patterned"
+      "designer": "bbqpattern"
     }
   }
 };

@@ -18,8 +18,11 @@
   var FREE_ENGRAVINGS = 2, ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
 
   var STYLES = {
-    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)',
-              patterned: 738486114 },   // the patchwork ("Patterned") version is its own Ecwid product
+    bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
+    // The patterned BBQ apron (a patchwork of leather panels) is its own Ecwid product and its own style:
+    // drawn and laid out as the BBQ apron (look), engraved on the chest (spots 1 and 2) and the pocket only.
+    bbqpattern: { id: 738486114, name: 'Patterned BBQ apron with beer holder', look: 'bbq', patterned: true, gallery: 'bbq-patterned',
+              positions: 2, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
     barber: { id: 619492033, name: 'Barber apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachments/Pockets)' },
     split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
@@ -134,6 +137,9 @@
       pocket: { x: 690, y: 645, w: 170, h: 150, fs: 44, stdW: 160, maxW: 190, maxH: 200, logoH: 130 }
     }
   };
+  // A style that is a version of another apron (look) shares its engraving boxes and fittings.
+  function lookOf(styleKey) { return (STYLES[styleKey] || {}).look || styleKey; }
+  Object.keys(STYLES).forEach(function (k) { if (STYLES[k].look) POS_OVERRIDES[k] = POS_OVERRIDES[STYLES[k].look]; });
   function posFor(styleKey, p) {
     var o = (POS_OVERRIDES[styleKey] || {})[p] || {}, base = POS[p] || {}, b = {};
     for (var k in base) b[k] = base[k];
@@ -163,8 +169,8 @@
 
   // What each spot offers and starts with, per apron style (from each apron's sketch): its choices, the
   // one it starts on, and where it sits ("where"). Spot 2 can be removed to make the chest logo or design
-  // bigger. Suggested designs: Grill Master on the BBQ and simple aprons' chest, the beer circle on the
-  // BBQ drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
+  // bigger. Suggested designs: Grill Master on the BBQ (plain and patterned) and simple aprons' chest, the
+  // beer circle on the plain BBQ apron's drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
   var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket'];
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
   function underChest(designs) {
@@ -182,6 +188,7 @@
       pocket: spotPlan('On the pocket')
     },
     barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
+    bbqpattern: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), pocket: spotPlan('On the pocket') },
     simple: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), 3: spotPlan('Above the pocket'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the centre pocket') },
     split: { 2: underChest(false), 3: spotPlan('Beside the chest pocket'), 4: spotPlan('Bottom of the left leg'), pocket: spotPlan('On the chest pocket') },
     wood: { 2: underChest(false), pocket: spotPlan('On the chest pocket') }
@@ -524,8 +531,8 @@
       rivet(acs, p[0] + 22, p[1] + 41, 6); rivet(acs, p[0] + 53, p[1] + 41, 6);
     });
 
-    var op = OPENER_AT[st.style];
-    if (st.style === 'bbq') {
+    var look = lookOf(st.style), op = OPENER_AT[look];
+    if (look === 'bbq') {
       loops(acs, 368, 688, 210, 50, 3, acc);
       loops(acs, 578, 804, 305, 54, 3, acc);
       hstrap(acs, 82, 1055, 153, 48, acc); hstrap(acs, 507, 1055, 140, 48, acc);
@@ -534,18 +541,18 @@
       vstrap(acs, 316, 1280, 48, 155, acc); vstrap(acs, 388, 1280, 46, 155, acc);
       if (!st.opener) dring(acs, 598, 1215, acc);
       pocket(acs, 730, 1065, 260, 298, acc);
-    } else if (st.style === 'barber') {
+    } else if (look === 'barber') {
       if (!st.opener) dring(acs, 424, 790, acc);
       band(acs, 605, 780, 225, 24, acc);
       loops(acs, 165, 1040, 323, 75, 3, acc);
       band(acs, 162, 1182, 328, 78, acc, 2);
       pocket(acs, 662, 1037, 275, 256, acc);
       ringLoop(acs, 1081, 1052, acc);
-    } else if (st.style === 'simple') {
+    } else if (look === 'simple') {
       band(acs, 288, 850, 222, 20, acc);
       dring(acs, 728, 790, acc);
       shapedPocket(acs, 978, 1375, acc);
-    } else if (st.style === 'split') {
+    } else if (look === 'split') {
       loops(acs, 518, 572, 324, 70, 3, acc);
       pocket(acs, 518, 650, 324, 260, acc);
       shapedPocket(acs, 920, 1315, acc);
@@ -563,7 +570,7 @@
         rivet(svg, p[0] + 26, p[1] + 44, 6); rivet(svg, p[0] + 62, p[1] + 44, 6);
       });
       [[495, 1686], [705, 1686]].forEach(function (p) { rivet(svg, p[0], p[1], 7); rivet(svg, p[0] + (p[0] < 600 ? 50 : -50), p[1], 7); });
-    } else if (st.style === 'wood') {
+    } else if (look === 'wood') {
       // Layout from the Virtual Leather woodworking sketch: two logo spots high on the chest.
       pocket(acs, 580, 525, 225, 238, acc);
       dring(acs, 412, 820, acc);
@@ -868,8 +875,8 @@
       wings: val('wings'), wingColor: val('wingColor'), opener: val('opener'), openerColor: val('openerColor'), grease: val('grease'),
       slots: {}
     };
-    // Patterned (patchwork panels) only where the style has that version.
-    st.patterned = val('finish') === 'patterned' && !!STYLES[st.style].patterned;
+    // Patterned (patchwork panels): the patterned BBQ apron.
+    st.patterned = !!STYLES[st.style].patterned;
     SLOT_KEYS.forEach(function (p) {
       var design = val('design-' + p), fields = {};
       ((DESIGNS[design] || {}).fields || []).forEach(function (f) { fields[f.key] = val('d-' + f.key + '-' + p); });
@@ -927,7 +934,6 @@
     total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag'),
     engravings: document.getElementById('sum-engravings'), engravingsDt: document.getElementById('sum-engravings-dt')
   };
-  var finishField = document.getElementById('finish-field');
   var wingField = document.getElementById('wing-color-field');
   var openerField = document.getElementById('opener-color-field');
   var waLink = document.getElementById('design-whatsapp');
@@ -1140,7 +1146,6 @@
     syncPrices(st);
     summaryEls.style.textContent = STYLES[st.style].name;
     summaryEls.colors.textContent = COLORS[st.main].label + (st.patterned ? ', patterned' : '') + ' / ' + COLORS[st.acc].label;
-    finishField.hidden = !STYLES[st.style].patterned;
     syncSize(st);
     summaryEls.engraving.textContent = engravingSummary(st, '', 'None');
     var ex = [];
@@ -1152,8 +1157,7 @@
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
     // Real photos and description of the chosen apron, under the preview.
-    // (the patterned version has its own photos)
-    var galleryKey = st.patterned && document.querySelector('.style-gallery[data-style="' + st.style + '-patterned"]') ? st.style + '-patterned' : st.style;
+    var galleryKey = STYLES[st.style].gallery || st.style;
     Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== galleryKey; });
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(waMessage(st));
   }
@@ -1163,9 +1167,9 @@
   // Ecwid product ID so Meta can match it to the catalogue. Suggested designs and logo uploads are
   // GA4-only select_content events, to see which designs customers like.
   var viewed = {}, designerSeen = false, picked = {};
-  function itemFor(styleKey, patterned) {
-    var s = STYLES[styleKey], id = patterned && s.patterned ? s.patterned : s.id;
-    return { item_id: String(id), item_name: (patterned && s.patterned ? 'Patterned ' : '') + s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
+  function itemFor(styleKey) {
+    var s = STYLES[styleKey];
+    return { item_id: String(s.id), item_name: s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
   }
   function trackView(styleKey) {
     if (!designerSeen || viewed[styleKey] || !VL.track) return;
@@ -1218,7 +1222,7 @@
     if (!customised) {
       customised = true;
       var st = read();
-      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style, st.patterned)] });
+      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style)] });
     }
     // A suggested design chosen (by switching a spot to designs, or picking another design)
     if (n.indexOf('mode-') === 0 || n.indexOf('design-') === 0) {
@@ -1363,7 +1367,7 @@
   // submitting then replaces that apron and its extras in the cart instead of adding another one.
   var SAVE = VL.saved, editingRef = null, lastRef = null, restoredDraft = false, busy = false, draftTimer = null;
   var savedBar = document.getElementById('saved-bar');
-  var STYLE_SHORT = { bbq: 'BBQ apron', barber: 'barber apron', simple: 'simple apron', split: 'split-leg apron', wood: 'woodworking apron' };
+  var STYLE_SHORT = { bbq: 'BBQ apron', bbqpattern: 'patterned BBQ apron', barber: 'barber apron', simple: 'simple apron', split: 'split-leg apron', wood: 'woodworking apron' };
   function styleLabel(st) { return STYLE_SHORT[st.style] + ' (' + SHORT[st.main] + ')'; }
   function newRef() {
     var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint8Array(4), out = 'VL-';
@@ -1394,6 +1398,8 @@
   }
   function restore(snap) {
     var f = snap.fields || {};
+    // Designs saved when the patterned BBQ apron was a "finish" of the BBQ apron.
+    if (f.style === 'bbq' && f.finish === 'patterned') f.style = 'bbqpattern';
     Object.keys(f).forEach(function (name) {
       var input = form.elements[name];
       if (!input) return;
@@ -1520,7 +1526,7 @@
   }
   // What goes in the cart for a design: the apron, then its extras (Ecwid product IDs and options).
   function cartLines(st, options) {
-    var lines = [{ id: st.patterned ? STYLES[st.style].patterned : STYLES[st.style].id, options: options, qty: 1 }], n = engravings(st).extra;
+    var lines = [{ id: STYLES[st.style].id, options: options, qty: 1 }], n = engravings(st).extra;
     if (st.wings) lines.push({ id: 688211109, options: { Color: COLORS[wingColor(st)].addon }, qty: 1 });
     if (st.opener) lines.push({ id: 619483308, options: { Color: COLORS[openerColor(st)].addon }, qty: 1 });
     if (st.grease) lines.push({ id: 619498559, options: {}, qty: 1 });
@@ -1705,13 +1711,13 @@
   });
 
   VL.designer = {
-    // finish: 'patterned' or 'plain' (optional)
+    // finish 'patterned' with 'bbq' (links from before the patterned BBQ apron was its own style) opens it.
     setStyle: function (s, finish) {
+      if (s === 'bbq' && finish === 'patterned') s = 'bbqpattern';
       var r = form.querySelector('input[name="style"][value="' + s + '"]');
-      if (r) r.checked = true;
-      var f = finish && form.querySelector('input[name="finish"][value="' + finish + '"]');
-      if (f) f.checked = true;
-      if (r || f) update();
+      if (!r) return;
+      if (!r.checked) { r.checked = true; applyDefaults(s, false); trackView(s); }
+      update();
     }
   };
   // Deep link: /#design?style=barber is not valid hash syntax, so use data-style buttons or ?style=
