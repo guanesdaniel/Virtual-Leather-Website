@@ -235,6 +235,7 @@ fieldset.panel { margin: 0; min-width: 0; }
 
 .summary { padding: 22px; background: var(--ink); color: #f3ece3; border-radius: var(--radius); }
 .summary dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin: 0 0 16px; }
+.summary .sum-note { margin: -6px 0 14px; color: #d9cfc2; }
 .summary dt { color: #cfc3b6; }
 .summary dd { margin: 0; text-align: right; font-weight: 600; }
 .summary .total { border-top: 1px solid #4a3f38; padding-top: 10px; font-size: 1.15rem; }

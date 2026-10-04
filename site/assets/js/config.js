@@ -11,7 +11,7 @@ window.VL_CONFIG = {
   "products": {
     "619483308": {
       "name": "Leather Bottle Opener (apron extra)",
-      "price": 18,
+      "price": 15,
       "group": "extras"
     },
     "619488531": {
@@ -32,7 +32,7 @@ window.VL_CONFIG = {
     },
     "619498559": {
       "name": "Leather Care Grease, 50 ml",
-      "price": 18,
+      "price": 15,
       "group": "extras"
     },
     "619498560": {
@@ -66,7 +66,7 @@ window.VL_CONFIG = {
     },
     "688211109": {
       "name": "Leather Wings (apron extra)",
-      "price": 18,
+      "price": 15,
       "group": "extras"
     },
     "738486114": {
