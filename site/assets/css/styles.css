@@ -372,8 +372,3 @@ fieldset.panel { margin: 0; min-width: 0; }
 .logo-file input[type="file"] { width: 100%; font: inherit; padding: 10px; border: 1.5px dashed #cbbba8; border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
 .logo-file input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #apron-preview [data-slot] { cursor: pointer; }
-.summary .link-btn { width: 100%; background: none; border: 0; padding: 4px 0; font: inherit; font-size: .95rem; text-decoration: underline; cursor: pointer; }
-.summary .link-btn:disabled { opacity: .6; cursor: progress; }
-.summary .pic-status { margin: 6px 0 0; text-align: center; font-size: .88rem; color: #cfc3b6; }
-.summary .pic-status:empty { display: none; }
-.shared-note { margin: 10px auto 0; max-width: 34em; padding: 8px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: .88rem; font-weight: 600; text-align: center; }
