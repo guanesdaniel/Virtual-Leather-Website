@@ -51,7 +51,17 @@ Aprons that the designer makes (the products with a `"designer"` style in `src/d
 
 ### Apron designer: engraving spots and suggested designs
 
-The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none) and which it starts on. The BBQ apron has the full set; other styles get text or a logo until they're rolled out.
+The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none), which it starts on, and where it sits on that apron. The spots follow each apron's sketch on its Ecwid listing (boxes in `POS_OVERRIDES`):
+
+| Apron | Spots | Notes |
+|---|---|---|
+| BBQ | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket |
+| Barber | 1–6 + pocket | 3 = above the scissor loops, 4 = above the pocket |
+| Simple | 1–6 + centre pocket | 3 and 4 above the pocket |
+| Split-leg | 1–4 + chest pocket | 3 = beside the chest pocket, 4 = bottom of the left leg ("Left leg") |
+| Woodworking | 1–2 + chest pocket | |
+
+On every apron, "None" comes first, every spot takes text or a logo at an adjustable size, and removing spot 2 makes the chest logo or design bigger. Grill Master is suggested for the chest on the BBQ and simple aprons.
 
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 

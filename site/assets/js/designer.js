@@ -20,10 +20,10 @@
   var STYLES = {
     bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)',
               patterned: 738486114 },   // the patchwork ("Patterned") version is its own Ecwid product
-    barber: { id: 619492033, name: 'Barber apron', positions: 6, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
-    simple: { id: 619505538, name: 'Simple apron', positions: 6, secondary: 'Secondary Color (Attachments/Pockets)' },
-    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' },
-    wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, secondary: 'Secondary Color (Attachment/Pockets)' }
+    barber: { id: 619492033, name: 'Barber apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
+    simple: { id: 619505538, name: 'Simple apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachments/Pockets)' },
+    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
+    wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' }
   };
   // Leather palette taken from the reference illustration.
   //   hex = base, edge = outline/shadow, hi = highlight, strap = harness colour, engrave = lettering,
@@ -99,10 +99,40 @@
       6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
     },
-    barber: { 3: { x: 326, y: 955, w: 250, h: 64 }, 4: { x: 800, y: 955, w: 250, h: 64 } },
-    split:  { 1: { y: 420 }, 2: { y: 505, h: 60 } },
-    simple: { 3: { x: 378, y: 935, w: 250, h: 64 }, 4: { x: 822, y: 935, w: 250, h: 64 } },
-    wood:   { 1: { y: 330, w: 300, h: 85 }, 2: { y: 440, w: 300, h: 70 } }
+    barber: {
+      1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
+      chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
+      2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
+      3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100 },
+      4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 220, logoH: 150 }
+    },
+    split: {
+      1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
+      chestBig: { y: 425, maxH: 270, logoH: 240, stdH: 240 },
+      2: { y: 515, h: 60, fs: 50, maxW: 420, maxH: 70, logoH: 60 },
+      3: { x: 370, y: 870, w: 200, h: 60, maxW: 240, maxH: 100, logoH: 90 },
+      4: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170 },
+      pocket: { x: 680, y: 790, w: 190, h: 140, fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 }
+    },
+    simple: {
+      1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
+      chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
+      2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
+      3: { x: 378, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
+      4: { x: 822, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
+    },
+    wood: {
+      1: { y: 330, w: 300, h: 85, fs: 74, maxW: 400, maxH: 170, logoH: 150, stdH: 150 },
+      chestBig: { y: 375, maxH: 250, logoH: 220, stdH: 220 },
+      2: { y: 455, w: 300, h: 60, fs: 48, maxW: 400, maxH: 60, logoH: 54 },
+      pocket: { x: 690, y: 645, w: 170, h: 150, fs: 44, stdW: 160, maxW: 190, maxH: 200, logoH: 130 }
+    }
   };
   function posFor(styleKey, p) {
     var o = (POS_OVERRIDES[styleKey] || {})[p] || {}, base = POS[p] || {}, b = {};
@@ -123,20 +153,38 @@
     if (s.pocket) list.push('pocket');
     return list;
   }
-  function posLabel(p) { return p === 'pocket' ? 'Pocket' : p + ' (' + POS[p].label + ')'; }
+  // A spot's name on the chosen style ("Chest", "Left"..., or a style's own, like the split-leg's "Left leg").
+  function curStyle() { return val('style') || 'bbq'; }
+  function spotLabel(p, styleKey) {
+    var o = (POS_OVERRIDES[styleKey || curStyle()] || {})[p];
+    return o && o.label || (p === 'pocket' ? 'Pocket' : POS[p].label);
+  }
+  function posLabel(p) { return p === 'pocket' ? 'Pocket' : p + ' (' + spotLabel(p) + ')'; }
 
-  // What each spot offers and starts with. The BBQ apron has the full set (suggested designs on the
-  // chest and the left spot); other styles get text or a logo until they're rolled out too.
+  // What each spot offers and starts with, per apron style (from each apron's sketch): its choices, the
+  // one it starts on, and where it sits ("where"). Spot 2 can be removed to make the chest logo or design
+  // bigger. Suggested designs: Grill Master on the BBQ and simple aprons' chest, the beer circle on the
+  // BBQ drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
   var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket'];
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
+  function underChest(designs) {
+    return { modes: ['none', 'text'], def: 'text', lines: 2, noneLabel: designs ? 'None (bigger chest design)' : 'None (bigger chest logo)',
+      hint: 'Smaller text under the chest. ' + (designs ? 'Designs and logos' : 'Logos') + ' usually fill the chest, so you can remove this spot to make them bigger.' };
+  }
+  function spotPlan(where) { return { modes: ['none', 'text', 'logo'], def: 'none', where: where }; }
+  var CHEST_WITH_DESIGNS = { modes: ['none', 'text', 'design', 'logo'], def: 'text', designs: ['grillmaster'] };
   var SLOT_PLANS = {
     bbq: {
-      1: { modes: ['none', 'text', 'design', 'logo'], def: 'text', designs: ['grillmaster'] },
-      2: { modes: ['none', 'text'], def: 'text', lines: 2, noneLabel: 'None (bigger chest design)',
-        hint: 'Smaller text under the chest. Designs and logos usually fill the chest, so you can remove this spot to make them bigger.' },
+      1: CHEST_WITH_DESIGNS,
+      2: underChest(true),
       3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder' },
-      4: { modes: ['none', 'text', 'logo'], def: 'none', where: 'Top of pocket' }
-    }
+      4: spotPlan('Top of pocket'),
+      pocket: spotPlan('On the pocket')
+    },
+    barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
+    simple: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), 3: spotPlan('Above the pocket'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the centre pocket') },
+    split: { 2: underChest(false), 3: spotPlan('Beside the chest pocket'), 4: spotPlan('Bottom of the left leg'), pocket: spotPlan('On the chest pocket') },
+    wood: { 2: underChest(false), pocket: spotPlan('On the chest pocket') }
   };
   function planFor(styleKey, p) {
     var plan = (SLOT_PLANS[styleKey] || {})[p];
@@ -547,7 +595,7 @@
     drawEngraving(svg, defs, st, main, acc);
   }
 
-  // The box a spot's engraving goes in. On the BBQ apron the chest grows into spot 2 when 2 is removed.
+  // The box a spot's engraving goes in. The chest grows into spot 2 when 2 is removed.
   function boxFor(st, p) {
     var b = posFor(st.style, p);
     if (p === '1' && st.slots['2'] && st.slots['2'].mode === 'none' && POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig) {
@@ -666,16 +714,16 @@
         '><span>' + esc(FONTS[k].label) + '</span></label>';
     }).join('') + '</div>';
   }
-  function slotTitle(p) { return p === 'pocket' ? 'Pocket' : p + ' · ' + POS[p].label; }
+  function slotTitle(p, styleKey) { return p === 'pocket' ? 'Pocket' : p + ' · ' + spotLabel(p, styleKey); }
   function buildSlots() {
     var allDesigns = Object.keys(DESIGNS);
     slotsBox.innerHTML = SLOT_KEYS.map(function (p) {
       var id = p;
       return '<fieldset class="slot" id="slot-' + id + '" data-slot="' + id + '">' +
-        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> ' + esc(slotTitle(p)) +
+        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> <span class="slot-title">' + esc(slotTitle(p, 'bbq')) + '</span>' +
           '<span class="slot-where"></span><span class="slot-price"></span></legend>' +
         '<p class="hint slot-hint" id="hint-' + id + '"></p>' +
-        '<div class="options mode-opts" role="group" aria-label="What goes in ' + esc(slotTitle(p)) + '">' +
+        '<div class="options mode-opts" role="group" aria-label="What goes in ' + esc(slotTitle(p, 'bbq')) + '">' +
           ['text', 'design', 'logo', 'none'].map(function (m) {
             return '<label class="opt"><input type="radio" name="mode-' + id + '" value="' + m + '"><span>' + MODE_LABELS[m] + '</span></label>';
           }).join('') + '</div>' +
@@ -915,7 +963,7 @@
 
   // The WhatsApp message: short, plain lines that open by asking to talk the design through.
   // (The full workshop detail, with fonts and sizes, goes in the order description instead.)
-  function spotName(p) { return p === 'pocket' ? 'Pocket' : POS[p].label + ' (' + p + ')'; }
+  function spotName(p) { return p === 'pocket' ? 'Pocket' : spotLabel(p) + ' (' + p + ')'; }
   function waMessage(st) {
     var lines = [], hasLogo = false, extras = [];
     var bigChest = POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && (st.slots['1'].mode === 'design' || st.slots['1'].mode === 'logo');
@@ -991,7 +1039,12 @@
         .filter(function (m) { return plan.modes.indexOf(m) !== -1; }).join();
       if (order !== plan.modes.join()) plan.modes.forEach(function (m) { group.appendChild(group.querySelector('input[value="' + m + '"]').closest('.opt')); });
       var mode = val('mode-' + p) || plan.def;
-      // Where the spot is on this style (e.g. "Top of drink holder"), shown beside its name.
+      // The spot's name on this style, and where it is (e.g. "Top of drink holder"), shown beside it.
+      var title = card.querySelector('.slot-title'), titleText = slotTitle(p, st.style);
+      if (title.textContent !== titleText) {
+        title.textContent = titleText;
+        card.querySelector('.mode-opts').setAttribute('aria-label', 'What goes in ' + titleText);
+      }
       var where = card.querySelector('.slot-where'), whereText = plan.where ? '\u00b7 ' + plan.where : '';
       if (where.textContent !== whereText) where.textContent = whereText;
       var hint = card.querySelector('.slot-hint');
