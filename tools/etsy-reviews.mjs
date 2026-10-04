@@ -8,7 +8,14 @@
 // the shop's real average and count, and Etsy's required API notice next to them.
 import { writeFile } from 'node:fs/promises';
 
-const KEY = process.env.ETSY_API_KEY;
+// Common paste slips are tidied (spaces, line breaks, quote marks, spaces around the colon).
+const KEY = (process.env.ETSY_API_KEY || '').trim().replace(/^['"]+|['"]+$/g, '').replace(/\s*:\s*/, ':');
+// The key's shape, never its content (build logs are public): how many parts and how long each is.
+function keyShape() {
+  const parts = KEY.split(':');
+  return `${parts.length} part${parts.length === 1 ? '' : 's'} separated by ":" (lengths ${parts.map((x) => x.length).join(' + ')})` +
+    (/\s/.test(KEY) ? ', with spaces or line breaks inside' : '');
+}
 const SHOP = process.env.ETSY_SHOP_NAME || 'virtualleathershop';
 const BASE = process.env.ETSY_API_BASE || 'https://openapi.etsy.com/v3/application';
 const SHOW = 12;
@@ -88,5 +95,9 @@ try {
   await writeFile('src/data/reviews.json', JSON.stringify(out, null, 2) + '\n');
   console.log(`Saved ${out.reviews.length} Etsy reviews (shop average ${out.etsyRating || 'n/a'} from ${out.etsyReviewCount} reviews).`);
 } catch (e) {
-  console.warn('Could not fetch Etsy reviews (' + e.message + '). Keeping src/data/reviews.json as it is.');
+  console.warn('Could not fetch Etsy reviews (' + e.message.trim() + '). Keeping src/data/reviews.json as it is.');
+  if (/ 40[13]:/.test(e.message)) {
+    console.warn('The ETSY_API_KEY secret has ' + keyShape() + '. Etsy expects 2 parts, "keystring:sharedsecret", ' +
+      'copied from Etsy > Your apps > See API key details, for an app whose status is Active.');
+  }
 }
