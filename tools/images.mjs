@@ -24,7 +24,6 @@ const IMAGES = {
   'work-tan-logo': ['619492033', 5, [480, 800]],
   'workshop': ['619501025', 4, [640, 1080]],
   'team-aprons': ['619498562', 20, [640, 1080]],
-  'team-barber': ['619492033', 10, [640]],
   'sketch': ['619498562', 2, [640]],
 };
 // Real photos for the designer, per apron style (src/data/gallery.json).

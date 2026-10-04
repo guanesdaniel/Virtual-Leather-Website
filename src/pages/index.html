@@ -30,7 +30,8 @@
         "mainEntity": [
           { "@type": "Question", "name": "How do you size the apron?", "acceptedAnswer": { "@type": "Answer", "text": "Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are adjustable." } },
           { "@type": "Question", "name": "Will I see my design before you make it?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it." } },
-          { "@type": "Question", "name": "What can you engrave?", "acceptedAnswer": { "@type": "Answer", "text": "Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. Personalisation is included in the price." } },
+          { "@type": "Question", "name": "What can you engrave?", "acceptedAnswer": { "@type": "Answer", "text": "Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. {{#if extraEngraving}}Two engravings are included in the price (the chest, spots 1 and 2, counts as one), and each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}}" } },
+          { "@type": "Question", "name": "Do you have discounts or special offers?", "acceptedAnswer": { "@type": "Answer", "text": "Offers, and prices for business, team and multi-apron orders, are agreed directly with us. Message us on WhatsApp or email and we'll talk it through." } },
           { "@type": "Question", "name": "Do you ship worldwide?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number." } }
         ]
       }
@@ -45,7 +46,7 @@
       <p class="hero-lead">A leather apron cut to the wearer's height and engraved with any name, phrase or logo. You approve the design before we start, so it arrives exactly as you pictured it.</p>
       <div class="hero-cta">
         <a class="btn btn-light" href="#design">Design your apron</a>
-        <p class="hero-price" style="margin:0"><strong>From $185</strong> · engraving included</p>
+        <p class="hero-price" style="margin:0"><strong>From $185</strong> · {{#if extraEngraving}}2 engravings included{{else}}engraving included{{/if extraEngraving}}</p>
       </div>
       <ul class="hero-facts" role="list">
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Made to measure</li>
@@ -154,11 +155,11 @@
 
           <fieldset class="card panel">
             <legend><span class="num">4</span> Add your engraving</legend>
-            <p class="hint">Engraving is included. Go spot by spot: the numbers match the preview, and you can tap a spot on the preview to jump to it. Spots set to "None" stay plain. We engrave exactly what you type, so please check spelling and capitals.</p>
+            <p class="hint">{{#if extraEngraving}}2 engravings are included, and the chest (spots 1 and 2) counts as one. Each extra spot is $5.{{else}}Engraving is included.{{/if extraEngraving}} Go spot by spot: the numbers match the preview, and you can tap a spot on the preview to jump to it. Spots set to "None" stay plain. We engrave exactly what you type, so please check spelling and capitals.</p>
             <div id="slots" class="slots"></div>
             <div class="field" style="margin:10px 0 0">
               <label for="notes">Anything else? <span class="muted">(optional)</span></label>
-              <textarea id="notes" name="notes" maxlength="300" rows="2" placeholder="e.g. a second text in position 5, a date, or a gift note"></textarea>
+              <textarea id="notes" name="notes" maxlength="300" rows="2" placeholder="e.g. a gift note, or anything we should know"></textarea>
             </div>
           </fieldset>
 
@@ -197,6 +198,7 @@
               <dt>Leather</dt><dd id="sum-colors"></dd>
               <dt>Engraving</dt><dd id="sum-engraving"></dd>
               <dt>Extras</dt><dd id="sum-extras"></dd>
+              <dt id="sum-engravings-dt" hidden>Extra engravings</dt><dd id="sum-engravings" hidden></dd>
               <dt class="total">Total</dt><dd class="total" id="sum-total" aria-live="polite">$185</dd>
             </dl>
             <button type="submit" class="btn btn-light btn-block" id="designer-submit">Add to cart</button>
@@ -331,7 +333,7 @@
         <a class="btn btn-light" href="{{site.whatsappUrl}}?text=Hi%20Virtual%20Leather%2C%20I%27d%20like%20a%20quote%20for%20aprons%20for%20my%20business%20or%20team." target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="business">Get a quote on WhatsApp</a>
         <a class="btn btn-ghost" href="mailto:{{site.email}}?subject=Business%20apron%20order" data-track="contact" data-channel="email" data-location="business">Email us</a>
       </div>
-      <p class="small muted" style="margin-top:16px">Ordering two? Our <a href="/shop/#!/p/619492032">2-apron bundle</a> is $332, with leather wings and a bottle opener on each.</p>
+      <p class="small muted" style="margin-top:16px">Ordering more than one apron, or asking about an offer? Business, team and multi-apron orders, and any promotions, are agreed directly with us, so message us and we'll talk it through.</p>
     </div>
     <div class="split-media">
       {{img team-aprons|Several black leather aprons laid out together, each engraved with a business logo|(min-width: 900px) 45vw, 100vw}}
@@ -348,12 +350,13 @@
     <div class="faq">
       <details><summary>How do you size the apron?</summary><div><p>Every apron is made to measure. Tell us the wearer's height and weight when you order and we cut the apron to fit. The neck and waist straps are also adjustable.</p></div></details>
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before production we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
-      <details><summary>What can you engrave, and where?</summary><div><p>Names, short phrases, dates, monograms and logos. There are six engraving positions (two on the split-leg and woodworking aprons), shown as numbers in the designer preview. Personalisation is included in the price. Send logos as PNG, JPG, PDF or SVG.</p></div></details>
+      <details><summary>What can you engrave, and where?</summary><div><p>Names, short phrases, dates, monograms and logos. There are six engraving positions, plus the pocket on the BBQ apron (two on the split-leg and woodworking aprons), shown as numbers in the designer preview. {{#if extraEngraving}}Two engravings are included in the price, and the chest (spots 1 and 2) counts as one. Each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}} Send logos as PNG, JPG, PDF or SVG.</p></div></details>
       <details><summary>Which leather colours can I choose?</summary><div><p>Black, tan (light brown) and dark brown. Pick one for the body of the apron and one for the straps, loops and pockets. Leather is a natural material, so tone and grain vary a little from piece to piece.</p></div></details>
       <details><summary>Where do you ship, and how long does it take?</summary><div><p>Every apron is handmade in Colombia and shipped worldwide with a tracking number. <span class="todo">TODO (owner): add typical production time and delivery time by region.</span></p></div></details>
       <details><summary>Can I return a personalised apron?</summary><div><p>Because each apron is made to order with your personalisation, we can't accept change-of-mind returns. If your order arrives faulty or isn't what we agreed in your proof, we'll put it right. See <a href="/shipping-returns/">shipping, returns &amp; refunds</a>.</p></div></details>
       <details><summary>How do I pay?</summary><div><p>Pay at our secure checkout. The available payment methods are shown at checkout. Prefer to order by message? We can take your order on WhatsApp too.</p></div></details>
       <details><summary>How do I look after my leather apron?</summary><div><p>Wipe it with a damp cloth and let it dry naturally, away from direct heat. Every few months, feed the leather with a conditioner such as our <a href="/shop/#!/p/619498559">leather care grease</a> to keep it supple.</p></div></details>
+      <details><summary>Do you have discounts or special offers?</summary><div><p>Offers, and prices for business, team and multi-apron orders, are agreed directly with us. Message us on <a href="{{site.whatsappUrl}}?text=Hi%20Virtual%20Leather%2C%20I%27d%20like%20to%20ask%20about%20an%20offer." target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="faq-offers">WhatsApp</a> or <a href="mailto:{{site.email}}?subject=Offers" data-track="contact" data-channel="email" data-location="faq-offers">email us</a> and we'll talk it through.</p></div></details>
       <details><summary>Can I talk to someone before ordering?</summary><div><p>Of course. Message us on <a href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="faq">WhatsApp ({{site.whatsappDisplay}})</a> or email <a href="mailto:{{site.email}}" data-track="contact" data-channel="email" data-location="faq">{{site.email}}</a>.</p></div></details>
     </div>
   </div>
@@ -371,4 +374,4 @@
 </section>
 
 <script src="/assets/js/design-art.js?v=1" defer></script>
-<script src="/assets/js/designer.js?v=34" defer></script>
+<script src="/assets/js/designer.js?v=35" defer></script>

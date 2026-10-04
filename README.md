@@ -47,13 +47,18 @@ npm run serve        # preview at http://localhost:8080
 `npm run images` re-downloads product photos from Ecwid and converts them to WebP. Edit the list in `tools/images.mjs` first.
 
 ### One way to order an apron
-Aprons that the designer makes (the products with a `"designer"` style in `src/data/products.json`) are ordered only through the designer. Their homepage cards open it, and the shop's own page for them (`/shop/#!/p/<id>`, including links from inside the shop) redirects to `/?style=<style>#design` with that apron chosen. Under the preview, the designer shows that apron's description and real photos from its Ecwid listing (`src/data/gallery.json`; run `npm run images` after changing it). Logo files can't travel with the cart, so when a design uses a logo, "Added to your cart" asks the customer to send the file on WhatsApp or by email. Other products (bags, knife rolls, extras, the patterned BBQ apron and the 2-apron bundle) still open in the shop.
+Aprons that the designer makes (the products with a `"designer"` style in `src/data/products.json`) are ordered only through the designer. Their homepage cards open it, and the shop's own page for them (`/shop/#!/p/<id>`, including links from inside the shop) redirects to `/?style=<style>#design` with that apron chosen. Under the preview, the designer shows that apron's description and real photos from its Ecwid listing (`src/data/gallery.json`; run `npm run images` after changing it). Logo files can't travel with the cart, so when a design uses a logo, "Added to your cart" asks the customer to send the file on WhatsApp or by email. Other products (bags, knife rolls, extras, and the patterned BBQ apron) still open in the shop. Business, team and multi-apron orders, and any offers, are agreed directly on WhatsApp or by email (the "Business orders" section and the FAQ say so).
 
 ### Apron designer: engraving spots and suggested designs
 
 The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none) and which it starts on. The BBQ apron has the full set; other styles get text or a logo until they're rolled out.
 
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
+
+### Engraving price
+Each apron includes 2 engravings, and the chest (spots 1 and 2) counts as one. Each extra spot is $5, whatever is on it (text, a suggested design or a logo). The designer counts the spots in use, shows "Included" or "+$5" beside each one, adds the extras to the total and puts that many **Extra engraving** items in the cart (one Ecwid product at $5).
+
+This switches on once `extraEngravingProductId` in `src/config.json` holds that Ecwid product's ID; until then, extra spots aren't charged and the site keeps saying "engraving included". To change the price, change it in Ecwid, in `ENGRAVING_PRICE` in `site/assets/js/designer.js`, and in the "$5" texts in `src/pages/index.html`.
 
 ## Publishing (free: GitHub Pages + your Hostinger domain)
 

@@ -11,6 +11,9 @@
 //   {{gallery}}            real photos per apron style for the designer (src/data/gallery.json)
 //   {{reviews}}            Etsy review cards from src/data/reviews.json (see tools/etsy-reviews.mjs)
 //   {{#if reviews}}…{{/if reviews}}  kept only when there are reviews
+//   {{#if extraEngraving}}…{{else}}…{{/if extraEngraving}}  first part once the Ecwid "Extra engraving"
+//                          product is set (extraEngravingProductId in src/config.json), else the second.
+//                          These also work inside a page's JSON header.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -86,6 +89,13 @@ function reviews() {
 }
 const hasReviews = (reviewData.reviews || []).length > 0;
 
+// {{#if flag}} … {{else}} … {{/if flag}} blocks (the {{else}} part is optional).
+const FLAGS = { reviews: hasReviews, extraEngraving: !!String(site.extraEngravingProductId || '').trim() };
+function ifFlags(s) {
+  return s.replace(/\{\{#if (\w+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if \1\}\}/g,
+    (all, k, yes, no = '') => (k in FLAGS ? (FLAGS[k] ? yes : no) : all));
+}
+
 // Real photos and a short description for each apron style, shown under the designer preview
 // (the designer shows the block for the chosen style).
 function gallery() {
@@ -106,7 +116,7 @@ async function render(tpl, page, depth = 0) {
   for (const [tag, name] of partials) {
     out = out.replace(tag, await render(await read(`src/partials/${name}.html`), page, depth + 1));
   }
-  return out
+  return ifFlags(out)
     .replace(/\{\{img ([^}]+)\}\}/g, (_, a) => img(...a.split('|').map((s) => s.trim())))
     .replace(/\{\{products (\w+)\}\}/g, (_, g) => productCards(g))
     .replace(/\{\{reviews\}\}/g, () => reviews())
@@ -117,8 +127,6 @@ async function render(tpl, page, depth = 0) {
         ? `Rated <strong>${esc(r.etsyRating)} out of 5</strong> from ${esc(r.etsyReviewCount)} reviews on our Etsy shop.`
         : '';
     })
-    // {{#if reviews}} … {{/if reviews}}: only kept when there are reviews to show.
-    .replace(/\{\{#if reviews\}\}([\s\S]*?)\{\{\/if reviews\}\}/g, (_, block) => (hasReviews ? block : ''))
     .replace(/\{\{site\.(\w+)\}\}/g, (_, k) => esc(site[k]))
     .replace(/\{\{page\.(\w+)\}\}/g, (_, k) => esc(page[k]))
     .replace(/\{\{raw page\.(\w+)\}\}/g, (_, k) => page[k] ?? '');
@@ -129,7 +137,7 @@ const pageFiles = (await fs.readdir(path.join(root, 'src/pages'))).filter((f) =>
 const sitemap = [];
 
 for (const file of pageFiles) {
-  const src = await read(`src/pages/${file}`);
+  const src = ifFlags(await read(`src/pages/${file}`));
   const m = src.match(/^<!--(\{[\s\S]*?\})-->\n?/);
   if (!m) throw new Error(`${file}: missing JSON header`);
   const page = JSON.parse(m[1]);
@@ -152,7 +160,7 @@ for (const file of pageFiles) {
 // Runtime config for the browser (only public, non-secret values).
 const pub = {
   siteUrl: site.siteUrl, whatsappNumber: site.whatsappNumber, email: site.email,
-  ecwidStoreId: site.ecwidStoreId, currency: site.currency,
+  ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
   products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {})])),
 };

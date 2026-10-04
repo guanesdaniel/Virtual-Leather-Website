@@ -5,6 +5,7 @@ window.VL_CONFIG = {
   "email": "danielguanes@virtualleather.info",
   "ecwidStoreId": "97299801",
   "currency": "USD",
+  "extraEngravingId": "619492030",
   "ga4MeasurementId": "",
   "metaPixelId": "",
   "products": {
@@ -22,11 +23,6 @@ window.VL_CONFIG = {
       "name": "Leather Knife Roll for Chefs & Butchers",
       "price": 170,
       "group": "more"
-    },
-    "619492032": {
-      "name": "2 Aprons Bundle",
-      "price": 332,
-      "group": "aprons"
     },
     "619492033": {
       "name": "Barber Leather Apron",

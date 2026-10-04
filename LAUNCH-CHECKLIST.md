@@ -9,7 +9,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [ ] **Legal entity and country** (for example a UK sole trader or company). This decides which law the Terms, Privacy and Refund policies cite.
 - [ ] **Business address** (and company and VAT number, if any) → `src/config.json`. UK and EU distance-selling rules require a geographic address on the site.
 - [ ] **Production time** after proof approval and **delivery times** by region.
-- [ ] **Customs and duties**: who pays outside the 2-apron bundle?
+- [ ] **Customs and duties**: who pays import duties and taxes in each destination country?
 - [ ] **Cancellations**: can an order be cancelled for a full refund before the proof is approved?
 - [ ] **Record retention period** for orders (for example 6 years in the UK).
 - [ ] **Warranty**: do you offer one (your partner offers 1 year)? If yes, it can be added as a selling point.
@@ -19,6 +19,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 ## Setup tasks
 - [ ] Ecwid: check that your plan allows the store to run on your own domain. Then in *Settings → General → Store profile*, add `https://virtualleather.net/shop/` as the storefront URL so emails and SEO links point to the new site.
 - [ ] Ecwid: keep Ecwid's own GA and Facebook Pixel integrations **off** (see README).
+- [ ] Ecwid: create the **"Extra engraving"** product ($5, no shipping, in no category) and put its product ID in `src/config.json` → `extraEngravingProductId`. Until then the designer doesn't charge for engravings beyond the 2 included (README, "Engraving price").
 - [ ] Ecwid: consider making "Email for design confirmation" and "Phone Number for shipping confirmation" **optional** product options. Checkout already collects both, so customers wouldn't be asked twice (less data, faster checkout).
 - [ ] Hostinger DNS: point `virtualleather.net` at GitHub Pages (4 A records + `www` CNAME, see README). Then in GitHub → Settings → Pages, tick "Enforce HTTPS".
 - [ ] Meta: verify the domain and confirm that test events arrive.
