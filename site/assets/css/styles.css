@@ -346,10 +346,11 @@ fieldset.panel { margin: 0; min-width: 0; }
 
 /* Designer: engraving spots, font picker, suggested designs and size controls */
 .slot { border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 4px 14px 12px; margin: 0 0 14px; background: rgba(255, 255, 255, .55); min-width: 0; transition: border-color .15s; }
-.slot > legend { font-weight: 700; padding: 0 6px; margin-left: -6px; display: flex; align-items: center; gap: 8px; }
+.slot > legend { font-weight: 700; padding: 0 6px; margin-left: -6px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .slot-num { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: .85rem; }
 .slot.is-active { border-color: var(--ink); }
 .slot .slot-hint { margin: 2px 0 8px; }
+.slot-where { font-weight: 500; color: var(--muted); white-space: pre; }
 .slot .mode-opts { margin: 4px 0 12px; }
 .slot .option-group { margin-bottom: 12px; }
 .slot-body .field { margin-bottom: 10px; }

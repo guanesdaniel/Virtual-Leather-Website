@@ -126,16 +126,18 @@
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
   var SLOT_PLANS = {
     bbq: {
-      1: { modes: ['text', 'design', 'logo', 'none'], def: 'text', designs: ['grillmaster'] },
-      2: { modes: ['text', 'none'], def: 'text', lines: 2, noneLabel: 'None (bigger chest design)',
+      1: { modes: ['none', 'text', 'design', 'logo'], def: 'text', designs: ['grillmaster'] },
+      2: { modes: ['none', 'text'], def: 'text', lines: 2, noneLabel: 'None (bigger chest design)',
         hint: 'Smaller text under the chest. Designs and logos usually fill the chest, so you can remove this spot to make them bigger.' },
-      3: { modes: ['design', 'text', 'logo', 'none'], def: 'design', designs: ['beer'], hint: 'Above the beer holder.' }
+      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder' },
+      4: { modes: ['none', 'text', 'logo'], def: 'none', where: 'Top of pocket' }
     }
   };
   function planFor(styleKey, p) {
     var plan = (SLOT_PLANS[styleKey] || {})[p];
     if (plan) return plan;
-    return p === '1' || p === '2' ? { modes: ['text', 'logo', 'none'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
+    // "None" always comes first, so every spot lists its choices in the same order.
+    return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
 
   // Suggested designs, drawn in a 1000-wide box (height = 1000 / aspect). Text the customer fills in
@@ -639,7 +641,8 @@
     slotsBox.innerHTML = SLOT_KEYS.map(function (p) {
       var id = p;
       return '<fieldset class="slot" id="slot-' + id + '" data-slot="' + id + '">' +
-        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> ' + esc(slotTitle(p)) + '</legend>' +
+        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> ' + esc(slotTitle(p)) +
+          '<span class="slot-where"></span></legend>' +
         '<p class="hint slot-hint" id="hint-' + id + '"></p>' +
         '<div class="options mode-opts" role="group" aria-label="What goes in ' + esc(slotTitle(p)) + '">' +
           ['text', 'design', 'logo', 'none'].map(function (m) {
@@ -840,6 +843,9 @@
         .filter(function (m) { return plan.modes.indexOf(m) !== -1; }).join();
       if (order !== plan.modes.join()) plan.modes.forEach(function (m) { group.appendChild(group.querySelector('input[value="' + m + '"]').closest('.opt')); });
       var mode = val('mode-' + p) || plan.def;
+      // Where the spot is on this style (e.g. "Top of drink holder"), shown beside its name.
+      var where = card.querySelector('.slot-where'), whereText = plan.where ? '\u00b7 ' + plan.where : '';
+      if (where.textContent !== whereText) where.textContent = whereText;
       var hint = card.querySelector('.slot-hint');
       hint.textContent = plan.hint || '';
       hint.hidden = !plan.hint;
