@@ -11,7 +11,7 @@
   var C = window.VL_CONFIG || {};
   var VL = window.VL = window.VL || {};
   var NS = 'http://www.w3.org/2000/svg';
-  var PRICE = 185, EXTRA_PRICE = 18;
+  var PRICE = 185, EXTRA_PRICE = 15;
   // Engraving: the first FREE_ENGRAVINGS spots are included and the chest (spots 1 and 2) counts as one.
   // Each spot after that adds one "Extra engraving" product to the cart. This is off until that Ecwid
   // product's ID is set (extraEngravingProductId in src/config.json).
