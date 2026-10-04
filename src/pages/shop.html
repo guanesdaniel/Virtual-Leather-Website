@@ -3,7 +3,8 @@
   "description": "Shop personalised leather aprons, knife rolls, backpacks and duffle bags. Made to measure in Colombia and shipped worldwide. Secure checkout.",
   "bodyClass": "shop"
 }-->
-<div class="wrap shop-intro">
+{{#if extraEngraving}}<style>/* The extra engraving is added from the designer, never on its own */ [class*="product--id-{{site.extraEngravingProductId}}"] { display: none !important; }</style>
+{{/if extraEngraving}}<div class="wrap shop-intro">
   <h1>Shop</h1>
   <p class="muted">Every piece is handmade and personalised to order. Prefer a live preview? <a href="/#design">Use the apron designer</a>.</p>
   <p class="edit-designs" data-edit-designs hidden></p>
