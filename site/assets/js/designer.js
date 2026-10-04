@@ -12,6 +12,10 @@
   var VL = window.VL = window.VL || {};
   var NS = 'http://www.w3.org/2000/svg';
   var PRICE = 185, EXTRA_PRICE = 18;
+  // Engraving: the first FREE_ENGRAVINGS spots are included and the chest (spots 1 and 2) counts as one.
+  // Each spot after that adds one "Extra engraving" product to the cart. This is off until that Ecwid
+  // product's ID is set (extraEngravingProductId in src/config.json).
+  var FREE_ENGRAVINGS = 2, ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
 
   var STYLES = {
     bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
@@ -642,7 +646,7 @@
       var id = p;
       return '<fieldset class="slot" id="slot-' + id + '" data-slot="' + id + '">' +
         '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> ' + esc(slotTitle(p)) +
-          '<span class="slot-where"></span></legend>' +
+          '<span class="slot-where"></span><span class="slot-price"></span></legend>' +
         '<p class="hint slot-hint" id="hint-' + id + '"></p>' +
         '<div class="options mode-opts" role="group" aria-label="What goes in ' + esc(slotTitle(p)) + '">' +
           ['text', 'design', 'logo', 'none'].map(function (m) {
@@ -771,6 +775,8 @@
   function describe(st) {
     var parts = slotLines(st, false);
     if (!parts.length) parts.push('Engraving: none');
+    var eng = engravings(st);
+    if (eng.extra) parts.push('Engravings: ' + eng.count + ' (' + FREE_ENGRAVINGS + ' included + ' + eng.extra + ' extra)');
     if (st.notes) parts.push('Notes: ' + st.notes);
     parts.push('Designed on virtualleather.net');
     return parts.join(' | ');
@@ -779,7 +785,8 @@
   var summaryEls = {
     style: document.getElementById('sum-style'), colors: document.getElementById('sum-colors'),
     engraving: document.getElementById('sum-engraving'), extras: document.getElementById('sum-extras'),
-    total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag')
+    total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag'),
+    engravings: document.getElementById('sum-engravings'), engravingsDt: document.getElementById('sum-engravings-dt')
   };
   var wingField = document.getElementById('wing-color-field');
   var openerField = document.getElementById('opener-color-field');
@@ -792,7 +799,27 @@
   function openerColor(st) { return COLORS[st.openerColor] ? st.openerColor : st.acc; }
   function openerName(st) { return SHORT[openerColor(st)]; }
 
-  function total(st) { return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0); }
+  // Engraving count for the price. A spot counts when something is on it (text, a design or a logo),
+  // and the chest (spots 1 and 2) counts once. Spots are counted in order (chest first), so the first
+  // FREE_ENGRAVINGS are included. Returns each spot's tag ('included' or 'extra') and the number of extras.
+  function engravings(st) {
+    var tags = {}, n = 0, chest = false;
+    positionsOf(st.style).forEach(function (p) {
+      var sl = st.slots[p];
+      if (!(sl.mode === 'logo' || (sl.mode === 'design' && DESIGNS[sl.design]) || (sl.mode === 'text' && sl.text))) return;
+      var isChest = p === '1' || p === '2';
+      if (!isChest || !chest) n++;
+      if (isChest) chest = true;
+      tags[p] = n > FREE_ENGRAVINGS ? 'extra' : 'included';
+    });
+    if (!ENGRAVING_ID) return { count: n, extra: 0, tags: {} };
+    return { count: n, extra: Math.max(0, n - FREE_ENGRAVINGS), tags: tags };
+  }
+
+  function total(st) {
+    return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0) +
+      engravings(st).extra * ENGRAVING_PRICE;
+  }
 
   // The WhatsApp message: short, plain lines that open by asking to talk the design through.
   // (The full workshop detail, with fonts and sizes, goes in the order description instead.)
@@ -818,6 +845,8 @@
         lines.push('Under chest (2): left empty so the chest design is bigger');
       }
     });
+    var eng = engravings(st);
+    if (eng.extra) lines.push('Extra engravings: ' + eng.extra + ' (+$' + eng.extra * ENGRAVING_PRICE + ')');
     if (st.wings) extras.push('leather wings (' + wingName(st) + ')');
     if (st.opener) extras.push('bottle opener (' + openerName(st) + ')');
     if (st.grease) extras.push('protective leather grease');
@@ -896,6 +925,17 @@
     });
   }
 
+  // Price tag beside each spot in use: "Included", or "+$5" once the included engravings are used up.
+  function syncPrices(st) {
+    var tags = engravings(st).tags;
+    SLOT_KEYS.forEach(function (p) {
+      var tag = document.getElementById('slot-' + p).querySelector('.slot-price');
+      var text = tags[p] === 'extra' ? '+$' + ENGRAVING_PRICE : tags[p] === 'included' ? 'Included' : '';
+      if (tag.textContent !== text) tag.textContent = text;
+      tag.classList.toggle('is-extra', tags[p] === 'extra');
+    });
+  }
+
   // Keep each size slider within what fits its spot, so the % shown always matches the preview.
   // Returns true if a slider had to come down (the preview is then redrawn).
   function clampSizes(st) {
@@ -935,12 +975,16 @@
     draw(st);
     if (clampSizes(st)) { st = read(); draw(st); }
     syncSizes(st);
+    syncPrices(st);
     summaryEls.style.textContent = STYLES[st.style].name;
     summaryEls.colors.textContent = COLORS[st.main].label + ' / ' + COLORS[st.acc].label;
     summaryEls.engraving.textContent = engravingSummary(st, '', 'None');
     var ex = [];
     if (st.wings) ex.push('Wings (' + wingName(st) + ')'); if (st.opener) ex.push('Bottle opener (' + openerName(st) + ')'); if (st.grease) ex.push('Leather grease');
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
+    var extraEng = engravings(st).extra;
+    summaryEls.engravings.hidden = summaryEls.engravingsDt.hidden = !extraEng;
+    summaryEls.engravings.textContent = extraEng + ' × $' + ENGRAVING_PRICE;
     summaryEls.total.textContent = '$' + total(st);
     summaryEls.tag.textContent = STYLES[st.style].name;
     // Real photos and description of the chosen apron, under the preview.
@@ -1151,11 +1195,11 @@
 
   function setStatus(msg, kind) { status.textContent = msg; status.setAttribute('data-kind', kind || ''); }
 
-  function addProduct(E, id, options) {
+  function addProduct(E, id, options, quantity) {
     return new Promise(function (resolve, reject) {
       var done = false;
       var t = setTimeout(function () { if (!done) reject(new Error('timeout')); }, 12000);
-      E.Cart.addProduct({ id: id, quantity: 1, options: options, callback: function (success) {
+      E.Cart.addProduct({ id: id, quantity: quantity || 1, options: options, callback: function (success) {
         done = true; clearTimeout(t);
         success === false ? reject(new Error('rejected')) : resolve();
       } });
@@ -1207,7 +1251,8 @@
       return addProduct(E, style.id, options)
         .then(function () { return st.wings ? addProduct(E, 688211109, { Color: COLORS[wingColor(st)].addon }) : null; })
         .then(function () { return st.opener ? addProduct(E, 619483308, { Color: COLORS[openerColor(st)].addon }) : null; })
-        .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; });
+        .then(function () { return st.grease ? addProduct(E, 619498559, {}) : null; })
+        .then(function () { var n = engravings(st).extra; return n ? addProduct(E, ENGRAVING_ID, {}, n) : null; });
     }).then(function () {
       setStatus('');
       showLogoStep(st);

@@ -357,6 +357,9 @@ fieldset.panel { margin: 0; min-width: 0; }
 .slot.is-active { border-color: var(--ink); }
 .slot .slot-hint { margin: 2px 0 8px; }
 .slot-where { font-weight: 500; color: var(--muted); white-space: pre; }
+.slot-price { margin-left: auto; padding: 1px 10px; border: 1.5px solid var(--line); border-radius: 999px; font-size: .8rem; font-weight: 700; color: var(--ink); }
+.slot-price:empty { display: none; }
+.slot-price.is-extra { background: var(--ink); border-color: var(--ink); color: #fff; }
 .slot .mode-opts { margin: 4px 0 12px; }
 .slot .option-group { margin-bottom: 12px; }
 .slot-body .field { margin-bottom: 10px; }

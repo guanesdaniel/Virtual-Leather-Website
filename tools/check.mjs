@@ -20,6 +20,7 @@ async function walk(dir) {
 const warnings = [], errors = [];
 for (const k of ['ga4MeasurementId', 'metaPixelId', 'businessAddress']) if (!cfg[k]) warnings.push(`src/config.json: "${k}" is empty`);
 if (!reviews.reviews.length) warnings.push('src/data/reviews.json: no Etsy reviews added yet');
+if (!cfg.extraEngravingProductId) warnings.push('src/config.json: "extraEngravingProductId" is empty, so extra engravings (+$5) are not charged yet');
 
 const files = (await walk(siteDir)).filter((f) => f.endsWith('.html'));
 for (const f of files) {
