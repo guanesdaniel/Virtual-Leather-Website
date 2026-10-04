@@ -265,20 +265,19 @@
   </div>
 </section>
 
+{{#if reviews}}
 <section class="section paper" id="reviews" aria-labelledby="reviews-title">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Reviews</p>
       <h2 id="reviews-title">From our customers.</h2>
-      <p>{{reviewsSummary}} We show customers' words exactly as they wrote them.</p>
+      <p>{{reviewsSummary}} These are our most recent reviews, in the customers' own words.</p>
     </div>
 {{reviews}}
-    <div class="review-cta">
-      <a class="btn btn-dark" href="{{site.etsyReviewsUrl}}" target="_blank" rel="noopener">Read all reviews on Etsy<span class="visually-hidden"> (opens in a new tab)</span></a>
-      <a href="{{site.etsyUrl}}" target="_blank" rel="noopener">Or shop with us on Etsy</a>
-    </div>
+    <p class="small muted etsy-notice">Reviews from our Etsy shop, shown with the Etsy API. The term "Etsy" is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.</p>
   </div>
 </section>
+{{/if reviews}}
 
 <section class="section" aria-labelledby="how-title">
   <div class="wrap">
@@ -332,7 +331,7 @@
       <details><summary>Which leather colours can I choose?</summary><div><p>Black, tan (light brown) and dark brown. Pick one for the body of the apron and one for the straps, loops and pockets. Leather is a natural material, so tone and grain vary a little from piece to piece.</p></div></details>
       <details><summary>Where do you ship, and how long does it take?</summary><div><p>Every apron is handmade in Colombia and shipped worldwide with a tracking number. <span class="todo">TODO (owner): add typical production time and delivery time by region.</span></p></div></details>
       <details><summary>Can I return a personalised apron?</summary><div><p>Because each apron is made to order with your personalisation, we can't accept change-of-mind returns. If your order arrives faulty or isn't what we agreed in your proof, we'll put it right. See <a href="/shipping-returns/">shipping, returns &amp; refunds</a>.</p></div></details>
-      <details><summary>How do I pay?</summary><div><p>Pay at our secure checkout. The available payment methods are shown at checkout. You can also order through our <a href="{{site.etsyUrl}}" target="_blank" rel="noopener">Etsy shop</a>.</p></div></details>
+      <details><summary>How do I pay?</summary><div><p>Pay at our secure checkout. The available payment methods are shown at checkout. Prefer to order by message? We can take your order on WhatsApp too.</p></div></details>
       <details><summary>How do I look after my leather apron?</summary><div><p>Wipe it with a damp cloth and let it dry naturally, away from direct heat. Every few months, feed the leather with a conditioner such as our <a href="/shop/#!/p/619498559">leather care grease</a> to keep it supple.</p></div></details>
       <details><summary>Can I talk to someone before ordering?</summary><div><p>Of course. Message us on <a href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="faq">WhatsApp ({{site.whatsappDisplay}})</a> or email <a href="mailto:{{site.email}}" data-track="contact" data-channel="email" data-location="faq">{{site.email}}</a>.</p></div></details>
     </div>

@@ -6,7 +6,7 @@ The Virtual Leather website: a fast, hand-coded static site with the existing **
 
 | Page | Purpose |
 |---|---|
-| `/` | Home, laid out like marketcenterco.com: hero → gift ideas → **live apron designer** → customer gallery → products → Etsy reviews → how to order → business orders → FAQ |
+| `/` | Home, laid out like marketcenterco.com: hero → gift ideas → **live apron designer** → customer gallery → products → reviews (from Etsy, shown on the site) → how to order → business orders → FAQ |
 | `/shop/` | Full Ecwid storefront (all products, cart, checkout, customer account) |
 | `/about/` | Story |
 | `/shipping-returns/`, `/terms/`, `/privacy/`, `/cookies/`, `/accessibility/` | Policies |
@@ -19,7 +19,19 @@ Everything you'd normally change is in **`src/`**:
 
 - `src/config.json`: business details, WhatsApp, email, **GA4 and Meta Pixel IDs**, Etsy links.
 - `src/data/products.json`: product cards (name, price, summary). Prices must match Ecwid.
-- `src/data/reviews.json`: Etsy reviews shown on the homepage. Paste the customer's exact words and star rating.
+- `src/data/reviews.json`: Etsy reviews shown on the homepage. Filled in automatically from Etsy (see below); don't edit by hand.
+
+### Etsy reviews on the site (automatic)
+The homepage shows your most recent written Etsy reviews (any rating, in the customers' own words) and your Etsy star average and review count. They're fetched through Etsy's official API, so customers read them here and are never sent to Etsy. Until reviews are available, the Reviews section and its menu link stay hidden.
+
+One-time setup (about 10 minutes, free):
+1. Signed in to your Etsy shop account, open **https://www.etsy.com/developers/register** and create an app. Name: "Virtual Leather website". Purpose: show my shop's reviews on my own website.
+2. Once the app is active, open **Your apps** and copy its **Keystring** and **Shared secret**.
+3. On GitHub, go to the repository → **Settings → Secrets and variables → Actions → New repository secret**. Name: `ETSY_API_KEY`. Value: the keystring and the shared secret joined by a colon, `keystring:sharedsecret`. Don't paste the key anywhere else (not in chat, email or code).
+4. Go to **Actions → Build and deploy → Run workflow**. Reviews then refresh automatically every 6 hours.
+
+To test locally: `ETSY_API_KEY=keystring:sharedsecret npm run reviews && npm run build`. The page shows Etsy's required notice: "This application uses the Etsy API but is not endorsed or certified by Etsy, Inc."
+
 - `src/pages/*.html`: page content. `src/partials/*.html`: header, footer, cookie banner, layout.
 - `site/assets/css/styles.css` and `site/assets/js/*.js`: design and behaviour.
 

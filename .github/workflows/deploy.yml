@@ -1,6 +1,8 @@
 # Builds the site and publishes site/ to GitHub Pages (free hosting) via the gh-pages branch.
 # The domain virtualleather.net (registered at Hostinger) points to GitHub Pages through DNS records;
 # see README "Publishing". Pull requests only build and check.
+# Etsy reviews are fetched before each build (when the ETSY_API_KEY secret is set) and refreshed
+# every 6 hours by the schedule below.
 name: Build and deploy
 
 on:
@@ -8,6 +10,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -26,6 +30,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Fetch Etsy reviews (official Etsy API; skipped without the ETSY_API_KEY secret)
+        if: github.event_name != 'pull_request'
+        run: npm run reviews
+        env:
+          ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
       - run: npm run build
       - run: npm run check
       - name: Publish to GitHub Pages (gh-pages branch)
