@@ -35,10 +35,24 @@ if (!KEY) {
   process.exit(0);
 }
 
+// Etsy allows a few requests per second: requests are spaced out, and one refused for going too fast
+// (429) is retried after a pause (Etsy's Retry-After if given, else 1, 2, 4, 8 seconds).
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+const GAP = Number(process.env.ETSY_REQUEST_GAP_MS ?? 400);
+let last = 0;
 async function api(path) {
-  const res = await fetch(BASE + path, { headers: { 'x-api-key': KEY, accept: 'application/json' } });
-  if (!res.ok) throw new Error(`${path.split('?')[0]} returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return res.json();
+  for (let attempt = 0; ; attempt++) {
+    await wait(Math.max(0, last + GAP - Date.now()));
+    last = Date.now();
+    const res = await fetch(BASE + path, { headers: { 'x-api-key': KEY, accept: 'application/json' } });
+    if (res.status === 429 && attempt < 4) {
+      const after = Number(res.headers.get('retry-after'));
+      await wait(after > 0 && after <= 60 ? after * 1000 : 1000 * 2 ** attempt);
+      continue;
+    }
+    if (!res.ok) throw new Error(`${path.split('?')[0]} returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return res.json();
+  }
 }
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
@@ -71,7 +85,7 @@ try {
   if (!shop) throw new Error(`no Etsy shop called ${SHOP}`);
 
   const all = [];
-  for (let offset = 0; offset < 500; offset += 100) {
+  for (let offset = 0; offset < 1000; offset += 100) {
     const page = await api(`/shops/${shop.shop_id}/reviews?limit=100&offset=${offset}`);
     all.push(...(page.results || []));
     if (!page.results || page.results.length < 100) break;
