@@ -38,7 +38,7 @@ npm run serve        # preview at http://localhost:8080
 
 The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none) and which it starts on. The BBQ apron has the full set; other styles get text or a logo until they're rolled out.
 
-The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change.
+The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 
 ## Publishing (free: GitHub Pages + your Hostinger domain)
 
