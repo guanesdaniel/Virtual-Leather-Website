@@ -38,6 +38,8 @@ npm run serve        # preview at http://localhost:8080
 
 The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLOT_PLANS`: which choices each spot offers (text, suggested designs, the customer's logo, none) and which it starts on. The BBQ apron has the full set; other styles get text or a logo until they're rolled out.
 
+**Design links and pictures.** Every design has a link (`https://virtualleather.net/#d=…`) that reopens it exactly in the designer. It's in the WhatsApp message and in the Ecwid order description, so you can see what the customer designed with one tap. The link holds only the design: no contact details and no logo files, and the part after `#` never reaches any server. Customers can also share (on phones) or save a picture of their design, with any logos they uploaded.
+
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 
 ## Publishing (free: GitHub Pages + your Hostinger domain)
