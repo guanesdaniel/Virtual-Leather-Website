@@ -1283,8 +1283,11 @@
    *     dark parts (outlines, dark fur, lettering) are engraved and the light parts left clear, as drawn.
    *     A one-tone drawing (white lettering on a navy box) is engraved whole.
    *  3. On a light background, light colours beside the logo (a yellow sun next to black lettering) are
-   *     engraved too, while light shapes inside it (a star inside a disk) stay clear. On a dark background,
-   *     the soft rim of light shapes (snow dots) isn't engraved.
+   *     engraved too, while light shapes inside it (a star inside a disk) stay clear; a light area holding
+   *     details (lettering on a gold button) is outlined instead. On a dark background, the soft rim of light
+   *     shapes (snow dots) isn't engraved.
+   *  A shaded picture (a photo, a 3-D egg: soft light-to-dark changes rather than drawn edges) is drawn as a
+   *     sketch instead: its outline plus what's darker than its surroundings (eyes, a smile).
    * Logos on a see-through background are engraved by their dark parts, or by their shape when they're light.
    * Then edges are smoothed, specks and pinholes removed, and margins trimmed. */
   function otsu(hist, total) {
@@ -1357,6 +1360,41 @@
     ctx.drawImage(img, 0, 0, cw, ch);
     return { w: cw, h: ch, data: ctx.getImageData(0, 0, cw, ch).data };
   }
+  // The band, a few pixels wide, along the inside of the background around the drawing: its outline.
+  function outlineBand(w, h, around) {
+    var band = around, t = Math.max(2, Math.round(Math.min(w, h) * 0.006));
+    for (var i = 0; i < t; i++) band = grow(w, h, band);
+    return band;
+  }
+  // A shaded picture as a sketch: its outline, plus what is darker than the drawing around it (a window of about a
+  // tenth of the picture, background left out), so the shading itself stays clear.
+  function sketch(w, h, L, bgAll, bgm) {
+    var n = w * h, ink = new Uint8Array(n), band = outlineBand(w, h, bgm), W = w + 1, x, y;
+    var sum = new Float64Array(W * (h + 1)), cnt = new Float64Array(W * (h + 1));
+    for (y = 0; y < h; y++) {
+      var rs = 0, rc = 0;
+      for (x = 0; x < w; x++) {
+        var q = y * w + x;
+        if (!bgAll[q]) { rs += L[q]; rc++; }
+        sum[(y + 1) * W + x + 1] = sum[y * W + x + 1] + rs;
+        cnt[(y + 1) * W + x + 1] = cnt[y * W + x + 1] + rc;
+      }
+    }
+    var R = Math.max(4, Math.round(Math.min(w, h) * 0.05));
+    for (y = 0; y < h; y++) {
+      var y0 = Math.max(0, y - R), y1 = Math.min(h, y + R + 1);
+      for (x = 0; x < w; x++) {
+        var p = y * w + x;
+        if (bgAll[p]) continue;
+        if (band[p]) { ink[p] = 1; continue; }
+        var x0 = Math.max(0, x - R), x1 = Math.min(w, x + R + 1);
+        var s = sum[y1 * W + x1] - sum[y0 * W + x1] - sum[y1 * W + x0] + sum[y0 * W + x0];
+        var c = cnt[y1 * W + x1] - cnt[y0 * W + x1] - cnt[y1 * W + x0] + cnt[y0 * W + x0];
+        if (c && L[p] < s / c - 24) ink[p] = 1;
+      }
+    }
+    return ink;
+  }
   // Which pixels to engrave (before clean-up): 1 = engraved.
   function engraveMask(im) {
     var w = im.w, h = im.h, n = w * h, d = im.data, body = new Uint8Array(n), L = new Uint8Array(n), clear = 0, i, j, x, y;
@@ -1402,7 +1440,21 @@
     for (i = 0; i < 256; i++) hist[i] = 0;
     for (i = 0; i < n; i++) if (!bgAll[i]) { hist[L[i]]++; cnt++; }
     if (!cnt) return ink;
-    var cut = otsu(hist, cnt), rim = grow(w, h, grow(w, h, bgAll)), cd = 0, cl = 0, sd = 0, sl = 0;
+    var cut = otsu(hist, cnt);
+    // A shaded picture (a photo, a 3-D egg) fades from light to dark instead of having drawn edges, so its main
+    // idea is its outline and the details darker than their surroundings (eyes, a smile), not its shading.
+    var soft = [];
+    for (y = 1; y < h - 1; y++) for (x = 1; x < w - 1; x++) {
+      j = y * w + x;
+      if (bgAll[j] || L[j] > cut) continue;
+      if ((!bgAll[j - 1] && L[j - 1] > cut) || (!bgAll[j + 1] && L[j + 1] > cut) || (!bgAll[j - w] && L[j - w] > cut) || (!bgAll[j + w] && L[j + w] > cut))
+        soft.push(Math.abs(L[j + 1] - L[j - 1]) + Math.abs(L[j + w] - L[j - w]));
+    }
+    if (soft.length >= 50) {
+      soft.sort(num);
+      if (soft[soft.length >> 2] < 25) return sketch(w, h, L, bgAll, bgm);
+    }
+    var rim = grow(w, h, grow(w, h, bgAll)), cd = 0, cl = 0, sd = 0, sl = 0;
     for (i = 0; i < n; i++) {
       if (rim[i]) continue;
       if (L[i] <= cut) { cd++; sd += L[i]; } else { cl++; sl += L[i]; }
@@ -1417,11 +1469,41 @@
       if (!bgLight && rim[i] && L[i] > bgL + 40) continue;   // the soft rim of light shapes on a dark background
       ink[i] = 1;
     }
-    // 3. Light colours beside the logo, on a light background.
+    // 3. On a light background, light colours beside the logo (a yellow sun) are engraved and light shapes inside
+    //    it stay clear; a light area holding details (lettering on a gold button) gets only its outline, so the
+    //    details stay readable.
     if (bgLight) {
-      var light = new Uint8Array(n);
+      var light = new Uint8Array(n), id = new Int32Array(n), sizes = [0], touches = [0], holds = [0], nid = 0;
       for (i = 0; i < n; i++) light[i] = !bgAll[i] && !ink[i] ? 1 : 0;
-      engraveBeside(w, h, ink, light, bgm);
+      patches(w, h, light, function (list, len) {
+        var out = 0;
+        nid++;
+        for (var m = 0; m < len; m++) {
+          var q = list[m], qx = q % w;
+          id[q] = nid;
+          if (!out && ((qx > 0 && bgm[q - 1]) || (qx < w - 1 && bgm[q + 1]) || (q >= w && bgm[q - w]) || (q < n - w && bgm[q + w]))) out = 1;
+        }
+        sizes.push(len); touches.push(out); holds.push(0);
+      });
+      // Dark parts that don't reach the background around the logo sit inside the light areas they touch.
+      patches(w, h, ink, function (list, len) {
+        var seen = [], free = false;
+        for (var m = 0; m < len && !free; m++) {
+          var q = list[m], qx = q % w, nb = [qx > 0 ? q - 1 : -1, qx < w - 1 ? q + 1 : -1, q >= w ? q - w : -1, q < n - w ? q + w : -1];
+          for (var k = 0; k < 4; k++) {
+            if (nb[k] < 0) continue;
+            if (bgm[nb[k]]) { free = true; break; }
+            if (id[nb[k]]) seen.push(id[nb[k]]);
+          }
+        }
+        if (!free) for (m = 0; m < seen.length; m++) holds[seen[m]] = 1;
+      });
+      var edgeBand = outlineBand(w, h, bgm), minPatch = Math.max(16, n * 0.0005);
+      for (i = 0; i < n; i++) {
+        var pid = id[i];
+        if (!pid || !touches[pid] || sizes[pid] < minPatch) continue;
+        if (!holds[pid] || edgeBand[i]) ink[i] = 1;
+      }
     }
     return ink;
   }
