@@ -6,8 +6,8 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [ ] **GA4 Measurement ID** (your own, not your partner's) → `src/config.json` `ga4MeasurementId`. Google Analytics → Admin → Create property → Web stream → copy the "G-…".
 - [x] **Meta Pixel ID**: your own pixel 298202042517671 (already connected in Ecwid) is used. Shop events come from Ecwid, designer and contact events from the website, and nothing is sent before cookie consent.
 - [x] Meta Advanced Matching / Google Enhanced Conversions: **no**. The site never sends customer emails or phone numbers to Meta or Google.
-- [ ] **Etsy reviews**: the API key is saved as the GitHub secret `ETSY_API_KEY`; waiting for Etsy to approve the app. Reviews then appear on the homepage automatically and refresh every 6 hours.
-- [ ] **UK VAT**: the business isn't VAT-registered, so turn off the 20% VAT Ecwid adds for UK addresses (Settings → Taxes & Invoices). US orders have no tax.
+- [x] **Etsy reviews**: live. The keystring and shared secret are saved as the GitHub secrets `ETSY_API_KEY` and `ETSY_SHARED_SECRET`; reviews refresh every 6 hours, and stay up if Etsy can't be reached.
+- [x] **UK VAT**: left as it is in Ecwid (owner's choice). US orders have no tax.
 - [x] **Legal entity and country**: sole trader, UK (England and Wales law).
 - [x] **Business address**: 1 Viaduct Road, Leeds LS4 2BG, United Kingdom (`src/config.json`).
 - [x] **Production time**: about 3 days after proof approval. Optional: typical **delivery times** by region, to add to the shipping page.
@@ -16,7 +16,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [x] **Record retention**: as UK tax law requires (5 years after the 31 January deadline for the tax year).
 - [ ] **Warranty**: the same as on Etsy. Send a screenshot of the Etsy policy so it can be copied word for word.
 - [ ] **Logo**: send the logo file. A "VL" monogram and wordmark are used until then.
-- [ ] Is it OK to show the customer photos in the gallery? They come from your Ecwid listings, so they're your own photos. Confirm that the customers shown (or whose names or logos appear) are happy to be featured.
+- [x] **Customer photos**: OK to show. The owner confirmed on 5 October 2026 that the customers shown in the gallery photos (and whose names or logos appear) are happy to be featured.
 
 ## Setup tasks
 - [ ] Ecwid: check that your plan allows the store to run on your own domain. Then in *Settings → General → Store profile*, add `https://virtualleather.net/shop/` as the storefront URL so emails and SEO links point to the new site.
