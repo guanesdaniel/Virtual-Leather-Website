@@ -395,13 +395,6 @@ fieldset.panel { margin: 0; min-width: 0; }
 .fit-note:empty { display: none; }
 .logo-file input[type="file"] { width: 100%; font: inherit; padding: 10px; border: 1.5px dashed #cbbba8; border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
 .logo-file input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.logo-tune { margin: 6px 0 10px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
-.logo-tune-head { margin: 0 0 8px; font-weight: 600; font-size: .95rem; }
-.logo-bw { display: block; max-width: 100%; max-height: 120px; margin: 0 0 8px; padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
-.logo-adj-row span { flex: none; font-size: .85rem; color: var(--muted); }
-.logo-swap { margin: 4px 0 6px; }
-.logo-swap[aria-pressed="true"]::before { content: "\2713\00a0"; }
-.logo-tune .hint { margin: 4px 0 0; }
 #apron-preview [data-slot] { cursor: pointer; }
 
 /* Designer: real photos of the chosen apron, photo viewer, logo step */
