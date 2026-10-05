@@ -97,9 +97,10 @@
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
-      4: { x: 851, y: 1000, fs: 58, maxW: 300, maxH: 150, logoH: 140 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      // Spot 4 lines up with the beer circle in spot 3 (same centre, same visible height: 146), as the owner asked.
+      4: { x: 851, y: 972, h: 70, fs: 58, maxW: 300, maxH: 146, logoH: 146, stdH: 146, inkH: 146 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
     },
     barber: {
@@ -108,8 +109,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100 },
       4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 220, logoH: 150 }
     },
     split: {
@@ -126,8 +127,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
       4: { x: 822, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
     },
     wood: {
@@ -147,10 +148,13 @@
     return b;
   }
   // stdW / stdH: the room used for the standard (100%) size; maxW / maxH: the most a bigger size may take.
+  // inkH: the tallest the engraving may be in that spot (the letters as they look, in any lettering, or a logo).
+  // On the lower spots 5 and 6 it's 42 units: "TEST" in Montserrat at 70 x 80%, the owner's chosen height. There
+  // the standard (100%) size is that largest one.
   function metrics(b) {
     var maxW = b.maxW || b.w + 80, maxH = b.maxH || b.h * 2;
     return { fs: b.fs || Math.min(96, b.h * 1.1), maxW: maxW, maxH: maxH, logoH: b.logoH || b.h * 1.6,
-      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7 };
+      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkH: b.inkH || 0 };
   }
   // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
   function positionsOf(styleKey) {
@@ -648,10 +652,12 @@
       // Logos and designs: an artwork box of a known aspect, standard size limited by the spot.
       var logo = sl.mode === 'logo' ? logos[p] : null, design = sl.mode === 'design' ? DESIGNS[sl.design] : null;
       var aspect = design ? design.aspect : logo ? logo.aspect : 1.6;
-      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH);
+      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = false;
+      if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
+      if (m.inkH && Math.floor(100 * m.inkH / std) <= maxPct) { maxPct = Math.floor(100 * m.inkH / std); capped = true; }
       var pct = Math.min(sl.size, maxPct), h = std * pct / 100, w = h * aspect, x = box.x - w / 2, y = box.y - h / 2;
-      fit[p] = { pct: pct, maxPct: maxPct };
+      fit[p] = { pct: pct, maxPct: maxPct, capped: capped };
       if (design) {
         var k = w / 1000;
         [['#ffe1c8', 0.22, 2], [ink, 1, 0]].forEach(function (layer) {
@@ -702,14 +708,36 @@
     });
     var widest = Math.max.apply(null, texts.map(function (t) { try { return t.getComputedTextLength(); } catch (e) { return 0; } })) || 1;
     var tall = lines.length * base * 1.08 / font.scale;
-    var std = base * Math.min(1, m.stdW / widest, m.stdH / tall);
+    var std = base * Math.min(1, m.stdW / widest, m.stdH / tall), capped = false, capSize = 0;
+    if (m.inkH) { capSize = m.inkH / inkPerSize(font, lines); std = Math.min(std, capSize); }
     var maxPct = Math.max(100, Math.floor(100 * base * Math.min(m.maxW / widest, m.maxH / tall) / std));
+    if (capSize && Math.floor(100 * capSize / std) <= maxPct) { maxPct = Math.floor(100 * capSize / std); capped = true; }
     var pct = Math.min(sl.size, maxPct), size = Math.max(12, std * pct / 100);
     texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
     var lh = size * 1.08, top = box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
     texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
     hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
-    return { pct: pct, maxPct: maxPct };
+    return { pct: pct, maxPct: maxPct, capped: capped };
+  }
+  // How tall the letters of these lines look per unit of font size in this lettering (the tallest line, from top
+  // of the highest letter to bottom of the lowest), measured on a canvas; 0.75 (Montserrat capitals) if unknown.
+  var inkCache = {}, inkCtx = null;
+  function inkPerSize(font, lines) {
+    var key = font.family + '|' + font.weight + '|' + lines.join('\n');
+    if (inkCache[key]) return inkCache[key];
+    var r = 0;
+    try {
+      inkCtx = inkCtx || document.createElement('canvas').getContext('2d');
+      inkCtx.font = font.weight + ' 100px ' + font.family;
+      lines.forEach(function (line) {
+        var mt = inkCtx.measureText(line), hgt = (mt.actualBoundingBoxAscent || 0) + (mt.actualBoundingBoxDescent || 0);
+        if (hgt / 100 > r) r = hgt / 100;
+      });
+    } catch (e) { r = 0; }
+    r = r > 0.2 ? r : 0.75;
+    // Only remember it once the lettering's own font is in (before that the canvas measures a stand-in font).
+    if (!document.fonts || document.fonts.check(font.weight + ' 100px ' + font.family)) inkCache[key] = r;
+    return r;
   }
 
   /* ---------- Engraving spots: one card per spot, built from the plans above ---------- */
@@ -1135,6 +1163,7 @@
       });
       var bigChest = p === '1' && POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && st.slots['2'].mode !== 'none';
       document.getElementById('size-' + p + '-fit').textContent = !atFit || v >= Number(input.max) ? '' :
+        f.capped ? 'That\'s the biggest size for this spot.' :
         'That\'s the biggest that fits this spot.' + (st.slots[p].mode === 'text' ? ' For bigger letters, use fewer letters or another line.' : '') +
         (bigChest && st.slots[p].mode !== 'text' ? ' Set spot 2 to "None" to make it bigger.' : '');
     });
