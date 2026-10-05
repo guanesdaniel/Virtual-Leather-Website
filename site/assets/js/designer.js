@@ -661,7 +661,8 @@
           design.draw(dg, o);
         });
       } else if (logo) {
-        var shapeRow = logo.mode === 'alpha' ? '0 0 0 1 0' : '-0.2126 -0.7152 -0.0722 1 0';
+        // The black and white logo is engraved where it is solid; a raw one (not yet converted) by its dark parts.
+        var shapeRow = logo.raw ? '-0.2126 -0.7152 -0.0722 1 0' : '0 0 0 1 0';
         [['ink-' + p, ink, 1, 0], ['hi-' + p, '#ffe1c8', 0.22, 2]].forEach(function (f) {
           var rgb = [1, 3, 5].map(function (i) { return (parseInt(f[1].substr(i, 2), 16) / 255).toFixed(3); });
           var flt = el('filter', { id: f[0], 'color-interpolation-filters': 'sRGB' }, defs);
@@ -713,7 +714,10 @@
 
   /* ---------- Engraving spots: one card per spot, built from the plans above ---------- */
   var active = '1';      // the spot being edited (outlined on the preview)
-  var logos = {};        // spot -> { src, aspect, mode, name, ok } once a logo file is chosen (kept on this device only)
+  // spot -> { src (black and white, as engraved), orig (the picture it's made from), aspect, adj, swap, name, ok }
+  // once a logo file is chosen (kept on this device only); raw = shown as uploaded, not yet in black and white.
+  var logos = {};
+  var logoPix = {};      // spot -> the logo's pixels in grey, to redo its black and white when the customer adjusts it
   var fit = {};          // spot -> { pct, maxPct } as drawn (set by drawEngraving)
   var modeTouched = {};  // spots whose choice the customer changed (others follow each style's default)
   var slotsBox = document.getElementById('slots');
@@ -772,6 +776,17 @@
           '<p class="hint" id="logo-hint-' + id + '">PNG, JPG, WebP or SVG, up to 15 MB. It stays on your device for this preview. After ordering, send us the original file by WhatsApp or email so we can engrave it sharply.</p>' +
           '<p class="hint logo-kept" id="logo-' + id + '-kept" hidden></p>' +
           '<p class="error" id="logo-' + id + '-error" aria-live="polite"></p></div>' +
+          // The logo in black and white, the way the laser engraves it, with two ways to adjust it.
+          '<div class="logo-tune" id="logo-tune-' + id + '" hidden>' +
+            '<p class="logo-tune-head">In black and white, as the laser engraves it</p>' +
+            '<img class="logo-bw" id="logo-bw-' + id + '" alt="Your logo in black and white">' +
+            '<div class="size-head"><label for="logo-adj-' + id + '">Detail</label></div>' +
+            '<div class="size-row logo-adj-row"><span aria-hidden="true">Less</span>' +
+              '<input type="range" id="logo-adj-' + id + '" data-slot="' + id + '" min="-50" max="50" step="5" value="0" aria-describedby="logo-tune-hint-' + id + '">' +
+              '<span aria-hidden="true">More</span></div>' +
+            '<button type="button" class="btn btn-sm btn-ghost logo-swap" data-slot="' + id + '" aria-pressed="false">Swap black and white</button>' +
+            '<p class="hint" id="logo-tune-hint-' + id + '">Move Detail until it looks right; Swap if the wrong part is black. We\'ll also send you a proof to approve before engraving.</p>' +
+          '</div>' +
         '</div>' +
         // Size (text, design or logo)
         '<div class="size-field">' +
@@ -908,7 +923,7 @@
           ((d.fields || []).length ? ', font ' + fontName(sl.dfont) : '') + ', size ' + size + ' of standard');
       } else if (sl.mode === 'logo') {
         out.push(short ? where + ': your logo' : where + ': customer\'s logo, size ' + size + ' of standard' +
-          (logos[p] ? ', previewed with "' + logos[p].name.slice(0, 60) + '"' : '') + ' (customer will send the file by WhatsApp or email)');
+          (logos[p] ? ', previewed with "' + logos[p].name.slice(0, 60) + '"' + bwNote(logos[p]) : '') + ' (customer will send the file by WhatsApp or email)');
       }
     });
     if (!short && st.slots['2'].mode === 'none' && list.indexOf('2') !== -1 && POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig &&
@@ -1268,7 +1283,134 @@
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
-  // Logo preview: read the file on this device, trim empty margins, and decide how to "burn" it in.
+  /* ---------- Customer logos in black and white ----------
+   * A laser either burns a spot or it doesn't, so the preview shows the logo the same way: every pixel
+   * engraved or not. It all happens on the customer's device, free, with no outside service:
+   *  - the picture is turned to grey (a light logo with see-through parts is laid on black, others on white);
+   *  - the split between dark and light is Otsu's: the cut that best separates the picture's two groups of greys;
+   *  - the background is the side that fills the picture's edges, so the logo is the part engraved;
+   *  - empty margins are trimmed.
+   * The customer can move the cut (Detail) or swap which side is engraved; we still make the laser file from
+   * the original they send us, and they approve a proof first. */
+  function otsu(hist, total) {
+    var sum = 0, sumB = 0, wB = 0, best = -1, cut = 127, i;
+    for (i = 0; i < 256; i++) sum += i * hist[i];
+    for (i = 0; i < 256; i++) {
+      wB += hist[i];
+      if (!wB) continue;
+      var wF = total - wB;
+      if (!wF) break;
+      sumB += i * hist[i];
+      var between = wB * wF * Math.pow(sumB / wB - (sum - sumB) / wF, 2);
+      if (between > best) { best = between; cut = i; }
+    }
+    return cut;   // greys up to the cut are the dark side
+  }
+  // The picture in greys at working size (up to 900 px; small pictures are enlarged so edges stay smooth).
+  // Throws when the browser won't let the page read the picture.
+  function logoPixels(img) {
+    var w = img.naturalWidth || img.width || 600, h = img.naturalHeight || img.height || 600;
+    var k = Math.min(4, 900 / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k)), n = cw * ch;
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, cw, ch);
+    var d = ctx.getImageData(0, 0, cw, ch).data, clear = 0, solid = 0, lum = 0, i, x, y;
+    for (i = 0; i < n; i++) {
+      if (d[i * 4 + 3] < 128) clear++;
+      else { solid++; lum += 0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]; }
+    }
+    var bg = clear > n * 0.05 && solid && lum / solid > 153 ? 0 : 255;
+    // v: each pixel's grey, its own colour's where the picture is solid (body), the backing's where see-through.
+    var v = new Uint8Array(n), body = new Uint8Array(n), hist = [];
+    for (i = 0; i < 256; i++) hist[i] = 0;
+    for (i = 0; i < n; i++) {
+      body[i] = d[i * 4 + 3] >= 128 ? 1 : 0;
+      v[i] = body[i] ? Math.round(0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]) : bg;
+      hist[v[i]]++;
+    }
+    var cut = otsu(hist, n), edge = 0, darkEdge = 0;
+    for (x = 0; x < cw; x++) { edge += 2; darkEdge += (v[x] <= cut ? 1 : 0) + (v[n - cw + x] <= cut ? 1 : 0); }
+    for (y = 1; y < ch - 1; y++) { edge += 2; darkEdge += (v[y * cw] <= cut ? 1 : 0) + (v[y * cw + cw - 1] <= cut ? 1 : 0); }
+    return { w: cw, h: ch, v: v, body: body, cut: cut, inkDark: darkEdge * 2 <= edge, seeThrough: clear > 0, canvas: c };
+  }
+  // The logo in black (engraved) on clear, trimmed: sets its src, aspect and ok (false = nothing to engrave).
+  function applyBW(l, px) {
+    var inkDark = px.inkDark !== !!l.swap, adj = Number(l.adj) || 0;
+    var cut = inkDark ? px.cut + adj : px.cut - adj;   // more Detail = more of the picture engraved
+    var w = px.w, h = px.h, v = px.v, body = px.body, x0 = w, y0 = h, x1 = -1, y1 = -1, x, y, i;
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var ctx = c.getContext('2d'), out = ctx.createImageData(w, h), o = out.data;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      i = y * w + x;
+      // See-through parts of a picture are never engraved, whichever side is chosen.
+      if (body[i] && (inkDark ? v[i] <= cut : v[i] > cut)) {
+        o[i * 4 + 3] = 255;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    if (x1 < 0) { l.src = c.toDataURL('image/png'); l.aspect = w / h; l.ok = false; return; }
+    ctx.putImageData(out, 0, 0);
+    var pad = 2, cx0 = Math.max(0, x0 - pad), cy0 = Math.max(0, y0 - pad);
+    var tw = Math.min(w, x1 + pad + 1) - cx0, th = Math.min(h, y1 + pad + 1) - cy0;
+    var t = document.createElement('canvas'); t.width = tw; t.height = th;
+    t.getContext('2d').drawImage(c, cx0, cy0, tw, th, 0, 0, tw, th);
+    l.src = t.toDataURL('image/png'); l.aspect = tw / th; l.ok = true;
+  }
+  // What the customer saw in the preview, in the order notes, so the workshop can match it.
+  function bwNote(l) {
+    if (!l || l.raw) return '';
+    return ' in black and white' + (l.swap ? ' (light and dark swapped)' : '') + (l.adj ? ', detail ' + (l.adj > 0 ? '+' : '') + l.adj : '');
+  }
+  function syncLogoTune(p) {
+    var box = document.getElementById('logo-tune-' + p), l = logos[p];
+    if (!box) return;
+    box.hidden = !(l && logoPix[p] && !l.raw);
+    if (box.hidden) return;
+    var adj = Number(l.adj) || 0, range = document.getElementById('logo-adj-' + p);
+    document.getElementById('logo-bw-' + p).src = l.src;
+    range.value = adj;
+    range.setAttribute('aria-valuetext', adj ? (adj > 0 ? 'More detail, ' : 'Less detail, ') + Math.abs(adj) : 'Standard');
+    box.querySelector('.logo-swap').setAttribute('aria-pressed', l.swap ? 'true' : 'false');
+  }
+  // Redo a logo's black and white after an adjustment (at most once per frame while a slider moves).
+  var retoneDue = {};
+  function retone(p) {
+    if (retoneDue[p]) return;
+    retoneDue[p] = true;
+    var run = function () {
+      retoneDue[p] = false;
+      if (!logos[p] || !logoPix[p]) return;
+      applyBW(logos[p], logoPix[p]);
+      syncLogoTune(p);
+      update();
+      saveDraftSoon();
+    };
+    if (window.requestAnimationFrame) window.requestAnimationFrame(run); else setTimeout(run, 16);
+  }
+  // A logo kept from an earlier visit: rebuild its greys from the kept picture so it can still be adjusted.
+  // Logos kept before the black and white preview (kept in colour, without orig) are converted now.
+  function reviveLogo(p) {
+    var l = logos[p];
+    if (!l) return;
+    if (!l.orig) { l.orig = l.src; l.raw = true; l.adj = 0; l.swap = false; delete l.mode; }
+    var img = new Image();
+    img.onload = function () {
+      if (logos[p] !== l) return;
+      try {
+        var px = logoPixels(img);
+        delete px.canvas;
+        logoPix[p] = px;
+        if (l.raw) { applyBW(l, px); delete l.raw; }
+      } catch (e) { return; }
+      syncLogoTune(p);
+      update();
+    };
+    img.src = l.orig;
+  }
+
+  // Logo preview: read the file on this device and show it in black and white, as it would be engraved.
   slotsBox.addEventListener('change', function (e) {
     var input = e.target;
     if (input.type !== 'file') return;
@@ -1276,7 +1418,7 @@
     var f = input.files && input.files[0];
     err.textContent = '';
     document.getElementById('logo-' + p + '-kept').hidden = true;
-    if (!f) { delete logos[p]; update(); return; }
+    if (!f) { delete logos[p]; delete logoPix[p]; syncLogoTune(p); update(); return; }
     if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type)) {
       err.textContent = 'Please choose a PNG, JPG, WebP or SVG image.'; input.value = ''; return;
     }
@@ -1285,10 +1427,25 @@
     }
     var url = URL.createObjectURL(f), img = new Image();
     img.onload = function () {
-      logos[p] = prepareLogo(img, url, f.name);
-      if (logos[p].src !== url) URL.revokeObjectURL(url);
-      if (!logos[p].ok) err.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
+      var l = { name: f.name, adj: 0, swap: false }, px = null;
+      try {
+        px = logoPixels(img);
+        // Kept (with the design, on this device) so the black and white can be redone later. PNG keeps
+        // see-through parts; a solid picture is much smaller as JPEG.
+        l.orig = px.seeThrough ? px.canvas.toDataURL('image/png') : px.canvas.toDataURL('image/jpeg', 0.9);
+        delete px.canvas;
+        applyBW(l, px);
+        URL.revokeObjectURL(url);
+      } catch (ex) {
+        // The browser wouldn't let us read the picture: show it as it is, engraved by its dark parts.
+        px = null;
+        l.src = url; l.raw = true; l.ok = true; l.aspect = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+      }
+      logos[p] = l;
+      if (px) logoPix[p] = px; else delete logoPix[p];
+      if (!l.ok) err.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
       trackPick('logo_upload', 'customer_logo', p);
+      syncLogoTune(p);
       update();
       saveDraftSoon();
     };
@@ -1299,36 +1456,20 @@
     };
     img.src = url;
   });
-  function prepareLogo(img, url, name) {
-    var w = img.naturalWidth || 600, h = img.naturalHeight || 600, k = Math.min(1, 900 / Math.max(w, h));
-    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
-    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
-    var ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, cw, ch);
-    try {
-      var d = ctx.getImageData(0, 0, cw, ch).data, clear = 0, solid = 0, lum = 0, i;
-      for (i = 0; i < d.length; i += 4) {
-        if (d[i + 3] < 128) clear++;
-        else { solid++; lum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; }
-      }
-      // A light logo on a transparent background is engraved by its shape; anything else by its dark parts.
-      var mode = clear > cw * ch * 0.05 && solid && lum / solid > 0.6 ? 'alpha' : 'dark';
-      var x0 = cw, y0 = ch, x1 = -1, y1 = -1;
-      for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) {
-        i = (y * cw + x) * 4;
-        var ink = mode === 'alpha' ? d[i + 3] >= 128 : d[i + 3] >= 128 && (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) < 200;
-        if (ink) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-      }
-      if (x1 < 0) return { src: c.toDataURL('image/png'), aspect: cw / ch, mode: mode, name: name, ok: false };
-      var pad = 2, cx0 = Math.max(0, x0 - pad), cy0 = Math.max(0, y0 - pad);
-      var tw = Math.min(cw, x1 + pad + 1) - cx0, th = Math.min(ch, y1 + pad + 1) - cy0;
-      var t = document.createElement('canvas'); t.width = tw; t.height = th;
-      t.getContext('2d').drawImage(c, cx0, cy0, tw, th, 0, 0, tw, th);
-      return { src: t.toDataURL('image/png'), aspect: tw / th, mode: mode, name: name, ok: true };
-    } catch (e) {
-      return { src: url, aspect: cw / ch, mode: 'dark', name: name, ok: true };
-    }
-  }
+  // Detail slider and Swap button under each logo.
+  slotsBox.addEventListener('input', function (e) {
+    var p = e.target.id && e.target.id.indexOf('logo-adj-') === 0 ? e.target.getAttribute('data-slot') : null;
+    if (!p || !logos[p]) return;
+    logos[p].adj = Number(e.target.value) || 0;
+    retone(p);
+  });
+  slotsBox.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.logo-swap') : null;
+    var p = b && b.getAttribute('data-slot');
+    if (!p || !logos[p]) return;
+    logos[p].swap = !logos[p].swap;
+    retone(p);
+  });
 
   // Show each lettering choice in its own font once the designer is close to the screen, so the
   // font files are only downloaded by people who scroll to it; re-measure the preview when fonts arrive.
@@ -1417,6 +1558,7 @@
     for (k in snap.touched || {}) modeTouched[k] = snap.touched[k];
     for (k in colourPicked) colourPicked[k] = !!(snap.picked || {})[k];
     for (k in logos) delete logos[k];
+    for (k in logoPix) delete logoPix[k];
     SLOT_KEYS.forEach(function (p) {
       var l = (snap.logos || {})[p], name = (snap.logoNames || {})[p], note = document.getElementById('logo-' + p + '-kept');
       document.getElementById('logo-' + p).value = '';
@@ -1424,6 +1566,8 @@
       note.textContent = l ? 'Showing the logo you added before (' + l.name + '). Choose a file to change it.'
         : name ? 'Choose your logo file (' + name + ') again to see it on the preview.' : '';
       note.hidden = !note.textContent;
+      syncLogoTune(p);
+      reviveLogo(p);
     });
     clearErrors();
     update();
@@ -1438,7 +1582,8 @@
     for (k in modeTouched) delete modeTouched[k];
     for (k in colourPicked) colourPicked[k] = false;
     for (k in logos) delete logos[k];
-    SLOT_KEYS.forEach(function (p) { document.getElementById('logo-' + p + '-kept').hidden = true; });
+    for (k in logoPix) delete logoPix[k];
+    SLOT_KEYS.forEach(function (p) { document.getElementById('logo-' + p + '-kept').hidden = true; syncLogoTune(p); });
     applyDefaults(style, true);
     followAccessory();
     editingRef = null;
