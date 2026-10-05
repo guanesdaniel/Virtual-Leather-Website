@@ -284,10 +284,12 @@
     rivet(g, x + w / 2, y + 22, 7);
     el('path', { d: 'M' + (x + w / 2 - 6) + ',' + (y + h * 0.55) + ' h12 M' + (x + w / 2 - 6) + ',' + (y + h * 0.78) + ' h12', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g);
   }
-  function hstrap(g, x, y, w, h, acc) {
+  // Strap with two stitch marks and its pin at one end: the right end, or the left with flip.
+  function hstrap(g, x, y, w, h, acc, flip) {
     plate(g, x, y, w, h, acc, 6);
-    el('path', { d: 'M' + (x + 35) + ',' + (y + h / 2) + ' h22 M' + (x + 70) + ',' + (y + h / 2) + ' h22', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g);
-    rivet(g, x + w - 24, y + h / 2, 7);
+    var a = flip ? x + w - 57 : x + 35, b = flip ? x + w - 92 : x + 70;
+    el('path', { d: 'M' + a + ',' + (y + h / 2) + ' h22 M' + b + ',' + (y + h / 2) + ' h22', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g);
+    rivet(g, flip ? x + 24 : x + w - 24, y + h / 2, 7);
   }
   // Plain strap riveted at both ends (rows = 1 or 2 rivets per end).
   function band(g, x, y, w, h, acc, rows, cols) {
@@ -535,9 +537,11 @@
     if (look === 'bbq') {
       loops(acs, 368, 688, 210, 50, 3, acc);
       loops(acs, 578, 804, 305, 54, 3, acc);
-      hstrap(acs, 82, 1055, 153, 48, acc); hstrap(acs, 507, 1055, 140, 48, acc);
-      shape(acs, 'M278,1055 H472 V1082 H440 V1212 Q440,1230 422,1230 H398 L380,1200 L362,1230 H334 Q316,1230 316,1212 V1082 H278 Z', acc);
-      el('ellipse', { cx: 378, cy: 1145, rx: 17, ry: 36, fill: main.edge }, acs);
+      // Straps either side of the drink holder, each pinned at the end next to it.
+      hstrap(acs, 82, 1055, 153, 48, acc); hstrap(acs, 507, 1055, 140, 48, acc, true);
+      // Drink holder, its hole cut through so the apron leather shows.
+      shape(acs, 'M278,1055 H472 V1082 H440 V1212 Q440,1230 422,1230 H398 L380,1200 L362,1230 H334 Q316,1230 316,1212 V1082 H278 Z' +
+        ' M361,1145 a17,36 0 1 0 34,0 a17,36 0 1 0 -34,0 Z', acc).setAttribute('fill-rule', 'evenodd');
       vstrap(acs, 316, 1280, 48, 155, acc); vstrap(acs, 388, 1280, 46, 155, acc);
       if (!st.opener) dring(acs, 598, 1215, acc);
       pocket(acs, 730, 1065, 260, 298, acc);
