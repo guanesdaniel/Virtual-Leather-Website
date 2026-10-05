@@ -1275,13 +1275,18 @@
    * A laser either burns a spot or it doesn't, so the preview shows the logo the same way, worked out on the
    * customer's device (free, no outside service). It's a quick idea of the engraving: we make the real file
    * from the original they send us, and they approve a proof before we engrave.
-   *  1. Greys: each solid pixel's own; see-through parts are backed with black (a light logo) or white.
-   *  2. Dark and light are split where they separate best (Otsu's method), and the side that fills the
-   *     picture's edges is the background, so the logo is the part engraved. See-through parts never are.
-   *  3. Coloured parts the split left with the background (a yellow sun beside black lettering on white) are
-   *     engraved too when they stand clearly apart from the background colour and touch it; light shapes
-   *     inside the logo (a star inside a disk) stay clear.
-   *  4. Clean-up: edges smoothed, specks and pinholes removed, margins trimmed. */
+   * Logos on a coloured or white background (most of them):
+   *  1. The background is the colour along the picture's edges (their median), with a tolerance from how much
+   *     they vary: pixels of that colour connected to the edges, and inside the drawing patches of almost
+   *     exactly that colour (the hole of an O). The background is never engraved.
+   *  2. Inside the drawing, dark and light are split where its own greys separate best (Otsu's method): the
+   *     dark parts (outlines, dark fur, lettering) are engraved and the light parts left clear, as drawn.
+   *     A one-tone drawing (white lettering on a navy box) is engraved whole.
+   *  3. On a light background, light colours beside the logo (a yellow sun next to black lettering) are
+   *     engraved too, while light shapes inside it (a star inside a disk) stay clear. On a dark background,
+   *     the soft rim of light shapes (snow dots) isn't engraved.
+   * Logos on a see-through background are engraved by their dark parts, or by their shape when they're light.
+   * Then edges are smoothed, specks and pinholes removed, and margins trimmed. */
   function otsu(hist, total) {
     var sum = 0, sumB = 0, wB = 0, best = -1, cut = 127, i;
     for (i = 0; i < 256; i++) sum += i * hist[i];
@@ -1295,35 +1300,6 @@
       if (between > best) { best = between; cut = i; }
     }
     return cut;   // greys up to the cut are the dark side
-  }
-  // The picture at working size (up to 720 px, enough for the preview; small pictures are enlarged so edges
-  // stay smooth): its greys, colours and solid parts. Throws when the browser won't let the page read it.
-  function logoPixels(img) {
-    var w = img.naturalWidth || img.width || 600, h = img.naturalHeight || img.height || 600;
-    var k = Math.min(4, 720 / Math.max(w, h));
-    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k)), n = cw * ch;
-    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
-    var ctx = c.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, 0, 0, cw, ch);
-    var d = ctx.getImageData(0, 0, cw, ch).data, clear = 0, solid = 0, lum = 0, i, x, y;
-    for (i = 0; i < n; i++) {
-      if (d[i * 4 + 3] < 128) clear++;
-      else { solid++; lum += 0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]; }
-    }
-    var backing = clear > n * 0.05 && solid && lum / solid > 153 ? 0 : 255;
-    var v = new Uint8Array(n), body = new Uint8Array(n), rgb = new Uint8Array(n * 3), hist = [];
-    for (i = 0; i < 256; i++) hist[i] = 0;
-    for (i = 0; i < n; i++) {
-      body[i] = d[i * 4 + 3] >= 128 ? 1 : 0;
-      rgb[i * 3] = d[i * 4]; rgb[i * 3 + 1] = d[i * 4 + 1]; rgb[i * 3 + 2] = d[i * 4 + 2];
-      v[i] = body[i] ? Math.round(0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]) : backing;
-      hist[v[i]]++;
-    }
-    var cut = otsu(hist, n), edge = 0, darkEdge = 0;
-    for (x = 0; x < cw; x++) { edge += 2; darkEdge += (v[x] <= cut ? 1 : 0) + (v[n - cw + x] <= cut ? 1 : 0); }
-    for (y = 1; y < ch - 1; y++) { edge += 2; darkEdge += (v[y * cw] <= cut ? 1 : 0) + (v[y * cw + cw - 1] <= cut ? 1 : 0); }
-    return { w: cw, h: ch, v: v, body: body, rgb: rgb, backing: backing, cut: cut, inkDark: darkEdge * 2 <= edge };
   }
   // Each connected patch of a mask (side by side, not corner to corner), handed to visit(pixels, count).
   function patches(w, h, mask, visit) {
@@ -1343,54 +1319,158 @@
       visit(list, len);
     }
   }
-  // The logo in black (engraved) on clear, trimmed: { src, aspect, ok } (ok false = nothing to engrave).
-  function digitize(px) {
-    var w = px.w, h = px.h, n = w * h, v = px.v, body = px.body, rgb = px.rgb, i, k, x, y;
-    var ink = new Uint8Array(n);
-    for (i = 0; i < n; i++) if (body[i] && (px.inkDark ? v[i] <= px.cut : v[i] > px.cut)) ink[i] = 1;
-
-    // 3. The background colour: the average of the edge pixels left clear (the backing where see-through).
-    var sum = [0, 0, 0], count = 0;
-    var edgePixel = function (j) {
-      if (ink[j]) return;
-      for (var c = 0; c < 3; c++) sum[c] += body[j] ? rgb[j * 3 + c] : px.backing;
-      count++;
-    };
-    for (x = 0; x < w; x++) { edgePixel(x); edgePixel(n - w + x); }
-    for (y = 1; y < h - 1; y++) { edgePixel(y * w); edgePixel(y * w + w - 1); }
-    if (count) {
-      var b0 = sum[0] / count, b1 = sum[1] / count, b2 = sum[2] / count, apart = new Uint8Array(n);
-      for (i = 0; i < n; i++) {
-        if (ink[i] || !body[i]) continue;
-        var d0 = rgb[i * 3] - b0, d1 = rgb[i * 3 + 1] - b1, d2 = rgb[i * 3 + 2] - b2;
-        if (d0 * d0 + d1 * d1 + d2 * d2 > 6400) apart[i] = 1;   // more than 80 apart (of 441)
-      }
-      // The background around the logo: clear, background-coloured patches that reach the picture's edges.
-      var open = new Uint8Array(n), outside = new Uint8Array(n), minPatch = Math.max(16, n * 0.0005);
-      for (i = 0; i < n; i++) open[i] = !ink[i] && !apart[i] ? 1 : 0;
-      patches(w, h, open, function (list, len) {
-        for (var m = 0; m < len; m++) {
-          var j = list[m], jx = j % w;
-          if (jx === 0 || jx === w - 1 || j < w || j >= n - w) {
-            for (m = 0; m < len; m++) outside[list[m]] = 1;
-            return;
-          }
-        }
-      });
-      patches(w, h, apart, function (list, len) {
-        if (len < minPatch) return;
-        for (var m = 0; m < len; m++) {
-          var j = list[m], jx = j % w;
-          if ((jx > 0 && outside[j - 1]) || (jx < w - 1 && outside[j + 1]) || (j >= w && outside[j - w]) || (j < n - w && outside[j + w])) {
-            for (m = 0; m < len; m++) ink[list[m]] = 1;
-            return;
-          }
-        }
-      });
+  // A mask grown by one pixel all round.
+  function grow(w, h, m) {
+    var out = new Uint8Array(w * h), x, y, i;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      i = y * w + x;
+      if (m[i] || (x > 0 && m[i - 1]) || (x < w - 1 && m[i + 1]) || (y > 0 && m[i - w]) || (y < h - 1 && m[i + w]) ||
+          (x > 0 && y > 0 && m[i - w - 1]) || (x < w - 1 && y > 0 && m[i - w + 1]) ||
+          (x > 0 && y < h - 1 && m[i + w - 1]) || (x < w - 1 && y < h - 1 && m[i + w + 1])) out[i] = 1;
     }
+    return out;
+  }
+  // Light patches of the drawing that touch the background around it become engraved (light colours beside
+  // the logo); patches enclosed by the logo stay clear.
+  function engraveBeside(w, h, ink, light, around) {
+    var n = w * h, minPatch = Math.max(16, n * 0.0005);
+    patches(w, h, light, function (list, len) {
+      if (len < minPatch) return;
+      for (var m = 0; m < len; m++) {
+        var j = list[m], jx = j % w;
+        if ((jx > 0 && around[j - 1]) || (jx < w - 1 && around[j + 1]) || (j >= w && around[j - w]) || (j < n - w && around[j + w])) {
+          for (m = 0; m < len; m++) ink[list[m]] = 1;
+          return;
+        }
+      }
+    });
+  }
+  // The picture at working size (up to 720 px, enough for the preview; small pictures are enlarged so edges
+  // stay smooth). Throws when the browser won't let the page read it.
+  function logoImage(img) {
+    var w = img.naturalWidth || img.width || 600, h = img.naturalHeight || img.height || 600;
+    var k = Math.min(4, 720 / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, cw, ch);
+    return { w: cw, h: ch, data: ctx.getImageData(0, 0, cw, ch).data };
+  }
+  // Which pixels to engrave (before clean-up): 1 = engraved.
+  function engraveMask(im) {
+    var w = im.w, h = im.h, n = w * h, d = im.data, body = new Uint8Array(n), L = new Uint8Array(n), clear = 0, i, j, x, y;
+    for (i = 0; i < n; i++) {
+      body[i] = d[i * 4 + 3] >= 128 ? 1 : 0;
+      if (!body[i]) clear++;
+      L[i] = Math.round(0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]);
+    }
+    var edge = [], edgeClear = 0;
+    for (x = 0; x < w; x++) { edge.push(x); if (h > 1) edge.push(n - w + x); }
+    for (y = 1; y < h - 1; y++) { edge.push(y * w); if (w > 1) edge.push(y * w + w - 1); }
+    for (i = 0; i < edge.length; i++) if (!body[edge[i]]) edgeClear++;
+    if (clear > n * 0.05 && edgeClear * 2 > edge.length) return seeThroughMask(w, h, d, body, L, edge);
 
-    // 4. Smooth the edges (each pixel follows most of its 3 x 3 block), then drop specks and fill pinholes.
-    var out = new Uint8Array(n);
+    // 1. The background: its colour, its tolerance, the part around the drawing (bgm) and all of it (bgAll).
+    var rs = [], gs = [], bs = [], num = function (a, b) { return a - b; };
+    for (i = 0; i < edge.length; i++) { j = edge[i]; if (body[j]) { rs.push(d[j * 4]); gs.push(d[j * 4 + 1]); bs.push(d[j * 4 + 2]); } }
+    var ink = new Uint8Array(n);
+    if (!rs.length) return ink;
+    rs.sort(num); gs.sort(num); bs.sort(num);
+    var mid = rs.length >> 1, br = rs[mid], bgG = gs[mid], bb = bs[mid];
+    var dist = function (q) { var a = d[q * 4] - br, b = d[q * 4 + 1] - bgG, c = d[q * 4 + 2] - bb; return Math.sqrt(a * a + b * b + c * c); };
+    var ed = [];
+    for (i = 0; i < edge.length; i++) if (body[edge[i]]) ed.push(dist(edge[i]));
+    ed.sort(num);
+    var tol = Math.min(90, Math.max(40, 2.5 * ed[Math.floor(ed.length * 0.8)])), tight = Math.min(tol, 25);
+    var near = new Uint8Array(n), bgm = new Uint8Array(n), bgAll = new Uint8Array(n), stack = new Int32Array(n), top = 0;
+    for (i = 0; i < n; i++) near[i] = !body[i] || dist(i) <= tol ? 1 : 0;
+    for (i = 0; i < edge.length; i++) { j = edge[i]; if (near[j] && !bgm[j]) { bgm[j] = 1; stack[top++] = j; } }
+    while (top) {
+      j = stack[--top]; x = j % w;
+      if (x > 0 && near[j - 1] && !bgm[j - 1]) { bgm[j - 1] = 1; stack[top++] = j - 1; }
+      if (x < w - 1 && near[j + 1] && !bgm[j + 1]) { bgm[j + 1] = 1; stack[top++] = j + 1; }
+      if (j >= w && near[j - w] && !bgm[j - w]) { bgm[j - w] = 1; stack[top++] = j - w; }
+      if (j < n - w && near[j + w] && !bgm[j + w]) { bgm[j + w] = 1; stack[top++] = j + w; }
+    }
+    // Inside the drawing a tighter match, so dark lines close to a dark background stay part of the drawing.
+    for (i = 0; i < n; i++) bgAll[i] = bgm[i] || (body[i] && dist(i) <= tight) ? 1 : 0;
+    var bgL = 0.2126 * br + 0.7152 * bgG + 0.0722 * bb, bgLight = bgL >= 128;
+
+    // 2. Dark and light inside the drawing, and whether it has real contrast (judged away from its rim).
+    var hist = [], cnt = 0;
+    for (i = 0; i < 256; i++) hist[i] = 0;
+    for (i = 0; i < n; i++) if (!bgAll[i]) { hist[L[i]]++; cnt++; }
+    if (!cnt) return ink;
+    var cut = otsu(hist, cnt), rim = grow(w, h, grow(w, h, bgAll)), cd = 0, cl = 0, sd = 0, sl = 0;
+    for (i = 0; i < n; i++) {
+      if (rim[i]) continue;
+      if (L[i] <= cut) { cd++; sd += L[i]; } else { cl++; sl += L[i]; }
+    }
+    var core = cd + cl;
+    if (core < 50 || !cd || !cl || cd < core * 0.03 || cl < core * 0.03 || sl / cl - sd / cd < 40) {
+      for (i = 0; i < n; i++) ink[i] = bgAll[i] ? 0 : 1;   // a one-tone drawing: engrave all of it
+      return ink;
+    }
+    for (i = 0; i < n; i++) {
+      if (bgAll[i] || L[i] > cut) continue;
+      if (!bgLight && rim[i] && L[i] > bgL + 40) continue;   // the soft rim of light shapes on a dark background
+      ink[i] = 1;
+    }
+    // 3. Light colours beside the logo, on a light background.
+    if (bgLight) {
+      var light = new Uint8Array(n);
+      for (i = 0; i < n; i++) light[i] = !bgAll[i] && !ink[i] ? 1 : 0;
+      engraveBeside(w, h, ink, light, bgm);
+    }
+    return ink;
+  }
+  // Logos on a see-through background: greys with the see-through parts backed with black (a light logo) or
+  // white; dark and light split by Otsu's method; the side filling the edges is the background. Coloured parts
+  // left with the background but clearly another colour, beside the logo, are engraved too.
+  function seeThroughMask(w, h, d, body, L, edge) {
+    var n = w * h, solid = 0, lum = 0, i, j, x;
+    for (i = 0; i < n; i++) if (body[i]) { solid++; lum += L[i]; }
+    var backing = solid && lum / solid > 153 ? 0 : 255, v = new Uint8Array(n), hist = [];
+    for (i = 0; i < 256; i++) hist[i] = 0;
+    for (i = 0; i < n; i++) { v[i] = body[i] ? L[i] : backing; hist[v[i]]++; }
+    var cut = otsu(hist, n), darkEdge = 0;
+    for (i = 0; i < edge.length; i++) if (v[edge[i]] <= cut) darkEdge++;
+    var inkDark = darkEdge * 2 <= edge.length, ink = new Uint8Array(n);
+    for (i = 0; i < n; i++) if (body[i] && (inkDark ? v[i] <= cut : v[i] > cut)) ink[i] = 1;
+    // The background colour: the average of the edge pixels left clear (the backing where see-through).
+    var s0 = 0, s1 = 0, s2 = 0, count = 0;
+    for (i = 0; i < edge.length; i++) {
+      j = edge[i];
+      if (ink[j]) continue;
+      if (body[j]) { s0 += d[j * 4]; s1 += d[j * 4 + 1]; s2 += d[j * 4 + 2]; } else { s0 += backing; s1 += backing; s2 += backing; }
+      count++;
+    }
+    if (!count) return ink;
+    s0 /= count; s1 /= count; s2 /= count;
+    var apart = new Uint8Array(n), open = new Uint8Array(n), outside = new Uint8Array(n);
+    for (i = 0; i < n; i++) {
+      if (ink[i] || !body[i]) continue;
+      var d0 = d[i * 4] - s0, d1 = d[i * 4 + 1] - s1, d2 = d[i * 4 + 2] - s2;
+      if (d0 * d0 + d1 * d1 + d2 * d2 > 6400) apart[i] = 1;   // more than 80 apart (of 441)
+    }
+    // The background around the logo: clear, background-coloured patches that reach the picture's edges.
+    for (i = 0; i < n; i++) open[i] = !ink[i] && !apart[i] ? 1 : 0;
+    patches(w, h, open, function (list, len) {
+      for (var m = 0; m < len; m++) {
+        var q = list[m]; x = q % w;
+        if (x === 0 || x === w - 1 || q < w || q >= n - w) {
+          for (m = 0; m < len; m++) outside[list[m]] = 1;
+          return;
+        }
+      }
+    });
+    engraveBeside(w, h, ink, apart, outside);
+    return ink;
+  }
+  // Smooth the edges (each pixel follows most of its 3 x 3 block), then drop specks and fill pinholes.
+  function cleanUp(w, h, ink) {
+    var n = w * h, out = new Uint8Array(n), gaps = new Uint8Array(n), speck = Math.max(9, n * 0.0001), x, y, i;
     for (y = 0; y < h; y++) {
       var ya = y > 0 ? y - 1 : 0, yb = y < h - 1 ? y + 1 : h - 1;
       for (x = 0; x < w; x++) {
@@ -1399,9 +1479,7 @@
         out[y * w + x] = on * 2 > all ? 1 : 0;
       }
     }
-    var speck = Math.max(9, n * 0.0001);
     patches(w, h, out, function (list, len) { if (len < speck) for (var m = 0; m < len; m++) out[list[m]] = 0; });
-    var gaps = new Uint8Array(n);
     for (i = 0; i < n; i++) gaps[i] = out[i] ? 0 : 1;
     patches(w, h, gaps, function (list, len) {
       if (len >= speck) return;
@@ -1411,9 +1489,11 @@
       }
       for (m = 0; m < len; m++) out[list[m]] = 1;
     });
-
-    // Trim to the logo (2 px margin) and draw it in black on clear.
-    var x0 = w, y0 = h, x1 = -1, y1 = -1;
+    return out;
+  }
+  // The logo in black (engraved) on clear, trimmed (2 px margin): { src, aspect, ok } (ok false = nothing to engrave).
+  function trimmedPng(out, w, h) {
+    var x0 = w, y0 = h, x1 = -1, y1 = -1, x, y;
     for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
       if (!out[y * w + x]) continue;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
@@ -1427,6 +1507,10 @@
     for (y = 0; y < th; y++) for (x = 0; x < tw; x++) if (out[(y + y0) * w + x + x0]) o[(y * tw + x) * 4 + 3] = 255;
     cx.putImageData(im, 0, 0);
     return { src: cv.toDataURL('image/png'), aspect: tw / th, ok: true };
+  }
+  function digitize(img) {
+    var im = logoImage(img);
+    return trimmedPng(cleanUp(im.w, im.h, engraveMask(im)), im.w, im.h);
   }
   // A logo kept from an earlier visit. Logos kept before the preview showed them in black and white (in colour)
   // are converted now; until then they show as before.
@@ -1442,7 +1526,7 @@
     img.onload = function () {
       if (logos[p] !== l) return;
       try {
-        var r = digitize(logoPixels(img));
+        var r = digitize(img);
         l.src = r.src; l.aspect = r.aspect; l.ok = r.ok; l.bw = true;
         delete l.raw; delete l.mode;
       } catch (e) { return; }
@@ -1470,7 +1554,7 @@
     img.onload = function () {
       var l = { name: f.name };
       try {
-        var r = digitize(logoPixels(img));
+        var r = digitize(img);
         l.src = r.src; l.aspect = r.aspect; l.ok = r.ok; l.bw = true;
         URL.revokeObjectURL(url);
       } catch (ex) {
