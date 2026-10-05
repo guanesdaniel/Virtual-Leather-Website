@@ -97,8 +97,10 @@
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
-      // Spot 4 lines up with the beer circle in spot 3 (same centre, same visible height: 146), as the owner asked.
-      4: { x: 851, y: 972, h: 70, fs: 58, maxW: 300, maxH: 146, logoH: 146, stdH: 146, inkH: 146 },
+      // Spot 4 lines up with the beer circle in spot 3, as the owner asked: its guide, a logo and text (all its lines
+      // together) sit between the circle's top and bottom (899-1045, 146 tall), and at 100% they're as tall as the
+      // circle, or as big as fits the width. Bigger isn't offered.
+      4: { x: 851, y: 972, h: 146, fs: 210, stdW: 300, maxW: 300, maxH: 240, logoH: 146, stdH: 240, inkH: 146, inkAll: true },
       5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
@@ -150,11 +152,12 @@
   // stdW / stdH: the room used for the standard (100%) size; maxW / maxH: the most a bigger size may take.
   // inkH: the tallest the engraving may be in that spot (the letters as they look, in any lettering, or a logo).
   // On the lower spots 5 and 6 it's 42 units: "TEST" in Montserrat at 70 x 80%, the owner's chosen height. There
-  // the standard (100%) size is that largest one.
+  // the standard (100%) size is that largest one. It applies to each line of text, or with inkAll to all the lines
+  // together (centred by the letters as they look), for a spot that must stay within a band.
   function metrics(b) {
     var maxW = b.maxW || b.w + 80, maxH = b.maxH || b.h * 2;
     return { fs: b.fs || Math.min(96, b.h * 1.1), maxW: maxW, maxH: maxH, logoH: b.logoH || b.h * 1.6,
-      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkH: b.inkH || 0 };
+      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkH: b.inkH || 0, inkAll: !!b.inkAll };
   }
   // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
   function positionsOf(styleKey) {
@@ -655,7 +658,8 @@
       var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = false;
       if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
-      if (m.inkH && Math.floor(100 * m.inkH / std) <= maxPct) { maxPct = Math.floor(100 * m.inkH / std); capped = true; }
+      var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
+      if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
       var pct = Math.min(sl.size, maxPct), h = std * pct / 100, w = h * aspect, x = box.x - w / 2, y = box.y - h / 2;
       fit[p] = { pct: pct, maxPct: maxPct, capped: capped };
       if (design) {
@@ -709,35 +713,44 @@
     var widest = Math.max.apply(null, texts.map(function (t) { try { return t.getComputedTextLength(); } catch (e) { return 0; } })) || 1;
     var tall = lines.length * base * 1.08 / font.scale;
     var std = base * Math.min(1, m.stdW / widest, m.stdH / tall), capped = false, capSize = 0;
-    if (m.inkH) { capSize = m.inkH / inkPerSize(font, lines); std = Math.min(std, capSize); }
+    var looks = m.inkH ? inkOf(font, lines) : null, block = looks && m.inkAll ? looks.bottom - looks.top : 0;
+    if (looks) { capSize = m.inkH / (block || looks.r); std = Math.min(std, capSize); }
     var maxPct = Math.max(100, Math.floor(100 * base * Math.min(m.maxW / widest, m.maxH / tall) / std));
-    if (capSize && Math.floor(100 * capSize / std) <= maxPct) { maxPct = Math.floor(100 * capSize / std); capped = true; }
+    var capPct = capSize ? pctOf(capSize, std) : 0;
+    if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
     var pct = Math.min(sl.size, maxPct), size = Math.max(12, std * pct / 100);
     texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
-    var lh = size * 1.08, top = box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
+    // First baseline: lines centred on the spot (the letters as they look, for a band spot).
+    var lh = size * 1.08, top = block ? box.y - (looks.top + looks.bottom) / 2 * size : box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
     texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
     hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
     return { pct: pct, maxPct: maxPct, capped: capped };
   }
-  // How tall the letters of these lines look per unit of font size in this lettering (the tallest line, from top
-  // of the highest letter to bottom of the lowest), measured on a canvas; 0.75 (Montserrat capitals) if unknown.
+  // a as a whole % of b, with a hair of slack so that a size capped at exactly the limit reads 100%, not 99%.
+  function pctOf(a, b) { return Math.floor(100 * a / b + 1e-6); }
+  // How the letters of these lines look per unit of font size in this lettering, measured on a canvas: r = the
+  // tallest line (top of the highest letter to bottom of the lowest); top / bottom = the whole text, lines 1.08
+  // apart, from the first line's baseline. Montserrat capitals (0.75 tall) if unknown.
   var inkCache = {}, inkCtx = null;
-  function inkPerSize(font, lines) {
+  function inkOf(font, lines) {
     var key = font.family + '|' + font.weight + '|' + lines.join('\n');
     if (inkCache[key]) return inkCache[key];
-    var r = 0;
+    var r = 0, top = Infinity, bottom = -Infinity;
     try {
       inkCtx = inkCtx || document.createElement('canvas').getContext('2d');
       inkCtx.font = font.weight + ' 100px ' + font.family;
-      lines.forEach(function (line) {
-        var mt = inkCtx.measureText(line), hgt = (mt.actualBoundingBoxAscent || 0) + (mt.actualBoundingBoxDescent || 0);
-        if (hgt / 100 > r) r = hgt / 100;
+      lines.forEach(function (line, i) {
+        if (!line.trim()) return;
+        var mt = inkCtx.measureText(line), up = (mt.actualBoundingBoxAscent || 0) / 100, down = (mt.actualBoundingBoxDescent || 0) / 100;
+        r = Math.max(r, up + down);
+        top = Math.min(top, i * 1.08 - up);
+        bottom = Math.max(bottom, i * 1.08 + down);
       });
     } catch (e) { r = 0; }
-    r = r > 0.2 ? r : 0.75;
+    var o = r > 0.2 ? { r: r, top: top, bottom: bottom } : { r: 0.75, top: -0.75, bottom: (lines.length - 1) * 1.08 };
     // Only remember it once the lettering's own font is in (before that the canvas measures a stand-in font).
-    if (!document.fonts || document.fonts.check(font.weight + ' 100px ' + font.family)) inkCache[key] = r;
-    return r;
+    if (!document.fonts || document.fonts.check(font.weight + ' 100px ' + font.family)) inkCache[key] = o;
+    return o;
   }
 
   /* ---------- Engraving spots: one card per spot, built from the plans above ---------- */

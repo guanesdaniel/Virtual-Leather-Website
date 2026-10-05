@@ -55,7 +55,7 @@ The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLO
 
 | Apron | Spots | Notes |
 |---|---|---|
-| BBQ & Grill | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket |
+| BBQ & Grill | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket, lined up with the beer circle (see below) |
 | BBQ Pattern | 1–2 + pocket | the BBQ apron in patchwork leather: chest and pocket only |
 | Barber | 1–6 + pocket | 3 = above the scissor loops, 4 = above the pocket |
 | Simple | 1–6 + centre pocket | 3 and 4 above the pocket |
@@ -63,6 +63,10 @@ The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLO
 | Woodworking | 1–2 + chest pocket | |
 
 On every apron, "None" comes first, every spot takes text or a logo at an adjustable size, and removing spot 2 makes the chest logo or design bigger. Grill Master is suggested for the chest on the BBQ (both) and simple aprons.
+
+Height limits the owner set (`inkH` in `POS_OVERRIDES`, measured on the letters as they look in each lettering):
+- **Spots 5 and 6** (BBQ, barber, simple): no taller than "TEST" in Montserrat at 80% (42 drawing units), for every lettering and for logos. 100% is that largest size.
+- **Spot 4 on the BBQ & Grill apron**: lined up with the beer circle in spot 3. A logo, or text with all its lines together, sits between the circle's top and bottom and is never taller than the circle (146 units). At 100% it's as tall as the circle, unless it's too wide for the spot: one long word is then as big as the width allows, and splitting it over two lines makes the letters bigger. The empty spot 4 box shows that band.
 
 The suggested-design library is the `DESIGNS` list in the same file. Each design is artwork plus the text the customer fills in (for example the name and year on "Grill Master"), drawn live in the lettering they pick. To add one, send the artwork (SVG, or a high-resolution PNG on a plain background) and say which spots it belongs in and which words customers can change. Artwork from an image is traced into vector shapes by `npm run designs` (`tools/trace-designs.mjs`, source files in `tools/design-src/`): it blanks out the changeable words and writes `site/assets/js/design-art.js`.
 
