@@ -90,6 +90,10 @@
   var STRAP_B = 'M810,318 V230 C810,172 748,170 670,132 L530,26 C458,-12 238,22 175,170 ' +
     'C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
 
+  // The beer circle in spot 3 of the BBQ apron, at its fixed size (a 156-tall box centred at 972): the outer edge of its
+  // ring (radius 483 of 500) spans 896.6-1047.4. Spot 4 sits level with it, within that band (the owner's blue lines).
+  var BEER_BAND = 156 * 483 / 500;
+
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     bbq: {
@@ -97,10 +101,11 @@
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
-      // Spot 4 lines up with the beer circle in spot 3, as the owner asked: its guide, a logo and text (all its lines
-      // together) sit between the circle's top and bottom (899-1045, 146 tall), and at 100% they're as tall as the
-      // circle, or as big as fits the width. Bigger isn't offered.
-      4: { x: 851, y: 972, h: 146, fs: 210, stdW: 300, maxW: 300, maxH: 240, logoH: 146, stdH: 240, inkH: 146, inkAll: true },
+      // Spot 4 sits level with the beer circle in spot 3, as the owner asked, clear of the pocket below it (its top is at
+      // 1065): its guide is the circle's band. A logo has a fixed size (see SLOT_PLANS): 126 tall, the owner's "120%" of
+      // the earlier standard (105). Text, all its lines together, is centred on the band and at 100% is as tall as the
+      // circle when it fits the width; bigger isn't offered.
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 210, stdW: 300, maxW: 300, maxH: 240, logoH: 126, stdH: 240, inkH: BEER_BAND, inkAll: true },
       5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
@@ -190,8 +195,9 @@
     bbq: {
       1: CHEST_WITH_DESIGNS,
       2: underChest(true),
-      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder' },
-      4: spotPlan('Top of pocket'),
+      // Spots 3 and 4: the beer circle and logos have a fixed size there (the owner's choice), so no size control.
+      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder', fixedSize: ['design', 'logo'] },
+      4: { modes: ['none', 'text', 'logo'], def: 'none', where: 'Top of pocket', fixedSize: ['logo'] },
       pocket: spotPlan('On the pocket')
     },
     barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
@@ -206,6 +212,8 @@
     // "None" always comes first, so every spot lists its choices in the same order.
     return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
+  // Does this choice have a fixed size in this spot (no size control; always its 100%)?
+  function fixedSize(styleKey, p, mode) { return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1; }
 
   // Suggested designs, drawn in a 1000-wide box (height = 1000 / aspect). Text the customer fills in
   // is drawn live in the lettering they choose. To add a design: give it an entry here (artwork as SVG
@@ -926,10 +934,10 @@
     // Patterned (patchwork panels): the patterned BBQ apron.
     st.patterned = !!STYLES[st.style].patterned;
     SLOT_KEYS.forEach(function (p) {
-      var design = val('design-' + p), fields = {};
+      var design = val('design-' + p), fields = {}, mode = val('mode-' + p) || 'none';
       ((DESIGNS[design] || {}).fields || []).forEach(function (f) { fields[f.key] = val('d-' + f.key + '-' + p); });
       st.slots[p] = {
-        mode: val('mode-' + p) || 'none', size: Number(val('size-' + p)) || 100,
+        mode: mode, size: fixedSize(st.style, p, mode) ? 100 : Number(val('size-' + p)) || 100,
         text: (form.elements['text-' + p].value || '').replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim(),
         font: FONTS[val('font-' + p)] ? val('font-' + p) : 'montserrat',
         design: design, fields: fields, dfont: FONTS[val('dfont-' + p)] ? val('dfont-' + p) : 'classic'
@@ -1105,7 +1113,7 @@
       hint.textContent = plan.hint || '';
       hint.hidden = !plan.hint;
       Array.prototype.forEach.call(card.querySelectorAll('.slot-body'), function (b) { b.hidden = b.getAttribute('data-for') !== mode; });
-      card.querySelector('.size-field').hidden = mode === 'none';
+      card.querySelector('.size-field').hidden = mode === 'none' || fixedSize(st.style, p, mode);
       // Designs offered in this spot
       var designs = plan.designs || [];
       Array.prototype.forEach.call(card.querySelectorAll('.design-opt'), function (o) {
