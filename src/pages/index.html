@@ -1,6 +1,6 @@
 <!--{
   "title": "Personalised Leather Aprons, Made to Measure | Virtual Leather",
-  "description": "Handmade leather aprons engraved with your name or logo, made to measure in Colombia and shipped worldwide. Design yours online and see a preview. From $185.",
+  "description": "Handmade leather aprons engraved with your name or logo, made to measure in Colombia and shipped worldwide. Design yours online and see a preview. From $185, shipping included.",
   "bodyClass": "home",
   "jsonld": {
     "@context": "https://schema.org",
@@ -13,7 +13,7 @@
         "image": "https://virtualleather.net/assets/img/hero-bbq-1080.webp",
         "brand": { "@type": "Brand", "name": "Virtual Leather" },
         "sku": "619498562",
-        "offers": { "@type": "Offer", "price": "185.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/shop/#!/p/619498562" }
+        "offers": { "@type": "Offer", "price": "185.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/shop/#!/p/619498562", "shippingDetails": { "@type": "OfferShippingDetails", "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" } } }
       },
       {
         "@type": "Product",
@@ -23,7 +23,7 @@
         "image": "https://virtualleather.net/assets/img/p-619492033-800.webp",
         "brand": { "@type": "Brand", "name": "Virtual Leather" },
         "sku": "619492033",
-        "offers": { "@type": "Offer", "price": "185.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/shop/#!/p/619492033" }
+        "offers": { "@type": "Offer", "price": "185.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/shop/#!/p/619492033", "shippingDetails": { "@type": "OfferShippingDetails", "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" } } }
       },
       {
         "@type": "FAQPage",
@@ -32,7 +32,7 @@
           { "@type": "Question", "name": "Will I see my design before you make it?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Before production we send you a design proof by email or WhatsApp. We only start making your apron once you approve it." } },
           { "@type": "Question", "name": "What can you engrave?", "acceptedAnswer": { "@type": "Answer", "text": "Names, short phrases, dates, monograms and logos, in the positions shown on our apron sketch. {{#if extraEngraving}}Two engravings are included in the price (the chest, spots 1 and 2, counts as one), and each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}}" } },
           { "@type": "Question", "name": "Do you have discounts or special offers?", "acceptedAnswer": { "@type": "Answer", "text": "Offers, and prices for business, team and multi-apron orders, are agreed directly with us. Message us on WhatsApp or email and we'll talk it through." } },
-          { "@type": "Question", "name": "Do you ship worldwide?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number." } }
+          { "@type": "Question", "name": "Do you ship worldwide?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every apron is handmade in Colombia and shipped worldwide with a tracking number. Shipping is included in the apron price." } }
         ]
       }
     ]
@@ -46,14 +46,14 @@
       <p class="hero-lead">A leather apron cut to the wearer's height and engraved with any name, phrase or logo. You approve the design before we start, so it arrives exactly as you pictured it.</p>
       <div class="hero-cta">
         <a class="btn btn-light" href="#design">Design your apron</a>
-        <p class="hero-price" style="margin:0"><strong>From $185</strong> · {{#if extraEngraving}}2 engravings included{{else}}engraving included{{/if extraEngraving}}</p>
+        <p class="hero-price" style="margin:0"><strong>From&nbsp;$185</strong> · {{#if extraEngraving}}2&nbsp;engravings&nbsp;included{{else}}engraving&nbsp;included{{/if extraEngraving}} · shipping&nbsp;included</p>
       </div>
 {{#if reviews}}      {{reviewsBadge}}
 {{/if reviews}}      <ul class="hero-facts" role="list">
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Made to measure</li>
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Name or logo engraving included</li>
         <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Design proof before we make it</li>
-        <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Tracked worldwide shipping</li>
+        <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>Tracked shipping included, worldwide</li>
       </ul>
     </div>
     <div class="hero-media">
@@ -101,7 +101,7 @@
           <div class="saved-bar" id="saved-bar" aria-live="polite" hidden></div>
           <fieldset class="card panel">
             <legend><span class="num">1</span> Choose your style</legend>
-            <p class="hint">All aprons are $185 and made to measure.</p>
+            <p class="hint">All aprons are $185, shipping included, and made to measure.</p>
             <div class="options style-opts">
               <label class="opt"><input type="radio" name="style" value="bbq" checked><span>BBQ &amp; Grill<small>Beer holder, tool loops, pocket</small></span></label>
               <label class="opt"><input type="radio" name="style" value="bbqpattern"><span>BBQ Pattern<small>Patchwork leather, chest &amp; pocket</small></span></label>
@@ -206,7 +206,7 @@
               <dt id="sum-engravings-dt" hidden>Extra engravings</dt><dd id="sum-engravings" hidden></dd>
               <dt class="total">Total</dt><dd class="total" id="sum-total" aria-live="polite">$185</dd>
             </dl>
-            <p class="small sum-note">Prices in US dollars. Any tax due is added at checkout.</p>
+            <p class="small sum-note">Prices in US dollars, shipping included. Any tax due is added at checkout.</p>
             <button type="submit" class="btn btn-light btn-block" id="designer-submit">Add to cart</button>
             <p class="form-status" id="designer-status" role="status"></p>
             <ul class="assure" role="list">
@@ -359,7 +359,7 @@
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before production we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
       <details><summary>What can you engrave, and where?</summary><div><p>Names, short phrases, dates, monograms and logos. The BBQ, barber and simple aprons have six engraving positions, the split-leg four and the woodworking two, plus a pocket on each. They're shown as numbers in the designer preview. {{#if extraEngraving}}Two engravings are included in the price, and the chest (spots 1 and 2) counts as one. Each extra spot is $5.{{else}}Personalisation is included in the price.{{/if extraEngraving}} Send logos as PNG, JPG, PDF or SVG.</p></div></details>
       <details><summary>Which leather colours can I choose?</summary><div><p>Black, tan (light brown) and dark brown. Pick one for the body of the apron and one for the straps, loops and pockets. Leather is a natural material, so tone and grain vary a little from piece to piece.</p></div></details>
-      <details><summary>Where do you ship, and how long does it take?</summary><div><p>Every apron is handmade in Colombia. We make it in about 3 days after you approve your design proof, then ship it worldwide with a tracking number. Unless we've agreed otherwise, any import duties in your country are paid on delivery.</p></div></details>
+      <details><summary>Where do you ship, and how long does it take?</summary><div><p>Every apron is handmade in Colombia. We make it in about 3 days after you approve your design proof, then ship it worldwide with a tracking number. Shipping is included in the apron price. Unless we've agreed otherwise, any import duties in your country are paid on delivery.</p></div></details>
       <details><summary>Can I return a personalised apron?</summary><div><p>Because each apron is made to order with your personalisation, we can't accept change-of-mind returns. If your order arrives faulty or isn't what we agreed in your proof, we'll put it right. See <a href="/shipping-returns/">shipping, returns &amp; refunds</a>.</p></div></details>
       <details><summary>How do I pay?</summary><div><p>Pay at our secure checkout. The available payment methods are shown at checkout. Prefer to order by message? We can take your order on WhatsApp too.</p></div></details>
       <details><summary>How do I look after my leather apron?</summary><div><p>Wipe it with a damp cloth and let it dry naturally, away from direct heat. Every few months, feed the leather with a conditioner such as our <a href="/shop/#!/p/619498559">leather care grease</a> to keep it supple.</p></div></details>
