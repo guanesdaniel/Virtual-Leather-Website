@@ -94,6 +94,11 @@
   // ring (radius 483 of 500) spans 896.6-1047.4. Spot 4 sits level with it, within that band (the owner's blue lines).
   var BEER_BAND = 156 * 483 / 500;
 
+  // Spots 5 and 6 (BBQ, barber and simple aprons): never taller than "TEST" in Montserrat at the owner's chosen size,
+  // 80% of the earlier standard (70 x 80% = 56), measured the same way as every lettering (inkRef). The letter size is
+  // set high so that this limit, or the width, is what decides 100%, which is then the largest size.
+  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56] };
+
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     bbq: {
@@ -105,9 +110,9 @@
       // 1065): its guide is the circle's band. A logo has a fixed size (see SLOT_PLANS): 126 tall, the owner's "120%" of
       // the earlier standard (105). Text, all its lines together, is centred on the band and at 100% is as tall as the
       // circle when it fits the width; bigger isn't offered.
-      4: { x: 851, y: 972, h: BEER_BAND, fs: 210, stdW: 300, maxW: 300, maxH: 240, logoH: 126, stdH: 240, inkH: BEER_BAND, inkAll: true },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 600, logoH: 126, stdH: 600, inkH: BEER_BAND, inkAll: true },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
     },
     barber: {
@@ -116,8 +121,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100 },
       4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 220, logoH: 150 }
     },
     split: {
@@ -134,8 +139,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
       4: { x: 822, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180, inkH: 42 },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
     },
     wood: {
@@ -155,14 +160,15 @@
     return b;
   }
   // stdW / stdH: the room used for the standard (100%) size; maxW / maxH: the most a bigger size may take.
-  // inkH: the tallest the engraving may be in that spot (the letters as they look, in any lettering, or a logo).
-  // On the lower spots 5 and 6 it's 42 units: "TEST" in Montserrat at 70 x 80%, the owner's chosen height. There
-  // the standard (100%) size is that largest one. It applies to each line of text, or with inkAll to all the lines
-  // together (centred by the letters as they look), for a spot that must stay within a band.
+  // inkH: the tallest the engraving may be in that spot (the letters as they look, in any lettering, or a logo), or
+  // inkRef [lettering, text, size]: as tall as that text looks at that size (spots 5 and 6: LOWER_SPOT). It applies to
+  // each line of text, or with inkAll to all the lines together (centred by the letters as they look), for a spot that
+  // must stay within a band.
   function metrics(b) {
     var maxW = b.maxW || b.w + 80, maxH = b.maxH || b.h * 2;
     return { fs: b.fs || Math.min(96, b.h * 1.1), maxW: maxW, maxH: maxH, logoH: b.logoH || b.h * 1.6,
-      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkH: b.inkH || 0, inkAll: !!b.inkAll };
+      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkAll: !!b.inkAll,
+      inkH: b.inkRef ? b.inkRef[2] * inkOf(FONTS[b.inkRef[0]], [b.inkRef[1]]).r : b.inkH || 0 };
   }
   // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
   function positionsOf(styleKey) {
