@@ -15,7 +15,7 @@ Items marked **Owner** need information only you can give. Run `npm run check` a
 - [x] **Cancellations**: full refund any time until the approved design is engraved.
 - [x] **Record retention**: as UK tax law requires (5 years after the 31 January deadline for the tax year).
 - [ ] **Warranty**: the same as on Etsy. Send a screenshot of the Etsy policy so it can be copied word for word.
-- [ ] **Logo**: send the logo file. A "VL" monogram and wordmark are used until then.
+- [x] **Logo**: the owner's brush "VL" logo is in the header, the browser tab icon, the phone home-screen icon and Google's business details. The owner sent the file again on 5 October 2026, and it matches the one on the site.
 - [x] **Customer photos**: OK to show. The owner confirmed on 5 October 2026 that the customers shown in the gallery photos (and whose names or logos appear) are happy to be featured.
 
 ## Setup tasks

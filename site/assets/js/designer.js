@@ -90,6 +90,15 @@
   var STRAP_B = 'M810,318 V230 C810,172 748,170 670,132 L530,26 C458,-12 238,22 175,170 ' +
     'C150,280 145,430 140,560 L135,650 C130,770 45,775 45,690 L45,620';
 
+  // The beer circle in spot 3 of the BBQ apron, at its fixed size (a 156-tall box centred at 972): the outer edge of its
+  // ring (radius 483 of 500) spans 896.6-1047.4. Spot 4 sits level with it, within that band (the owner's blue lines).
+  var BEER_BAND = 156 * 483 / 500;
+
+  // Spots 5 and 6 (BBQ, barber and simple aprons): never taller than "TEST" in Montserrat at the owner's chosen size,
+  // 80% of the earlier standard (70 x 80% = 56), measured the same way as every lettering (inkRef). The letter size is
+  // set high so that this limit, or the width, is what decides 100%, which is then the largest size.
+  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56] };
+
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
     bbq: {
@@ -97,9 +106,13 @@
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
-      4: { x: 851, y: 1000, fs: 58, maxW: 300, maxH: 150, logoH: 140 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      // Spot 4 sits level with the beer circle in spot 3, as the owner asked, clear of the pocket below it (its top is at
+      // 1065): its guide is the circle's band. A logo has a fixed size (see SLOT_PLANS): 126 tall, the owner's "120%" of
+      // the earlier standard (105). Text, all its lines together, is centred on the band and at 100% is as tall as the
+      // circle when it fits the width; bigger isn't offered.
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 600, logoH: 126, stdH: 600, inkH: BEER_BAND, inkAll: true },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
     },
     barber: {
@@ -108,8 +121,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100 },
       4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 220, logoH: 150 }
     },
     split: {
@@ -126,8 +139,8 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
       4: { x: 822, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
-      5: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
-      6: { fs: 70, maxW: 330, maxH: 200, logoH: 180 },
+      5: LOWER_SPOT,
+      6: LOWER_SPOT,
       pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
     },
     wood: {
@@ -147,10 +160,15 @@
     return b;
   }
   // stdW / stdH: the room used for the standard (100%) size; maxW / maxH: the most a bigger size may take.
+  // inkH: the tallest the engraving may be in that spot (the letters as they look, in any lettering, or a logo), or
+  // inkRef [lettering, text, size]: as tall as that text looks at that size (spots 5 and 6: LOWER_SPOT). It applies to
+  // each line of text, or with inkAll to all the lines together (centred by the letters as they look), for a spot that
+  // must stay within a band.
   function metrics(b) {
     var maxW = b.maxW || b.w + 80, maxH = b.maxH || b.h * 2;
     return { fs: b.fs || Math.min(96, b.h * 1.1), maxW: maxW, maxH: maxH, logoH: b.logoH || b.h * 1.6,
-      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7 };
+      stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkAll: !!b.inkAll,
+      inkH: b.inkRef ? b.inkRef[2] * inkOf(FONTS[b.inkRef[0]], [b.inkRef[1]]).r : b.inkH || 0 };
   }
   // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
   function positionsOf(styleKey) {
@@ -183,8 +201,9 @@
     bbq: {
       1: CHEST_WITH_DESIGNS,
       2: underChest(true),
-      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder' },
-      4: spotPlan('Top of pocket'),
+      // Spots 3 and 4: the beer circle and logos have a fixed size there (the owner's choice), so no size control.
+      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder', fixedSize: ['design', 'logo'] },
+      4: { modes: ['none', 'text', 'logo'], def: 'none', where: 'Top of pocket', fixedSize: ['logo'] },
       pocket: spotPlan('On the pocket')
     },
     barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
@@ -199,6 +218,8 @@
     // "None" always comes first, so every spot lists its choices in the same order.
     return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
+  // Does this choice have a fixed size in this spot (no size control; always its 100%)?
+  function fixedSize(styleKey, p, mode) { return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1; }
 
   // Suggested designs, drawn in a 1000-wide box (height = 1000 / aspect). Text the customer fills in
   // is drawn live in the lettering they choose. To add a design: give it an entry here (artwork as SVG
@@ -648,10 +669,13 @@
       // Logos and designs: an artwork box of a known aspect, standard size limited by the spot.
       var logo = sl.mode === 'logo' ? logos[p] : null, design = sl.mode === 'design' ? DESIGNS[sl.design] : null;
       var aspect = design ? design.aspect : logo ? logo.aspect : 1.6;
-      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH);
+      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = false;
+      if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
+      var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
+      if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
       var pct = Math.min(sl.size, maxPct), h = std * pct / 100, w = h * aspect, x = box.x - w / 2, y = box.y - h / 2;
-      fit[p] = { pct: pct, maxPct: maxPct };
+      fit[p] = { pct: pct, maxPct: maxPct, capped: capped };
       if (design) {
         var k = w / 1000;
         [['#ffe1c8', 0.22, 2], [ink, 1, 0]].forEach(function (layer) {
@@ -702,14 +726,45 @@
     });
     var widest = Math.max.apply(null, texts.map(function (t) { try { return t.getComputedTextLength(); } catch (e) { return 0; } })) || 1;
     var tall = lines.length * base * 1.08 / font.scale;
-    var std = base * Math.min(1, m.stdW / widest, m.stdH / tall);
+    var std = base * Math.min(1, m.stdW / widest, m.stdH / tall), capped = false, capSize = 0;
+    var looks = m.inkH ? inkOf(font, lines) : null, block = looks && m.inkAll ? looks.bottom - looks.top : 0;
+    if (looks) { capSize = m.inkH / (block || looks.r); std = Math.min(std, capSize); }
     var maxPct = Math.max(100, Math.floor(100 * base * Math.min(m.maxW / widest, m.maxH / tall) / std));
+    var capPct = capSize ? pctOf(capSize, std) : 0;
+    if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
     var pct = Math.min(sl.size, maxPct), size = Math.max(12, std * pct / 100);
     texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
-    var lh = size * 1.08, top = box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
+    // First baseline: lines centred on the spot (the letters as they look, for a band spot).
+    var lh = size * 1.08, top = block ? box.y - (looks.top + looks.bottom) / 2 * size : box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
     texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
     hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
-    return { pct: pct, maxPct: maxPct };
+    return { pct: pct, maxPct: maxPct, capped: capped };
+  }
+  // a as a whole % of b, with a hair of slack so that a size capped at exactly the limit reads 100%, not 99%.
+  function pctOf(a, b) { return Math.floor(100 * a / b + 1e-6); }
+  // How the letters of these lines look per unit of font size in this lettering, measured on a canvas: r = the
+  // tallest line (top of the highest letter to bottom of the lowest); top / bottom = the whole text, lines 1.08
+  // apart, from the first line's baseline. Montserrat capitals (0.75 tall) if unknown.
+  var inkCache = {}, inkCtx = null;
+  function inkOf(font, lines) {
+    var key = font.family + '|' + font.weight + '|' + lines.join('\n');
+    if (inkCache[key]) return inkCache[key];
+    var r = 0, top = Infinity, bottom = -Infinity;
+    try {
+      inkCtx = inkCtx || document.createElement('canvas').getContext('2d');
+      inkCtx.font = font.weight + ' 100px ' + font.family;
+      lines.forEach(function (line, i) {
+        if (!line.trim()) return;
+        var mt = inkCtx.measureText(line), up = (mt.actualBoundingBoxAscent || 0) / 100, down = (mt.actualBoundingBoxDescent || 0) / 100;
+        r = Math.max(r, up + down);
+        top = Math.min(top, i * 1.08 - up);
+        bottom = Math.max(bottom, i * 1.08 + down);
+      });
+    } catch (e) { r = 0; }
+    var o = r > 0.2 ? { r: r, top: top, bottom: bottom } : { r: 0.75, top: -0.75, bottom: (lines.length - 1) * 1.08 };
+    // Only remember it once the lettering's own font is in (before that the canvas measures a stand-in font).
+    if (!document.fonts || document.fonts.check(font.weight + ' 100px ' + font.family)) inkCache[key] = o;
+    return o;
   }
 
   /* ---------- Engraving spots: one card per spot, built from the plans above ---------- */
@@ -885,10 +940,10 @@
     // Patterned (patchwork panels): the patterned BBQ apron.
     st.patterned = !!STYLES[st.style].patterned;
     SLOT_KEYS.forEach(function (p) {
-      var design = val('design-' + p), fields = {};
+      var design = val('design-' + p), fields = {}, mode = val('mode-' + p) || 'none';
       ((DESIGNS[design] || {}).fields || []).forEach(function (f) { fields[f.key] = val('d-' + f.key + '-' + p); });
       st.slots[p] = {
-        mode: val('mode-' + p) || 'none', size: Number(val('size-' + p)) || 100,
+        mode: mode, size: fixedSize(st.style, p, mode) ? 100 : Number(val('size-' + p)) || 100,
         text: (form.elements['text-' + p].value || '').replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim(),
         font: FONTS[val('font-' + p)] ? val('font-' + p) : 'montserrat',
         design: design, fields: fields, dfont: FONTS[val('dfont-' + p)] ? val('dfont-' + p) : 'classic'
@@ -1064,7 +1119,7 @@
       hint.textContent = plan.hint || '';
       hint.hidden = !plan.hint;
       Array.prototype.forEach.call(card.querySelectorAll('.slot-body'), function (b) { b.hidden = b.getAttribute('data-for') !== mode; });
-      card.querySelector('.size-field').hidden = mode === 'none';
+      card.querySelector('.size-field').hidden = mode === 'none' || fixedSize(st.style, p, mode);
       // Designs offered in this spot
       var designs = plan.designs || [];
       Array.prototype.forEach.call(card.querySelectorAll('.design-opt'), function (o) {
@@ -1135,6 +1190,7 @@
       });
       var bigChest = p === '1' && POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && st.slots['2'].mode !== 'none';
       document.getElementById('size-' + p + '-fit').textContent = !atFit || v >= Number(input.max) ? '' :
+        f.capped ? 'That\'s the biggest size for this spot.' :
         'That\'s the biggest that fits this spot.' + (st.slots[p].mode === 'text' ? ' For bigger letters, use fewer letters or another line.' : '') +
         (bigChest && st.slots[p].mode !== 'text' ? ' Set spot 2 to "None" to make it bigger.' : '');
     });
