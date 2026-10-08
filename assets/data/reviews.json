@@ -1,0 +1,81 @@
+{
+  "_comment": "Written by tools/etsy-reviews.mjs from the Etsy API. Do not edit by hand: it is replaced on each deploy.",
+  "source": "etsy-api",
+  "fetched": "2026-10-08T18:38:09.670Z",
+  "etsyRating": "4.9",
+  "etsyReviewCount": "527",
+  "reviews": [
+    {
+      "rating": 5,
+      "text": "This is a gift for my boss and it came out perfect!!! Thank you so much!!!",
+      "date": "Oct 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "Very pleased with the product!",
+      "date": "Sept 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "Daniel was very responsive and attentive to any questions I had. Great quality and will consider purchasing more in the future.",
+      "date": "Sept 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "At first sight good and sturdy leather. The overall look is nice 😊",
+      "date": "Jul 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "This apron made of real leather is fabulous. My husband really likes it. I originally bought it for him when he was going to cookout on his grills, but he said he’s looking forward to wearing it when he’s doing woodworking and cooking He was really happy with it. Thank you so much for the awesome communication in customizing it just to fit him, customer Service was just outstanding thank you",
+      "date": "Jul 2026",
+      "item": "Leather Wings Back Adjuster (Optional Extra)"
+    },
+    {
+      "rating": 5,
+      "text": "The apron is just what my husband wanted. Great design and quality.",
+      "date": "Jul 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "Perfection and professionalism, a good merchant",
+      "date": "Jul 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "The first one of these was so good, I bought one for the wife. We are both BBQ pitmasters and we always get compliments on how much people like our aprons.",
+      "date": "May 2026",
+      "item": "Personalized Leather Apron: Handcrafted Text/Logo for Barber"
+    },
+    {
+      "rating": 5,
+      "text": "Amazing quality, looks just like the picture!",
+      "date": "Apr 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets"
+    },
+    {
+      "rating": 5,
+      "text": "Excellent accessory for the apron.",
+      "date": "Apr 2026",
+      "item": "Personalized Leather BBQ Apron with Drink Pockets + Leather Bottle Opener (Optional Extra)"
+    },
+    {
+      "rating": 5,
+      "text": "Daniel was fantastic to deal with and he produced a wonderful product. Thank you. I will be a regular customer.",
+      "date": "Apr 2026",
+      "item": "Leather Wings Back Adjuster (Optional Extra)"
+    },
+    {
+      "rating": 4,
+      "text": "I probably should have ordered a smaller one but it is functional, nice to look at and the personalization looks great!\n\nDaniel was very responsive and helpful.",
+      "date": "Mar 2026",
+      "item": "Personalized Leather Chef Knife Roll"
+    }
+  ]
+}
