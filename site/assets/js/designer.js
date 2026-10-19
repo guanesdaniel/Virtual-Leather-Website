@@ -187,7 +187,7 @@
 
   // What each spot offers and starts with, per apron style (from each apron's sketch): its choices, the
   // one it starts on, and where it sits ("where"). Spot 2 can be removed to make the chest logo or design
-  // bigger. Suggested designs: Grill Master on the BBQ (plain and patterned) and simple aprons' chest, the
+  // bigger. Suggested designs: Grill Master, the Grill Master emblem, Best Dad Ever and Dad legend on the BBQ (plain and patterned) and simple aprons' chest, the
   // beer circle on the plain BBQ apron's drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
   var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket'];
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
@@ -196,7 +196,7 @@
       hint: 'Smaller text under the chest. ' + (designs ? 'Designs and logos' : 'Logos') + ' usually fill the chest, so you can remove this spot to make them bigger.' };
   }
   function spotPlan(where) { return { modes: ['none', 'text', 'logo'], def: 'none', where: where }; }
-  var CHEST_WITH_DESIGNS = { modes: ['none', 'text', 'design', 'logo'], def: 'text', designs: ['grillmaster'] };
+  var CHEST_WITH_DESIGNS = { modes: ['none', 'text', 'design', 'logo'], def: 'text', designs: ['grillmaster', 'grillemblem', 'bestdad', 'dadlegend'] };
   var SLOT_PLANS = {
     bbq: {
       1: CHEST_WITH_DESIGNS,
@@ -235,12 +235,16 @@
       ],
       draw: function (g, o) {
         var art = (window.VL_DESIGN_ART || {}).grillmaster;
-        if (art) el('path', { d: art.d, fill: o.ink, transform: 'scale(' + (1000 / art.w).toFixed(5) + ')' }, g);
+        if (art) el('path', { d: art.d, fill: o.ink, 'fill-rule': 'evenodd', transform: 'scale(' + (1000 / art.w).toFixed(5) + ')' }, g);
         var nf = FONTS[o.font] || FONTS.classic;
         // The name sits on the original's baseline, as big as the gap between the artwork allows.
         textFit(g, { x: 500, y: 559, size: 132 * nf.scale, maxW: 940, family: nf.family, weight: nf.weight }, o.name || 'YOUR NAME', o.ink, o.name ? 1 : 0.4);
       }
     },
+    // The owner's fixed designs, traced into design-art.js: nothing for the customer to change.
+    grillemblem: fixedArt('grillemblem', 'Grill Master emblem', 1384 / 877),
+    bestdad: fixedArt('bestdad', 'Best Dad Ever', 769 / 1113),
+    dadlegend: fixedArt('dadlegend', 'Dad Legend', 1145 / 1134),
     beer: {
       label: 'If you can read this, get me a beer', short: 'Beer circle', aspect: 1, fields: [],
       draw: function (g, o) {
@@ -259,6 +263,13 @@
       }
     }
   };
+  // A design that is only traced artwork (VL_DESIGN_ART[key]), drawn in the engraving colour.
+  function fixedArt(key, label, aspect, short) {
+    return { label: label, short: short, aspect: aspect, fields: [], draw: function (g, o) {
+      var art = (window.VL_DESIGN_ART || {})[key];
+      if (art) el('path', { d: art.d, fill: o.ink, 'fill-rule': 'evenodd', transform: 'scale(' + (1000 / art.w).toFixed(5) + ')' }, g);
+    } };
+  }
   function designLabel(id) { return (DESIGNS[id] || {}).label || id; }
   // A line of text that shrinks to maxW if needed. Returns the <text> element.
   function textFit(g, o, str, ink, opacity) {
