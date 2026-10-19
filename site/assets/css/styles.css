@@ -199,7 +199,6 @@ main:focus { outline: none; }
 @media (min-width: 980px) { .preview { position: sticky; top: calc(var(--header-h) + 16px); } }
 .preview svg { margin: 0 auto; width: 100%; max-width: 440px; }
 .preview-note { font-size: .88rem; color: var(--muted); text-align: center; margin: 10px auto 0; max-width: 34em; }
-.preview-tag { position: absolute; top: 14px; left: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 600; }
 .engraving { font-weight: 650; }
 .pos-hint { fill: none; stroke: rgba(255, 255, 255, .55); stroke-dasharray: 4 4; }
 .pos-hint-label { fill: rgba(255, 255, 255, .8); font: 700 12px var(--sans); }

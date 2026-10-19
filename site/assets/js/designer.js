@@ -993,7 +993,7 @@
   var summaryEls = {
     style: document.getElementById('sum-style'), colors: document.getElementById('sum-colors'),
     engraving: document.getElementById('sum-engraving'), extras: document.getElementById('sum-extras'),
-    total: document.getElementById('sum-total'), tag: document.getElementById('preview-tag'),
+    total: document.getElementById('sum-total'),
     engravings: document.getElementById('sum-engravings'), engravingsDt: document.getElementById('sum-engravings-dt')
   };
   var wingField = document.getElementById('wing-color-field');
@@ -1218,7 +1218,6 @@
     summaryEls.engravings.hidden = summaryEls.engravingsDt.hidden = !extraEng;
     summaryEls.engravings.textContent = extraEng + ' × $' + ENGRAVING_PRICE;
     summaryEls.total.textContent = '$' + total(st);
-    summaryEls.tag.textContent = STYLES[st.style].name;
     // Real photos and description of the chosen apron, under the preview.
     var galleryKey = STYLES[st.style].gallery || st.style;
     Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== galleryKey; });
