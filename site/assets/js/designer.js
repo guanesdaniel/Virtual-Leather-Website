@@ -226,19 +226,17 @@
   // paths, or an image drawn with el('image')) and list its key in a spot's designs above.
   var DESIGNS = {
     // The owner's Grill Master artwork (forks, flame, "Grill Master"), traced into design-art.js by
-    // tools/trace-designs.mjs. Only the name and the Est. year change; they sit where the original's were.
+    // tools/trace-designs.mjs. Only the name changes; it sits where the original's was. The original's
+    // "Est." and year are left out to keep the design simple.
     grillmaster: {
       label: 'Grill Master', aspect: 1388 / 1497, defFont: 'classic',
       fields: [
-        { key: 'name', label: 'Name', required: true, max: 18, placeholder: 'e.g. MIKE', sample: 'MIKE' },
-        { key: 'year', label: 'Est. year', max: 4, placeholder: 'e.g. 1986', sample: '1986', numeric: true }
+        { key: 'name', label: 'Name', required: true, max: 18, placeholder: 'e.g. MIKE', sample: 'MIKE' }
       ],
       draw: function (g, o) {
         var art = (window.VL_DESIGN_ART || {}).grillmaster;
         if (art) el('path', { d: art.d, fill: o.ink, transform: 'scale(' + (1000 / art.w).toFixed(5) + ')' }, g);
-        var serif = '"Playfair Display", Georgia, serif', nf = FONTS[o.font] || FONTS.classic;
-        textFit(g, { x: 134, y: 407, anchor: 'start', size: 45, family: serif, weight: 700 }, 'EST.', o.ink, o.year ? 1 : 0.4);
-        textFit(g, { x: 890, y: 408, anchor: 'end', size: 45, family: serif, weight: 700 }, o.year || 'YEAR', o.ink, o.year ? 1 : 0.4);
+        var nf = FONTS[o.font] || FONTS.classic;
         // The name sits on the original's baseline, as big as the gap between the artwork allows.
         textFit(g, { x: 500, y: 559, size: 132 * nf.scale, maxW: 940, family: nf.family, weight: nf.weight }, o.name || 'YOUR NAME', o.ink, o.name ? 1 : 0.4);
       }
@@ -1046,7 +1044,7 @@
       } else if (sl.mode === 'design' && DESIGNS[sl.design]) {
         var d = DESIGNS[sl.design], f = sl.fields || {};
         lines.push(spotName(p) + ': ' + (d.fields && d.fields.length ? d.label + ' design' : '"' + d.label + '" design') +
-          (f.name ? ', name "' + f.name + '"' : '') + (f.year ? ', Est. ' + f.year : '') +
+          (f.name ? ', name "' + f.name + '"' : '') +
           (d.fields && d.fields.length ? ' (' + FONTS[sl.dfont].label + ' lettering)' : '') + bigger);
       } else if (sl.mode === 'logo') {
         hasLogo = true;
@@ -1960,7 +1958,7 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var st = read();
-    // Suggested designs: the name is required, the year (if given) must be 4 digits.
+    // Suggested designs: required fields must be filled in, and numeric ones (if given) must be 4 digits.
     var missing = null;
     positionsOf(st.style).forEach(function (p) {
       var sl = st.slots[p], d = DESIGNS[sl.design];
