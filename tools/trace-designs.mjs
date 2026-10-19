@@ -19,12 +19,16 @@ const DESIGNS = {
       { left: 395, top: 885, width: 1253, height: 122 }   // the name
     ],
     crop: { left: 295, top: 219, width: 1388, height: 1497 }
-  }
+  },
+  // Fixed designs: nothing for the customer to change, so nothing is blanked out.
+  bestdad: { src: 'tools/design-src/best-dad-ever.png', crop: { left: 286, top: 23, width: 769, height: 1113 } },
+  dadlegend: { src: 'tools/design-src/dad-legend.png', crop: { left: 51, top: 52, width: 1145, height: 1134 } },
+  grillemblem: { src: 'tools/design-src/grill-master-emblem.png', crop: { left: 77, top: 64, width: 1384, height: 877 } }
 };
 
 const out = {};
 for (const [key, d] of Object.entries(DESIGNS)) {
-  const patches = await Promise.all(d.erase.map(async (r) => ({
+  const patches = await Promise.all((d.erase || []).map(async (r) => ({
     input: await sharp({ create: { width: r.width, height: r.height, channels: 3, background: '#fff' } }).png().toBuffer(),
     left: r.left, top: r.top
   })));
