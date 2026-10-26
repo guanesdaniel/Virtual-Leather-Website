@@ -9,6 +9,7 @@ window.VL_PRODUCT_DESIGN = {
   desc: 'Front of the minimalist backpack',
   colorOption: 'Color',
   accent: ['Front pocket', 'pocket'],
+  extraEngravings: false,  // every engraving is included in the price
   // Where engravings can go. zone: a box (x, y, w, h) the engraving stays inside.
   // perMm: drawing units per millimetre there. text / logo: height in mm (min, max, starting size).
   places: {

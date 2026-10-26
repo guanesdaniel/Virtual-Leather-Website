@@ -27,7 +27,8 @@
   if (!form || !box) return;
   if (!P) { document.getElementById('pd-failed').hidden = false; document.getElementById('pd-designer').hidden = true; return; }
 
-  var ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
+  // Extra engravings add the Ecwid "Extra engraving" product, unless the product includes them all.
+  var ENGRAVING_PRICE = 5, ENGRAVING_ID = P.extraEngravings === false ? 0 : Number(C.extraEngravingId) || 0;
   // Leather tones, as on the apron designer (ecwid = the value of the product's colour option in the store,
   // P.colorOption, "Main Color" unless the product says otherwise).
   var COLORS = {
@@ -241,7 +242,7 @@
     var list = engraved();
     if (!list.length) parts.push('Engraving: none (plain)');
     list.forEach(function (it, i) { parts.push(line(it, i + 1)); });
-    if (list.length > 1) parts.push('Engravings: ' + list.length + ' (1 included + ' + (list.length - 1) + ' extra)');
+    if (list.length > 1) parts.push('Engravings: ' + list.length + (ENGRAVING_ID ? ' (1 included + ' + (list.length - 1) + ' extra)' : ' (all included)'));
     var who = document.getElementById('pd-for').value.trim(), notes = document.getElementById('pd-notes').value.trim();
     if (who) parts.push('For: ' + who);
     if (notes) parts.push('Notes: ' + notes);
