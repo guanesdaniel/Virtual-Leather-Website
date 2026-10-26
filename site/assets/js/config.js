@@ -22,7 +22,8 @@ window.VL_CONFIG = {
     "619492031": {
       "name": "Leather Knife Roll for Chefs & Butchers",
       "price": 170,
-      "group": "more"
+      "group": "more",
+      "page": "/knife-case/"
     },
     "619492033": {
       "name": "Barber Leather Apron",

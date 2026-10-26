@@ -1,4 +1,4 @@
-/* Virtual Leather — designer for products with their own page (the duffle bag): leather tones, text and
+/* Virtual Leather — designer for products with their own page (the duffle bag, the knife roll): leather tones, text and
    logo engravings the customer drags into place, a live preview, and the Ecwid cart. Each product's
    drawing and engraving places come from window.VL_PRODUCT_DESIGN (site/assets/js/designs/*.js).
    Also runs the photo gallery at the top of those pages. */
@@ -27,7 +27,8 @@
   if (!form || !box) return;
   if (!P) { document.getElementById('pd-failed').hidden = false; document.getElementById('pd-designer').hidden = true; return; }
 
-  var ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
+  // Extra engravings add the Ecwid "Extra engraving" product, unless the product includes them all.
+  var ENGRAVING_PRICE = 5, ENGRAVING_ID = P.extraEngravings === false ? 0 : Number(C.extraEngravingId) || 0;
   // Leather tones, as on the apron designer (ecwid = the "Main Color" value in the store).
   var COLORS = {
     tan:   { label: 'Tan', ecwid: 'Tanned (Light Brown)', hex: '#b5592f', hi: '#c97a50', edge: '#5e2a14', engrave: '#3b170a' },
@@ -49,6 +50,16 @@
   };
   function fontName(k) { var f = FONTS[k] || FONTS.montserrat; return f.label + (f.real ? ' (' + f.real + ')' : ''); }
   var PLACES = Object.keys(P.places);
+  // Sizes (optional, P.sizes): a "size" radio group in the form picks one; each has its price, the
+  // store's spelling of the choice, and a scale for the drawing.
+  var SIZES = P.sizes || null;
+  function curSize() {
+    if (!SIZES) return null;
+    var k = val('size');
+    return SIZES.filter(function (z) { return z.key === k; })[0] || SIZES[0];
+  }
+  function perMm(place) { var z = curSize(); return P.places[place].perMm * (z && z.scale || 1); }
+  function basePrice() { var z = curSize(); return z ? z.price : P.price; }
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function el(name, attrs, parent) {
@@ -72,7 +83,7 @@
   function isPlain() { return document.getElementById('pd-plain').checked; }
   function engraved() { return isPlain() ? [] : items.filter(hasContent); }
   function extras() { return Math.max(0, engraved().length - 1); }
-  function total() { return P.price + (ENGRAVING_ID ? extras() * ENGRAVING_PRICE : 0); }
+  function total() { return basePrice() + (ENGRAVING_ID ? extras() * ENGRAVING_PRICE : 0); }
 
   /* ---------- Preview ---------- */
   var svg = el('svg', { viewBox: P.viewBox, role: 'img', 'aria-labelledby': 'pd-svg-desc', id: 'pd-svg' }, box);
@@ -90,17 +101,18 @@
 
   function hexRgb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16) / 255; }); }
   function drawBase(main, straps) {
-    if (drawn === main + straps) return;
-    drawn = main + straps;
+    var size = curSize() ? curSize().key : '';
+    if (drawn === main + straps + size) return;
+    drawn = main + straps + size;
     while (base.firstChild) base.removeChild(base.firstChild);
-    P.draw(base, COLORS[main], COLORS[straps], { el: el });
+    P.draw(base, COLORS[main], COLORS[straps], { el: el, size: size });
     var c = hexRgb(COLORS[main].engrave).map(function (v) { return v.toFixed(3); });
     logoMatrix.setAttribute('values', '0 0 0 0 ' + c[0] + '  0 0 0 0 ' + c[1] + '  0 0 0 0 ' + c[2] + '  -0.2126 -0.7152 -0.0722 0 1');
   }
 
   // How big an engraving is in drawing units, before fitting: [width, height].
   function boxOf(it, node) {
-    var place = P.places[it.place], h = it.size * place.perMm;
+    var h = it.size * perMm(it.place);
     if (it.kind === 'logo') return [h * (it.img ? it.img.ratio : 1.4), h];
     var b = node.getBBox();
     return [b.width, h];
@@ -135,13 +147,13 @@
       if (it.kind === 'text') {
         var f = FONTS[it.font] || FONTS.montserrat, empty = !it.text.trim();
         node = el('text', { x: it.x, y: it.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: ink,
-          'font-family': f.family, 'font-weight': f.weight, 'font-size': (it.size * P.places[it.place].perMm / .7 * f.scale).toFixed(1),
+          'font-family': f.family, 'font-weight': f.weight, 'font-size': (it.size * perMm(it.place) / .7 * f.scale).toFixed(1),
           opacity: empty ? .35 : .92 }, hit);
         node.textContent = empty ? 'Your name' : it.text;
         var bw = node.getBBox().width, r = room(it, it.y);
         // Too long for the place at this size: shrink it to fit (we tell the customer in the form).
         if (bw > r[0] * .96) { fit = r[0] * .96 / bw; node.setAttribute('font-size', (node.getAttribute('font-size') * fit).toFixed(1)); }
-        w = bw * fit; h = it.size * P.places[it.place].perMm * fit;
+        w = bw * fit; h = it.size * perMm(it.place) * fit;
       } else {
         var bx = boxOf(it), r2 = room(it, it.y);
         fit = Math.min(1, r2[0] * .96 / bx[0], r2[1] * .96 / bx[1]);
@@ -231,12 +243,16 @@
     if (it.kind === 'text') return n + ') Text "' + it.text.trim() + '" on ' + P.places[it.place].long + ', font ' + fontName(it.font) + ', ' + size + ', ' + where(it);
     return n + ') Image or logo on ' + P.places[it.place].long + ' (' + (it.note ? it.note + '; ' : '') + 'customer sends the file), ' + size + ', ' + where(it);
   }
+  // The engravings on one place, for a store option of their own ('' if none).
+  function linesOn(place) {
+    return engraved().map(function (it, i) { return it.place === place ? line(it, i + 1) : ''; }).filter(Boolean).join(' | ');
+  }
   function describe(ref) {
-    var parts = ['Straps and handles: ' + COLORS[val('straps')].label];
+    var parts = [(curSize() ? 'Size: ' + curSize().label + ' | ' : '') + (P.strapsLabel || 'Straps and handles') + ': ' + COLORS[val('straps')].label];
     var list = engraved();
     if (!list.length) parts.push('Engraving: none (plain)');
     list.forEach(function (it, i) { parts.push(line(it, i + 1)); });
-    if (list.length > 1) parts.push('Engravings: ' + list.length + ' (1 included + ' + (list.length - 1) + ' extra)');
+    if (list.length > 1) parts.push('Engravings: ' + list.length + (ENGRAVING_ID ? ' (1 included + ' + (list.length - 1) + ' extra)' : ' (all included)'));
     var who = document.getElementById('pd-for').value.trim(), notes = document.getElementById('pd-notes').value.trim();
     if (who) parts.push('For: ' + who);
     if (notes) parts.push('Notes: ' + notes);
@@ -244,11 +260,12 @@
     return parts.join(' | ');
   }
   var sum = {
-    colors: document.getElementById('pd-sum-colors'), engraving: document.getElementById('pd-sum-engraving'),
+    size: document.getElementById('pd-sum-size'), colors: document.getElementById('pd-sum-colors'), engraving: document.getElementById('pd-sum-engraving'),
     extra: document.getElementById('pd-sum-extra'), extraDt: document.getElementById('pd-sum-extra-dt'), total: document.getElementById('pd-sum-total')
   };
   var waLink = document.getElementById('pd-whatsapp');
   function updateSummary() {
+    if (sum.size && curSize()) sum.size.textContent = curSize().summary || curSize().label;
     sum.colors.textContent = COLORS[val('main')].label + ', ' + shortTone(val('straps')) + ' straps';
     var list = engraved();
     sum.engraving.textContent = list.length ? list.map(function (it) {
@@ -259,7 +276,7 @@
     sum.extra.textContent = n + ' × $' + ENGRAVING_PRICE;
     sum.total.textContent = '$' + total();
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(
-      'Hi Virtual Leather! I\'d like to order a ' + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
+      'Hi Virtual Leather! I\'d like to order a ' + (curSize() ? curSize().label.toLowerCase() + ' ' : '') + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
     document.getElementById('pd-svg-desc').textContent = P.desc + ' in ' + shortTone(val('main')) + ' leather with ' + shortTone(val('straps')) + ' straps' +
       (list.length ? ', engraved: ' + list.map(function (it) { return (it.kind === 'text' ? it.text.trim() : 'a logo') + ' on ' + P.places[it.place].long; }).join('; ') : ', without engraving') + '.';
   }
@@ -270,7 +287,7 @@
     clearTimeout(draftTimer);
     draftTimer = setTimeout(function () {
       try {
-        localStorage.setItem(DRAFT, JSON.stringify({ main: val('main'), straps: val('straps'), plain: isPlain(),
+        localStorage.setItem(DRAFT, JSON.stringify({ main: val('main'), straps: val('straps'), size: val('size'), plain: isPlain(),
           for: document.getElementById('pd-for').value, notes: document.getElementById('pd-notes').value,
           email: form.elements.email.value, phone: form.elements.phone.value,
           items: items.map(function (it) { return { kind: it.kind, place: it.place, text: it.text, font: it.font, size: it.size, x: it.x, y: it.y, note: it.note }; }) }));
@@ -281,7 +298,7 @@
     var d;
     try { d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) {}
     if (!d || !Array.isArray(d.items)) return false;
-    ['main', 'straps'].forEach(function (n) { var r = form.querySelector('input[name="' + n + '"][value="' + d[n] + '"]'); if (r) r.checked = true; });
+    ['main', 'straps', 'size'].forEach(function (n) { var r = form.querySelector('input[name="' + n + '"][value="' + d[n] + '"]'); if (r) r.checked = true; });
     document.getElementById('pd-plain').checked = !!d.plain;
     document.getElementById('pd-for').value = d.for || '';
     document.getElementById('pd-notes').value = d.notes || '';
@@ -313,7 +330,7 @@
   function changed() {
     if (tracked || !VL.track) return;
     tracked = true;
-    VL.track('customize_product', { currency: C.currency, value: P.price, items: [{ item_id: String(P.id), item_name: P.label, price: P.price }] });
+    VL.track('customize_product', { currency: C.currency, value: basePrice(), items: [{ item_id: String(P.id), item_name: P.label, price: basePrice() }] });
   }
   function select(i, focusCard) {
     if (i === selected && !focusCard) return;
@@ -476,6 +493,35 @@
     });
   }
 
+  // Add the product. With sizes, the cart is checked for the size: if the store didn't take the choice as
+  // spelled (so the price would be wrong), that line comes out and the next spelling is tried.
+  function addMain(E, options, ref) {
+    var z = curSize(), names = z ? [].concat(z.ecwid) : [null];
+    function check(name) {
+      return new Promise(function (resolve) {
+        E.Cart.get(function (cart) {
+          var items = cart && cart.items || [], at = -1;
+          items.forEach(function (it, i) {
+            var o = it.options || {};
+            if (it.product && Number(it.product.id) === P.id && Object.keys(o).some(function (k) { return String(o[k]).indexOf(ref) !== -1; })) at = i;
+          });
+          if (at !== -1 && items[at].options.Size === name) return resolve(true);
+          if (at === -1) return resolve(false);
+          E.Cart.removeProduct(at, function () { resolve(false); });
+        });
+      });
+    }
+    function attempt(i) {
+      if (z) options.Size = names[i];
+      var last = i === names.length - 1;
+      return addProduct(E, P.id, options, 1).then(function () {
+        if (last) return;
+        return check(names[i]).then(function (ok) { if (!ok) return attempt(i + 1); });
+      }, function (err) { if (last) throw err; return attempt(i + 1); });
+    }
+    return attempt(0);
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!isPlain() && !engraved().length) {
@@ -493,10 +539,13 @@
       'Email for design confirmation': form.elements.email.value.trim(),
       'Phone Number for shipping confirmation': form.elements.phone.value.trim()
     };
+    if (curSize()) options.Size = [].concat(curSize().ecwid)[0];
+    // A product whose store options differ maps them itself (P.cartOptions).
+    if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[val('straps')], description: options['Description For Personalization'], lines: linesOn });
     submit.disabled = true;
     setStatus('Adding to your cart…');
     VL.loadEcwid().then(function (E) {
-      return addProduct(E, P.id, options, 1).then(function () { if (n) return addProduct(E, ENGRAVING_ID, {}, n); });
+      return addMain(E, options, ref).then(function () { if (n) return addProduct(E, ENGRAVING_ID, {}, n); });
     }).then(function () {
       setStatus('');
       try { localStorage.removeItem(DRAFT); } catch (err) {}
@@ -536,5 +585,5 @@
     document.fonts.ready.then(function () { drawItems(val('main')); refreshCards(); });
     document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', function () { if (!drag) { drawItems(val('main')); refreshCards(); } });
   }
-  if (VL.track) VL.track('view_item', { currency: C.currency, value: P.price, items: [{ item_id: String(P.id), item_name: P.label, price: P.price }] });
+  if (VL.track) VL.track('view_item', { currency: C.currency, value: basePrice(), items: [{ item_id: String(P.id), item_name: P.label, price: basePrice() }] });
 })();
