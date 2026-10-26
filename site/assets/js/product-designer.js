@@ -1,6 +1,7 @@
-/* Virtual Leather — designer for products with their own page (the duffle bag): leather tones, text and
+/* Virtual Leather — designer for products with their own page (the duffle bag, the knife roll): leather tones, text and
    logo engravings the customer drags into place, a live preview, and the Ecwid cart. Each product's
    drawing and engraving places come from window.VL_PRODUCT_DESIGN (site/assets/js/designs/*.js).
+   Optional per product: sizes, views (one part of the drawing at a time) and suggested designs (ideas).
    Also runs the photo gallery at the top of those pages. */
 (function () {
   'use strict';
@@ -51,6 +52,16 @@
   };
   function fontName(k) { var f = FONTS[k] || FONTS.montserrat; return f.label + (f.real ? ' (' + f.real + ')' : ''); }
   var PLACES = Object.keys(P.places);
+  // Sizes (optional, P.sizes): a "size" radio group in the form picks one; each has its price, the
+  // store's spelling of the choice, and a scale for the drawing.
+  var SIZES = P.sizes || null;
+  function curSize() {
+    if (!SIZES) return null;
+    var k = val('size');
+    return SIZES.filter(function (z) { return z.key === k; })[0] || SIZES[0];
+  }
+  function perMm(place) { var z = curSize(); return P.places[place].perMm * (z && z.scale || 1); }
+  function basePrice() { var z = curSize(); return z ? z.price : P.price; }
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function el(name, attrs, parent) {
@@ -72,18 +83,57 @@
   function zoneCentre(place) { var z = P.places[place].zone; return z.r ? { x: z.cx, y: z.cy } : { x: z.x + z.w / 2, y: z.y + z.h / 2 }; }
   function newItem(kind, place) {
     var c = zoneCentre(place);
-    return { key: nextKey++, kind: kind, place: place, text: '', font: 'montserrat', size: P.places[place][kind][2], x: c.x, y: c.y, note: '', img: null };
+    return { key: nextKey++, kind: kind, place: place, text: '', font: 'montserrat', size: P.places[place][kind][2], x: c.x, y: c.y, note: '', img: null,
+      src: 'own', idea: IDEAS.length ? IDEAS[0].key : '' };
+  }
+  // Suggested designs for "Image or logo" (optional, P.ideas: keys of the artwork in design-art.js). With them,
+  // a logo is the customer's own (src 'own'), one of ours ('idea'), or one we create for them ('create').
+  var IDEAS = (P.ideas || []).filter(function (d) { return (window.VL_DESIGN_ART || {})[d.key]; });
+  function ideaOf(it) { return it.kind === 'logo' && it.src === 'idea' ? IDEAS.filter(function (d) { return d.key === it.idea; })[0] || IDEAS[0] : null; }
+  function artOf(d) { return d ? window.VL_DESIGN_ART[d.key] : null; }
+  function logoName(it) {
+    var d = ideaOf(it);
+    return d ? d.label : it.src === 'create' ? 'Design we create' : 'Logo';
   }
   function hasContent(it) { return it.kind === 'logo' || !!it.text.trim(); }
   function isPlain() { return document.getElementById('pd-plain').checked; }
   function engraved() { return isPlain() ? [] : items.filter(hasContent); }
   function extras() { return Math.max(0, engraved().length - 1); }
-  function total() { return P.price + (ENGRAVING_ID ? extras() * ENGRAVING_PRICE : 0); }
+  function total() { return basePrice() + (ENGRAVING_ID ? extras() * ENGRAVING_PRICE : 0); }
 
   /* ---------- Preview ---------- */
   var svg = el('svg', { viewBox: P.viewBox, role: 'img', 'aria-labelledby': 'pd-svg-desc', id: 'pd-svg' }, box);
   el('desc', { id: 'pd-svg-desc' }, svg);
   var base = el('g', {}, svg), defs = el('defs', {}, svg), layer = el('g', {}, svg), drawn = '';
+  // Views (optional, P.views): the preview shows one part of the drawing at a time, with buttons to switch;
+  // choosing an engraving shows the view its place is on.
+  var curView = '', viewBar = null;
+  function showView(v) {
+    if (!P.views || !P.views[v] || v === curView) return;
+    curView = v;
+    svg.setAttribute('viewBox', P.views[v].box);
+    Array.prototype.forEach.call(viewBar.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-view') === v)); });
+  }
+  function followSelected() { var it = items[selected]; if (it && P.places[it.place].view) showView(P.places[it.place].view); }
+  if (P.views) {
+    viewBar = document.createElement('div');
+    viewBar.className = 'pd-views';
+    viewBar.setAttribute('role', 'group');
+    viewBar.setAttribute('aria-label', 'View');
+    viewBar.innerHTML = Object.keys(P.views).map(function (k) {
+      return '<button type="button" class="pd-view" data-view="' + k + '" aria-pressed="false">' + esc(P.views[k].label) + '</button>';
+    }).join('');
+    box.insertBefore(viewBar, svg);
+    viewBar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-view]');
+      if (!b) return;
+      var v = b.getAttribute('data-view');
+      showView(v);
+      // Select the first engraving in that view, so it's the one the form and arrow keys work on.
+      for (var i = 0; i < items.length; i++) if (P.places[items[i].place].view === v) { if (i !== selected) select(i); break; }
+    });
+    showView(Object.keys(P.views)[0]);
+  }
   // Clip each place, so engravings never spill over the edge.
   PLACES.forEach(function (k) {
     var z = P.places[k].zone, cp = el('clipPath', { id: 'pd-clip-' + k }, defs);
@@ -96,18 +146,20 @@
 
   function hexRgb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16) / 255; }); }
   function drawBase(main, straps) {
-    if (drawn === main + straps) return;
-    drawn = main + straps;
+    var size = curSize() ? curSize().key : '';
+    if (drawn === main + straps + size) return;
+    drawn = main + straps + size;
     while (base.firstChild) base.removeChild(base.firstChild);
-    P.draw(base, COLORS[main], COLORS[straps], { el: el });
+    P.draw(base, COLORS[main], COLORS[straps], { el: el, size: size });
     var c = hexRgb(COLORS[main].engrave).map(function (v) { return v.toFixed(3); });
     logoMatrix.setAttribute('values', '0 0 0 0 ' + c[0] + '  0 0 0 0 ' + c[1] + '  0 0 0 0 ' + c[2] + '  -0.2126 -0.7152 -0.0722 0 1');
   }
 
   // How big an engraving is in drawing units, before fitting: [width, height].
   function boxOf(it, node) {
-    var place = P.places[it.place], h = it.size * place.perMm;
-    if (it.kind === 'logo') return [h * (it.img ? it.img.ratio : 1.4), h];
+    var h = it.size * perMm(it.place);
+    var art = artOf(ideaOf(it));
+    if (it.kind === 'logo') return [h * (art ? art.w / art.h : it.img && it.src === 'own' ? it.img.ratio : 1.4), h];
     var b = node.getBBox();
     return [b.width, h];
   }
@@ -141,13 +193,13 @@
       if (it.kind === 'text') {
         var f = FONTS[it.font] || FONTS.montserrat, empty = !it.text.trim();
         node = el('text', { x: it.x, y: it.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: ink,
-          'font-family': f.family, 'font-weight': f.weight, 'font-size': (it.size * P.places[it.place].perMm / .7 * f.scale).toFixed(1),
+          'font-family': f.family, 'font-weight': f.weight, 'font-size': (it.size * perMm(it.place) / .7 * f.scale).toFixed(1),
           opacity: empty ? .35 : .92 }, hit);
         node.textContent = empty ? 'Your name' : it.text;
         var bw = node.getBBox().width, r = room(it, it.y);
         // Too long for the place at this size: shrink it to fit (we tell the customer in the form).
         if (bw > r[0] * .96) { fit = r[0] * .96 / bw; node.setAttribute('font-size', (node.getAttribute('font-size') * fit).toFixed(1)); }
-        w = bw * fit; h = it.size * P.places[it.place].perMm * fit;
+        w = bw * fit; h = it.size * perMm(it.place) * fit;
       } else {
         var bx = boxOf(it), r2 = room(it, it.y);
         fit = Math.min(1, r2[0] * .96 / bx[0], r2[1] * .96 / bx[1]);
@@ -156,11 +208,15 @@
       it.fit = fit;
       clamp(it, w, h);
       if (it.kind === 'text') { node.setAttribute('x', it.x); node.setAttribute('y', it.y); }
-      else if (it.img) {
+      else if (ideaOf(it)) {
+        var art = artOf(ideaOf(it)), k = Math.min(w / art.w, h / art.h);
+        el('path', { d: art.d, fill: ink, opacity: .92, 'fill-rule': 'evenodd',
+          transform: 'translate(' + (it.x - art.w * k / 2).toFixed(1) + ',' + (it.y - art.h * k / 2).toFixed(1) + ') scale(' + k.toFixed(5) + ')' }, hit);
+      } else if (it.img && it.src === 'own') {
         el('image', { href: it.img.url, x: it.x - w / 2, y: it.y - h / 2, width: w, height: h, filter: 'url(#pd-logo)', preserveAspectRatio: 'xMidYMid meet' }, hit);
       } else {
         el('rect', { x: it.x - w / 2, y: it.y - h / 2, width: w, height: h, rx: 8, fill: 'none', stroke: ink, 'stroke-width': 3, 'stroke-dasharray': '8 6' }, hit);
-        el('text', { x: it.x, y: it.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: ink, 'font-family': 'Inter, sans-serif', 'font-weight': 700, 'font-size': Math.min(h * .3, w * .22).toFixed(1) }, hit).textContent = 'LOGO';
+        el('text', { x: it.x, y: it.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: ink, 'font-family': 'Inter, sans-serif', 'font-weight': 700, 'font-size': Math.min(h * .3, w * .22).toFixed(1) }, hit).textContent = it.src === 'create' ? 'DESIGN' : 'LOGO';
       }
       // Invisible hit area (so a thin script is easy to grab), and the selection outline.
       el('rect', { x: it.x - w / 2 - 8, y: it.y - h / 2 - 8, width: w + 16, height: h + 16, fill: 'transparent' }, hit);
@@ -175,6 +231,26 @@
     if (!ENGRAVING_ID || !hasContent(it)) return '';
     return engraved().indexOf(it) > 0 ? '+$' + ENGRAVING_PRICE : 'Included';
   }
+  // "Image or logo" with suggested designs: yours, one of ours, or one we create for you.
+  function logoBody(it, id) {
+    var srcs = [['own', 'Your own'], ['idea', 'One of our ideas'], ['create', 'Create one for me']];
+    var out = '<fieldset class="option-group"><legend>Image</legend><div class="options">' + srcs.map(function (o) {
+      return '<label class="opt"><input type="radio" name="' + id + '-src" value="' + o[0] + '" data-k="src"' + (o[0] === it.src ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+    }).join('') + '</div></fieldset>';
+    if (it.src === 'idea') {
+      return out + '<fieldset class="option-group"><legend>Our ideas</legend><div class="options idea-opts">' + IDEAS.map(function (d) {
+        var a = artOf(d);
+        return '<label class="opt"><input type="radio" name="' + id + '-idea" value="' + d.key + '" data-k="idea"' + (d.key === ideaOf(it).key ? ' checked' : '') + '>' +
+          '<span><svg viewBox="0 0 ' + a.w + ' ' + a.h + '" aria-hidden="true" focusable="false"><path d="' + a.d + '" fill-rule="evenodd" fill="currentColor"/></svg>' + esc(d.label) + '</span></label>';
+      }).join('') + '</div></fieldset>';
+    }
+    if (it.src === 'create') {
+      return out + '<div class="field"><label for="' + id + '-note">What should we create?</label>' +
+        '<input id="' + id + '-note" type="text" maxlength="120" autocomplete="off" data-k="note" value="' + esc(it.note) + '" placeholder="e.g. a chef\'s hat with crossed knives"></div>';
+    }
+    return out + '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; you send us the file after)</span></label>' +
+      '<input id="' + id + '-file" type="file" accept="image/*" data-k="file"></div>';
+  }
   function card(it, i) {
     var id = 'pd-e' + it.key, r = range(it);
     var places = PLACES.map(function (k) {
@@ -188,6 +264,7 @@
           return '<label class="opt"><input type="radio" name="' + id + '-font" value="' + k + '" data-k="font"' + (k === it.font ? ' checked' : '') + '>' +
             '<span style="font-family:' + esc(f.family) + ';font-weight:' + f.weight + '">' + esc(f.label) + '</span></label>';
         }).join('') + '</div></fieldset>'
+      : IDEAS.length ? logoBody(it, id)
       : '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; you send us the file after)</span></label>' +
           '<input id="' + id + '-file" type="file" accept="image/*" data-k="file"></div>' +
         '<div class="field"><label for="' + id + '-note">Or tell us what you\'d like <span class="muted">(optional)</span></label>' +
@@ -235,10 +312,16 @@
   function line(it, n) {
     var size = 'about ' + Math.round(it.size * (it.fit || 1)) + ' mm tall';
     if (it.kind === 'text') return n + ') Text "' + it.text.trim() + '" on ' + P.places[it.place].long + ', font ' + fontName(it.font) + ', ' + size + ', ' + where(it);
+    if (ideaOf(it)) return n + ') Our design "' + ideaOf(it).label + '" on ' + P.places[it.place].long + ', ' + size + ', ' + where(it);
+    if (it.src === 'create') return n + ') Image for us to create on ' + P.places[it.place].long + ' (' + (it.note || 'ask the customer') + '), ' + size + ', ' + where(it);
     return n + ') Image or logo on ' + P.places[it.place].long + ' (' + (it.note ? it.note + '; ' : '') + 'customer sends the file), ' + size + ', ' + where(it);
   }
+  // The engravings on one place, for a store option of their own ('' if none).
+  function linesOn(place) {
+    return engraved().map(function (it, i) { return it.place === place ? line(it, i + 1) : ''; }).filter(Boolean).join(' | ');
+  }
   function describe(ref) {
-    var parts = hasStraps ? [ACCENT[0] + ': ' + COLORS[val('straps')].label] : [];
+    var parts = (curSize() ? ['Size: ' + curSize().label] : []).concat(hasStraps ? [ACCENT[0] + ': ' + COLORS[val('straps')].label] : []);
     var list = engraved();
     if (!list.length) parts.push('Engraving: none (plain)');
     list.forEach(function (it, i) { parts.push(line(it, i + 1)); });
@@ -250,24 +333,27 @@
     return parts.join(' | ');
   }
   var sum = {
-    colors: document.getElementById('pd-sum-colors'), engraving: document.getElementById('pd-sum-engraving'),
+    size: document.getElementById('pd-sum-size'), colors: document.getElementById('pd-sum-colors'), engraving: document.getElementById('pd-sum-engraving'),
     extra: document.getElementById('pd-sum-extra'), extraDt: document.getElementById('pd-sum-extra-dt'), total: document.getElementById('pd-sum-total')
   };
   var waLink = document.getElementById('pd-whatsapp');
   function updateSummary() {
+    if (sum.size && curSize()) sum.size.textContent = curSize().summary || curSize().label;
+    // The tone chosen, shown next to each tone's heading ("The case: Tan").
+    Array.prototype.forEach.call(form.querySelectorAll('[data-picked]'), function (n) { var c = COLORS[val(n.getAttribute('data-picked'))]; if (c) n.textContent = c.label; });
     sum.colors.textContent = COLORS[val('main')].label + (hasStraps ? ', ' + shortTone(val('straps')) + ' ' + ACCENT[1] : '');
     var list = engraved();
     sum.engraving.textContent = list.length ? list.map(function (it) {
-      return (it.kind === 'text' ? '"' + it.text.trim() + '"' : 'Logo') + ' (' + P.places[it.place].label.toLowerCase() + ')';
+      return (it.kind === 'text' ? '"' + it.text.trim() + '"' : logoName(it)) + ' (' + P.places[it.place].label.toLowerCase() + ')';
     }).join(', ') : 'None';
     var n = ENGRAVING_ID ? extras() : 0;
     sum.extra.hidden = sum.extraDt.hidden = !n;
     sum.extra.textContent = n + ' × $' + ENGRAVING_PRICE;
     sum.total.textContent = '$' + total();
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(
-      'Hi Virtual Leather! I\'d like to order a ' + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
+      'Hi Virtual Leather! I\'d like to order a ' + (curSize() ? curSize().label.toLowerCase() + ' ' : '') + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
     document.getElementById('pd-svg-desc').textContent = P.desc + ' in ' + shortTone(val('main')) + ' leather' + (hasStraps ? ' with ' + shortTone(val('straps')) + ' ' + ACCENT[1] : '') +
-      (list.length ? ', engraved: ' + list.map(function (it) { return (it.kind === 'text' ? it.text.trim() : 'a logo') + ' on ' + P.places[it.place].long; }).join('; ') : ', without engraving') + '.';
+      (list.length ? ', engraved: ' + list.map(function (it) { return (it.kind === 'text' ? it.text.trim() : logoName(it).toLowerCase()) + ' on ' + P.places[it.place].long; }).join('; ') : ', without engraving') + '.';
   }
 
   /* ---------- Draft (kept on this device, without logo pictures) ---------- */
@@ -276,10 +362,10 @@
     clearTimeout(draftTimer);
     draftTimer = setTimeout(function () {
       try {
-        localStorage.setItem(DRAFT, JSON.stringify({ main: val('main'), straps: val('straps'), plain: isPlain(),
+        localStorage.setItem(DRAFT, JSON.stringify({ main: val('main'), straps: val('straps'), size: val('size'), plain: isPlain(),
           for: document.getElementById('pd-for').value, notes: document.getElementById('pd-notes').value,
           email: form.elements.email.value, phone: form.elements.phone.value,
-          items: items.map(function (it) { return { kind: it.kind, place: it.place, text: it.text, font: it.font, size: it.size, x: it.x, y: it.y, note: it.note }; }) }));
+          items: items.map(function (it) { return { kind: it.kind, place: it.place, text: it.text, font: it.font, size: it.size, x: it.x, y: it.y, note: it.note, src: it.src, idea: it.idea }; }) }));
       } catch (e) {}
     }, 400);
   }
@@ -287,7 +373,7 @@
     var d;
     try { d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) {}
     if (!d || !Array.isArray(d.items)) return false;
-    ['main', 'straps'].forEach(function (n) { var r = form.querySelector('input[name="' + n + '"][value="' + d[n] + '"]'); if (r) r.checked = true; });
+    ['main', 'straps', 'size'].forEach(function (n) { var r = form.querySelector('input[name="' + n + '"][value="' + d[n] + '"]'); if (r) r.checked = true; });
     document.getElementById('pd-plain').checked = !!d.plain;
     document.getElementById('pd-for').value = d.for || '';
     document.getElementById('pd-notes').value = d.notes || '';
@@ -297,6 +383,8 @@
       var n = newItem(it.kind, it.place), r = P.places[it.place][it.kind];
       n.text = String(it.text || ''); n.font = FONTS[it.font] ? it.font : 'montserrat'; n.note = String(it.note || '');
       n.size = Math.min(r[1], Math.max(r[0], Number(it.size) || r[2])); n.x = Number(it.x) || n.x; n.y = Number(it.y) || n.y;
+      if (IDEAS.length && ['own', 'idea', 'create'].indexOf(it.src) !== -1) n.src = it.src;
+      if (IDEAS.some(function (d) { return d.key === it.idea; })) n.idea = it.idea;
       return n;
     });
     return true;
@@ -308,7 +396,7 @@
     var plain = isPlain();
     if (selected >= items.length) selected = items.length - 1;
     drawBase(val('main'), straps());
-    if (rebuild) renderList();
+    if (rebuild) { renderList(); followSelected(); }
     list.hidden = plain;
     document.getElementById('pd-add').hidden = plain;
     drawItems(val('main'));
@@ -319,11 +407,12 @@
   function changed() {
     if (tracked || !VL.track) return;
     tracked = true;
-    VL.track('customize_product', { currency: C.currency, value: P.price, items: [{ item_id: String(P.id), item_name: P.label, price: P.price }] });
+    VL.track('customize_product', { currency: C.currency, value: basePrice(), items: [{ item_id: String(P.id), item_name: P.label, price: basePrice() }] });
   }
   function select(i, focusCard) {
     if (i === selected && !focusCard) return;
     selected = i;
+    followSelected();
     drawItems(val('main'));
     refreshCards();
     if (focusCard && cardOf(i)) cardOf(i).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -342,6 +431,8 @@
       return update(true);
     }
     if (k === 'font') it.font = t.value;
+    if (k === 'src') { it.src = t.value; it.size = range(it)[2]; changed(); update(true); var f = cardOf(selected).querySelector('[data-k="src"]:checked'); if (f) f.focus(); return; }
+    if (k === 'idea') it.idea = t.value;
     if (k === 'file' && t.files && t.files[0]) {
       var url = URL.createObjectURL(t.files[0]), probe = new Image();
       probe.onload = function () {
@@ -482,6 +573,35 @@
     });
   }
 
+  // Add the product. With sizes, the cart is checked for the size: if the store didn't take the choice as
+  // spelled (so the price would be wrong), that line comes out and the next spelling is tried.
+  function addMain(E, options, ref) {
+    var z = curSize(), names = z ? [].concat(z.ecwid) : [null];
+    function check(name) {
+      return new Promise(function (resolve) {
+        E.Cart.get(function (cart) {
+          var items = cart && cart.items || [], at = -1;
+          items.forEach(function (it, i) {
+            var o = it.options || {};
+            if (it.product && Number(it.product.id) === P.id && Object.keys(o).some(function (k) { return String(o[k]).indexOf(ref) !== -1; })) at = i;
+          });
+          if (at !== -1 && items[at].options.Size === name) return resolve(true);
+          if (at === -1) return resolve(false);
+          E.Cart.removeProduct(at, function () { resolve(false); });
+        });
+      });
+    }
+    function attempt(i) {
+      if (z) options.Size = names[i];
+      var last = i === names.length - 1;
+      return addProduct(E, P.id, options, 1).then(function () {
+        if (last) return;
+        return check(names[i]).then(function (ok) { if (!ok) return attempt(i + 1); });
+      }, function (err) { if (last) throw err; return attempt(i + 1); });
+    }
+    return attempt(0);
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!isPlain() && !engraved().length) {
@@ -492,17 +612,20 @@
     }
     var bad = [form.elements.email, form.elements.phone].filter(function (f) { return !validate(f); });
     if (bad.length) { setStatus('Please check the highlighted fields.', 'error'); bad[0].focus(); return; }
-    var ref = newRef(), n = ENGRAVING_ID ? extras() : 0, logos = engraved().filter(function (it) { return it.kind === 'logo'; }).length;
+    var ref = newRef(), n = ENGRAVING_ID ? extras() : 0, logos = engraved().filter(function (it) { return it.kind === 'logo' && it.src === 'own'; }).length;
     var options = {
       'Description For Personalization': describe(ref),
       'Email for design confirmation': form.elements.email.value.trim(),
       'Phone Number for shipping confirmation': form.elements.phone.value.trim()
     };
     options[P.colorOption || 'Main Color'] = COLORS[val('main')].ecwid;
+    if (curSize()) options.Size = [].concat(curSize().ecwid)[0];
+    // A product whose store options differ maps them itself (P.cartOptions).
+    if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[straps()], description: options['Description For Personalization'], lines: linesOn });
     submit.disabled = true;
     setStatus('Adding to your cart…');
     VL.loadEcwid().then(function (E) {
-      return addProduct(E, P.id, options, 1).then(function () { if (n) return addProduct(E, ENGRAVING_ID, {}, n); });
+      return addMain(E, options, ref).then(function () { if (n) return addProduct(E, ENGRAVING_ID, {}, n); });
     }).then(function () {
       setStatus('');
       try { localStorage.removeItem(DRAFT); } catch (err) {}
@@ -542,5 +665,5 @@
     document.fonts.ready.then(function () { drawItems(val('main')); refreshCards(); });
     document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', function () { if (!drag) { drawItems(val('main')); refreshCards(); } });
   }
-  if (VL.track) VL.track('view_item', { currency: C.currency, value: P.price, items: [{ item_id: String(P.id), item_name: P.label, price: P.price }] });
+  if (VL.track) VL.track('view_item', { currency: C.currency, value: basePrice(), items: [{ item_id: String(P.id), item_name: P.label, price: basePrice() }] });
 })();
