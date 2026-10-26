@@ -17,7 +17,8 @@ window.VL_CONFIG = {
     "619488531": {
       "name": "Minimalist Leather Backpack",
       "price": 180,
-      "group": "more"
+      "group": "more",
+      "page": "/backpack/"
     },
     "619492031": {
       "name": "Leather Knife Roll for Chefs & Butchers",
