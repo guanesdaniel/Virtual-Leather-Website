@@ -415,3 +415,47 @@ fieldset.panel { margin: 0; min-width: 0; }
 .logo-next { margin: 16px 0; padding: 14px 16px; border: 1.5px solid var(--ink); border-radius: var(--radius-sm); }
 .logo-next h4 { margin: 0 0 6px; }
 .logo-next p { margin: 0 0 10px; }
+
+/* Product pages and product designer (the duffle bag: src/pages/duffle-bag.html, product-designer.js) */
+.crumbs ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 18px 0 0; list-style: none; font-size: .9rem; color: var(--muted); }
+.crumbs li + li::before { content: "›"; margin-right: 6px; }
+.crumbs a { color: var(--muted); }
+.pdp { padding: 20px 0 clamp(48px, 7vw, 88px); }
+.pdp-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }  /* minmax(0) stops the thumbnail strip widening the page on phones */
+@media (min-width: 900px) { .pdp-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: start; } }
+.pdp-main { aspect-ratio: 4 / 5; border-radius: var(--radius); overflow: hidden; background: #e9e0d4; }
+.pdp-main img { width: 100%; height: 100%; object-fit: cover; }
+.pdp-thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scrollbar-width: thin; }
+.pdp-thumbs li { flex: none; }
+.pdp-thumb { display: block; width: 72px; height: 88px; padding: 0; border: 1.5px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: #e9e0d4; cursor: pointer; }
+.pdp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pdp-thumb[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.pdp-thumb:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 900px) { .pdp-gallery { position: sticky; top: calc(var(--header-h) + 16px); } }
+.pdp-info h1 { font-size: clamp(2.1rem, 4.6vw, 3.2rem); }
+.pdp-lead { font-size: 1.12rem; color: var(--muted); }
+.pdp-price { font: 600 2rem/1.1 var(--display); margin: 0 0 4px; }
+.pdp-price-note { color: var(--muted); font-size: .95rem; }
+.pdp-size { display: grid; gap: 8px; margin: 18px 0; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.pdp-size div { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.pdp-size dt { font-weight: 650; min-width: 6.5em; }
+.pdp-size dd { margin: 0; }
+.pdp-colours .swatch { display: inline-block; width: 18px; height: 18px; vertical-align: -3px; margin-right: 4px; }
+.pdp-colours .swatch:nth-child(3) { margin-right: 8px; }
+.pdp-cta { margin: 22px 0; }
+.pdp-ticks { margin-bottom: 18px; }
+.pdp-more summary { padding: 16px 40px 16px 0; font-size: 1rem; }
+.pdp-more summary::after { top: 10px; }
+.pdp-more details > div { padding-bottom: 14px; }
+.pd-preview svg { max-width: 640px; touch-action: manipulation; }
+.pd-item { cursor: grab; touch-action: none; outline: none; }
+.pd-item:active { cursor: grabbing; }
+.pd-sel { stroke: #fff; stroke-width: 2.5; stroke-dasharray: 7 5; filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, .7)); }
+.pd-item:focus-visible + .pd-sel, .pd-item:focus-visible ~ .pd-sel { stroke: var(--focus); }
+.pd-add { margin: 4px 0 8px; }
+.pd-item-actions { gap: 18px; margin-top: 6px; font-size: .92rem; }
+.know-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.know { padding: 24px; }
+.know p { color: var(--muted); margin: 0; }
+.know .ticks { margin: 0; }
+.also-grid .product { color: var(--ink); }
