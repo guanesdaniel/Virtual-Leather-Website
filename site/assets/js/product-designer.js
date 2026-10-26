@@ -30,7 +30,8 @@
 
   // Extra engravings add the Ecwid "Extra engraving" product, unless the product includes them all.
   var ENGRAVING_PRICE = 5, ENGRAVING_ID = P.extraEngravings === false ? 0 : Number(C.extraEngravingId) || 0;
-  // Leather tones, as on the apron designer (ecwid = the "Main Color" value in the store).
+  // Leather tones, as on the apron designer (ecwid = the value of the product's colour option in the store,
+  // P.colorOption, "Main Color" unless the product says otherwise).
   var COLORS = {
     tan:   { label: 'Tan', ecwid: 'Tanned (Light Brown)', hex: '#b5592f', hi: '#c97a50', edge: '#5e2a14', engrave: '#3b170a' },
     brown: { label: 'Dark brown', ecwid: 'Dark Brown', hex: '#5b3c35', hi: '#7a5650', edge: '#2e1c18', engrave: '#1c100c' },
@@ -70,6 +71,10 @@
     return n;
   }
   function val(name) { var f = form.querySelector('input[name="' + name + '"]:checked'); return f ? f.value : ''; }
+  // Products with a second leather tone (the duffle bag's straps, the backpack's pocket) have a "straps"
+  // choice, named by P.accent ([label, short word]); others are all one tone.
+  var hasStraps = !!form.querySelector('input[name="straps"]'), ACCENT = P.accent || ['Straps and handles', 'straps'];
+  function straps() { return hasStraps ? val('straps') : val('main'); }
 
   /* ---------- State ---------- */
   // Each engraving: kind 'text' or 'logo', place (a key of P.places), its size (mm tall), and its centre
@@ -316,7 +321,7 @@
     return engraved().map(function (it, i) { return it.place === place ? line(it, i + 1) : ''; }).filter(Boolean).join(' | ');
   }
   function describe(ref) {
-    var parts = [(curSize() ? 'Size: ' + curSize().label + ' | ' : '') + (P.strapsLabel || 'Straps and handles') + ': ' + COLORS[val('straps')].label];
+    var parts = (curSize() ? ['Size: ' + curSize().label] : []).concat(hasStraps ? [ACCENT[0] + ': ' + COLORS[val('straps')].label] : []);
     var list = engraved();
     if (!list.length) parts.push('Engraving: none (plain)');
     list.forEach(function (it, i) { parts.push(line(it, i + 1)); });
@@ -334,9 +339,9 @@
   var waLink = document.getElementById('pd-whatsapp');
   function updateSummary() {
     if (sum.size && curSize()) sum.size.textContent = curSize().summary || curSize().label;
-    // The tone chosen, shown next to each tone's heading ("Leather: Tan").
+    // The tone chosen, shown next to each tone's heading ("The case: Tan").
     Array.prototype.forEach.call(form.querySelectorAll('[data-picked]'), function (n) { var c = COLORS[val(n.getAttribute('data-picked'))]; if (c) n.textContent = c.label; });
-    sum.colors.textContent = COLORS[val('main')].label + ', ' + shortTone(val('straps')) + ' straps';
+    sum.colors.textContent = COLORS[val('main')].label + (hasStraps ? ', ' + shortTone(val('straps')) + ' ' + ACCENT[1] : '');
     var list = engraved();
     sum.engraving.textContent = list.length ? list.map(function (it) {
       return (it.kind === 'text' ? '"' + it.text.trim() + '"' : logoName(it)) + ' (' + P.places[it.place].label.toLowerCase() + ')';
@@ -347,7 +352,7 @@
     sum.total.textContent = '$' + total();
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(
       'Hi Virtual Leather! I\'d like to order a ' + (curSize() ? curSize().label.toLowerCase() + ' ' : '') + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
-    document.getElementById('pd-svg-desc').textContent = P.desc + ' in ' + shortTone(val('main')) + ' leather with ' + shortTone(val('straps')) + ' straps' +
+    document.getElementById('pd-svg-desc').textContent = P.desc + ' in ' + shortTone(val('main')) + ' leather' + (hasStraps ? ' with ' + shortTone(val('straps')) + ' ' + ACCENT[1] : '') +
       (list.length ? ', engraved: ' + list.map(function (it) { return (it.kind === 'text' ? it.text.trim() : logoName(it).toLowerCase()) + ' on ' + P.places[it.place].long; }).join('; ') : ', without engraving') + '.';
   }
 
@@ -390,7 +395,7 @@
   function update(rebuild) {
     var plain = isPlain();
     if (selected >= items.length) selected = items.length - 1;
-    drawBase(val('main'), val('straps'));
+    drawBase(val('main'), straps());
     if (rebuild) { renderList(); followSelected(); }
     list.hidden = plain;
     document.getElementById('pd-add').hidden = plain;
@@ -609,14 +614,14 @@
     if (bad.length) { setStatus('Please check the highlighted fields.', 'error'); bad[0].focus(); return; }
     var ref = newRef(), n = ENGRAVING_ID ? extras() : 0, logos = engraved().filter(function (it) { return it.kind === 'logo' && it.src === 'own'; }).length;
     var options = {
-      'Main Color': COLORS[val('main')].ecwid,
       'Description For Personalization': describe(ref),
       'Email for design confirmation': form.elements.email.value.trim(),
       'Phone Number for shipping confirmation': form.elements.phone.value.trim()
     };
+    options[P.colorOption || 'Main Color'] = COLORS[val('main')].ecwid;
     if (curSize()) options.Size = [].concat(curSize().ecwid)[0];
     // A product whose store options differ maps them itself (P.cartOptions).
-    if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[val('straps')], description: options['Description For Personalization'], lines: linesOn });
+    if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[straps()], description: options['Description For Personalization'], lines: linesOn });
     submit.disabled = true;
     setStatus('Adding to your cart…');
     VL.loadEcwid().then(function (E) {

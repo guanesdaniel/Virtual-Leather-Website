@@ -9,7 +9,7 @@ window.VL_PRODUCT_DESIGN = {
   price: 170,
   viewBox: '0 0 1000 800',
   desc: 'The knife roll',
-  strapsLabel: 'Straps and handle',
+  accent: ['Straps and handle', 'straps'],
   // Both engravings (outside and inside) are included: no "Extra engraving" in the cart.
   extraEngravings: false,
   // The preview shows one view at a time (box: the part of the drawing it shows); choosing an
