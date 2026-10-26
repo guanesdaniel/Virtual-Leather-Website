@@ -25,7 +25,7 @@ window.VL_PRODUCT_DESIGN = {
     outside: {
       label: 'Outside', long: 'the outside, between the straps',
       zone: { x: 382, y: 96, w: 236, h: 130 }, perMm: 1.6,
-      text: [8, 40, 18], logo: [20, 80, 55]
+      text: [8, 40, 14], logo: [20, 80, 55]
     },
     inside: {
       label: 'Inside flap', long: 'the inside flap',
