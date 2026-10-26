@@ -21,7 +21,7 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/styles.css?v=19">
+<link rel="stylesheet" href="/assets/css/styles.css?v=20">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"Virtual Leather","legalName":"Virtual Leather Intl","url":"https://virtualleather.net/","logo":"https://virtualleather.net/assets/img/logo-vl-512.png","email":"danielguanes@virtualleather.info","sameAs":["https://www.instagram.com/virtualleatherintl/","https://virtualleathershop.etsy.com/"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","telephone":"+447552809738","email":"danielguanes@virtualleather.info","availableLanguage":["English","Spanish"]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","@id":"https://virtualleather.net/knife-case/#product","name":"Personalised Leather Knife Roll","description":"Handmade roll-up leather knife case for chefs and butchers, in two sizes: small (45 × 36 cm open, 6 knives) and large (76 × 52 cm open, 7 knives, with a shoulder strap). Laser engraved outside and inside with your name, phrase or logo.","image":"https://virtualleather.net/assets/img/p-619492031-800.webp","brand":{"@type":"Brand","name":"Virtual Leather"},"sku":"619492031","offers":{"@type":"AggregateOffer","lowPrice":"170.00","highPrice":"190.00","offerCount":2,"priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://virtualleather.net/knife-case/"}}</script>
 <script src="/assets/js/config.js?v=4"></script>
@@ -143,7 +143,7 @@
     <div class="section-head">
       <p class="eyebrow">Personalise it</p>
       <h2 id="design-title">Design your knife roll here.</h2>
-      <p>Choose the size and the leather, write the name and place it where you want it. Before we engrave anything, we send you a design proof to approve.</p>
+      <p>Choose the size and the leather, write the name or pick a design, and place it where you want it. Before we engrave anything, we send you a design proof to approve.</p>
     </div>
 
     <noscript><p class="card panel">The designer needs JavaScript. You can still <a href="https://wa.me/447552809738">design your knife roll with us on WhatsApp</a>.</p></noscript>
@@ -151,7 +151,6 @@
 
     <div class="designer" id="pd-designer">
       <div class="preview pd-preview">
-        <span class="preview-tag" aria-hidden="true">Knife roll</span>
         <div id="pd-preview"></div>
         <p class="preview-note">Tap an engraving to select it, then drag it to move it. Preview only: leather is a natural material, so tone and grain vary from piece to piece. We'll adjust the layout in your proof before engraving.</p>
       </div>
@@ -169,7 +168,7 @@
           <fieldset class="card panel">
             <legend><span class="num">2</span> Choose your leather tones</legend>
             <fieldset class="option-group">
-              <legend>The case</legend>
+              <legend>The case: <span class="picked" data-picked="main">Tan</span></legend>
               <div class="options">
                 <label class="opt"><input type="radio" name="main" value="tan" checked><span><i class="swatch" style="background:#b5592f"></i>Tan</span></label>
                 <label class="opt"><input type="radio" name="main" value="brown"><span><i class="swatch" style="background:#5b3c35"></i>Dark brown</span></label>
@@ -177,7 +176,7 @@
               </div>
             </fieldset>
             <fieldset class="option-group" style="margin-bottom:0">
-              <legend>Straps</legend>
+              <legend>Straps and handle: <span class="picked" data-picked="straps">Dark brown</span></legend>
               <div class="options">
                 <label class="opt"><input type="radio" name="straps" value="tan"><span><i class="swatch" style="background:#b5592f"></i>Tan</span></label>
                 <label class="opt"><input type="radio" name="straps" value="brown" checked><span><i class="swatch" style="background:#5b3c35"></i>Dark brown</span></label>
@@ -192,7 +191,7 @@
             <div id="pd-engravings"></div>
             <div class="btn-row pd-add" id="pd-add">
               <button type="button" class="btn btn-ghost btn-sm" data-add="text">+ Another text</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-add="logo">+ Image or logo</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-add="logo">+ Image or logo <span class="muted">(yours, one of our ideas, or we create it)</span></button>
             </div>
             <label class="check pd-plain"><input type="checkbox" name="plain" id="pd-plain"> <span>I'd like it plain, without engraving (same price)</span></label>
             <div class="field" style="margin:10px 0 0">
@@ -319,7 +318,7 @@
       <details><summary>Can I engrave the outside and the inside?</summary><div><p>Yes, both are included in the price. Put a name or phrase on the outside, between the straps, and a name, phrase or logo on the inside flap.</p></div></details>
       <details><summary>Can the straps be a different colour?</summary><div><p>Yes. Choose the tone of the case and the tone of the straps separately when you design it.</p></div></details>
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before we engrave it, we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
-      <details><summary>How do I send my logo?</summary><div><p>Pick "+ Image or logo" in the designer to see it on the case. After you add it to your cart, send us the original file on WhatsApp or by email. Don't have one? Describe what you'd like and we can draw it for you.</p></div></details>
+      <details><summary>How do I send my logo?</summary><div><p>Pick "+ Image or logo", then "Your own", to see it on the case. After you add it to your cart, send us the original file on WhatsApp or by email. Don't have one? Choose one of our ideas, or "Create one for me" and tell us what you'd like.</p></div></details>
       <details><summary>Can I return a personalised knife roll?</summary><div><p>Because each knife roll is made to order with your personalisation, we can't accept change-of-mind returns. If it arrives faulty or isn't what we agreed in your proof, we'll put it right. See <a href="/shipping-returns/">shipping and returns</a>.</p></div></details>
     </div>
   </div>
@@ -354,8 +353,9 @@
   </div>
 </section>
 
-<script src="/assets/js/designs/knife-case.js?v=1" defer></script>
-<script src="/assets/js/product-designer.js?v=2" defer></script>
+<script src="/assets/js/design-art.js?v=1" defer></script>
+<script src="/assets/js/designs/knife-case.js?v=2" defer></script>
+<script src="/assets/js/product-designer.js?v=3" defer></script>
 
 </main>
 <footer class="site-footer">

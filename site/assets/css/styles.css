@@ -459,3 +459,11 @@ fieldset.panel { margin: 0; min-width: 0; }
 .know p { color: var(--muted); margin: 0; }
 .know .ticks { margin: 0; }
 .also-grid .product { color: var(--ink); }
+/* Product designer: view buttons above the preview (the knife roll: rolled up / open) and suggested designs */
+.pd-views { display: flex; justify-content: center; gap: 8px; margin: 0 0 10px; }
+.pd-view { min-height: 40px; padding: 6px 16px; border: 1.5px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: .92rem; cursor: pointer; }
+.pd-view[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: #fff; font-weight: 650; }
+.pd-view:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.idea-opts .opt span { flex-direction: column; gap: 4px; border-radius: 14px; padding: 8px 12px; font-size: .85rem; }
+.idea-opts svg { width: 64px; height: 56px; color: #3b170a; }
+.picked { font-weight: 650; }
