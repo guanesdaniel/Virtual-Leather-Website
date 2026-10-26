@@ -50,7 +50,8 @@ window.VL_CONFIG = {
     "619501024": {
       "name": "Leather Duffle / Gym Bag",
       "price": 180,
-      "group": "more"
+      "group": "more",
+      "page": "/duffle-bag/"
     },
     "619501025": {
       "name": "Split-Leg Forging & Tattoo Apron",

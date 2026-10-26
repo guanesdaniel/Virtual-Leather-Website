@@ -10,10 +10,13 @@
   // One way to order an apron: the shop's pages for the aprons our designer makes open the designer,
   // with that apron chosen, instead of the shop's own order form.
   function designerStyle(id) { var p = (C.products || {})[String(id)]; return p && p.designer; }
-  // Products bought only through the designer: the aprons it makes, and the extra engraving (which only
-  // comes with an apron). Their shop pages open the designer instead.
+  // Products bought only through a designer: the aprons it makes, products with their own design page
+  // (the duffle bag), and the extra engraving (which only comes with one of those). Their shop pages open
+  // the designer instead.
   function designerUrl(id) {
     if (C.extraEngravingId && String(id) === String(C.extraEngravingId)) return '/#design';
+    var p = (C.products || {})[String(id)];
+    if (p && p.page) return p.page + '#design';
     var style = designerStyle(id);
     return style ? '/?style=' + encodeURIComponent(style) + '#design' : '';
   }
@@ -221,14 +224,14 @@
     }
 
     // Baseline = cart contents at load, so only later additions count as add_to_cart.
-    // The extra engraving only comes with an apron: if no apron is left in the cart, take it out.
+    // The extra engraving only comes with an apron or a duffle bag: if neither is left in the cart, take it out.
     function dropLoneEngraving(cart) {
       if (!C.extraEngravingId || VL.cartBusy) return;
       var lone = [], apron = false;
       (cart && cart.items || []).forEach(function (it, i) {
         var id = String(it.product && it.product.id), p = (C.products || {})[id];
         if (id === String(C.extraEngravingId)) lone.push(i);
-        else if (p && p.group === 'aprons') apron = true;
+        else if (p && (p.group === 'aprons' || p.page)) apron = true;
       });
       if (lone.length && !apron) E.Cart.removeProducts(lone);
     }
