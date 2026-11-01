@@ -97,7 +97,10 @@
   // Spots 5 and 6 (BBQ, barber and simple aprons): never taller than "TEST" in Montserrat at the owner's chosen size,
   // 80% of the earlier standard (70 x 80% = 56), measured the same way as every lettering (inkRef). The letter size is
   // set high so that this limit, or the width, is what decides 100%, which is then the largest size.
-  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56] };
+  // A logo isn't held to that letter height (a square logo that short looked tiny, the owner said): at 100% it fills
+  // the spot's dashed guide box (logoBox: 260 wide x 120 tall), which is also its largest size.
+  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56],
+    logoBox: [260, 120] };
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
@@ -678,7 +681,8 @@
       // Logos and designs: an artwork box of a known aspect, standard size limited by the spot.
       var logo = sl.mode === 'logo' ? logos[p] : null, design = sl.mode === 'design' ? DESIGNS[sl.design] : null;
       var aspect = design ? design.aspect : logo ? logo.aspect : 1.6;
-      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = false;
+      if (sl.mode === 'logo' && box.logoBox) m = { maxW: box.logoBox[0], maxH: box.logoBox[1], stdW: box.logoBox[0], stdH: box.logoBox[1], logoH: box.logoBox[1], inkH: 0 };
+      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = !!(sl.mode === 'logo' && box.logoBox);
       if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
       var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
