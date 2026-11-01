@@ -102,6 +102,9 @@
   // (logoBox), the same as a logo there.
   var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56],
     logoBox: [270, 156] };
+  // Spots 3 and 4 (BBQ, barber and split-leg aprons; the simple apron has less room): a logo is the same fixed size in
+  // both, the BBQ apron's spot 3 logo (the owner's choice): 156 tall, no wider than 270, no size control.
+  var LOGO_34 = [270, 156];
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
@@ -111,10 +114,9 @@
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
       3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
       // Spot 4 sits level with the beer circle in spot 3, as the owner asked, clear of the pocket below it (its top is at
-      // 1065): its guide is the circle's band. A logo has a fixed size (see SLOT_PLANS): 126 tall, the owner's "120%" of
-      // the earlier standard (105). Text, all its lines together, is centred on the band and at 100% is as tall as the
-      // circle when it fits the width; bigger isn't offered.
-      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 600, logoH: 126, stdH: 600, inkH: BEER_BAND, inkAll: true },
+      // 1065): its guide is the circle's band. A logo has spot 3's fixed size (LOGO_34). Text, all its lines together, is
+      // centred on the band and at 100% is as tall as the circle when it fits the width; bigger isn't offered.
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 600, logoH: 126, stdH: 600, inkH: BEER_BAND, inkAll: true, logoBox: LOGO_34 },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
@@ -123,10 +125,11 @@
       1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
-      // Logos are sized as on the BBQ apron (the owner's choice): spot 3 as its spot 3 and spot 4 as its spot 4, each a
-      // fixed size (logoBox, no size control), and the pocket's largest the same as the BBQ pocket's.
-      3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100, logoBox: [270, 156] },
-      4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100, logoBox: [300, 126] },
+      // Logos are sized as on the BBQ apron (the owner's choice): spots 3 and 4 at LOGO_34, and the pocket's largest the
+      // same as the BBQ pocket's.
+      // Spots 3 and 4 a little higher (945, was 955) so a LOGO_34 logo clears the scissor loops and pocket (tops 1037).
+      3: { x: 326, y: 945, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100, logoBox: LOGO_34 },
+      4: { x: 800, y: 945, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100, logoBox: LOGO_34 },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
       pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
@@ -135,16 +138,18 @@
       1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
       chestBig: { y: 425, maxH: 270, logoH: 240, stdH: 240 },
       2: { y: 515, h: 60, fs: 50, maxW: 420, maxH: 70, logoH: 60 },
-      3: { x: 370, y: 870, w: 200, h: 60, maxW: 240, maxH: 100, logoH: 90 },
-      4: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170 },
+      3: { x: 370, y: 870, w: 200, h: 60, maxW: 240, maxH: 100, logoH: 90, logoBox: LOGO_34 },
+      4: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
       pocket: { x: 680, y: 790, w: 190, h: 140, fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 }
     },
     simple: {
       1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
-      3: { x: 378, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
-      4: { x: 822, y: 935, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96 },
+      // Spots 3 and 4 sit between the leather band (bottom 870) and the pocket (top 978), only 108 apart, so a logo there
+      // can't be LOGO_34's 156 tall: both get the same fixed size that fits, 96 tall, centred in that gap.
+      3: { x: 378, y: 924, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96, logoBox: [270, 96] },
+      4: { x: 822, y: 924, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96, logoBox: [270, 96] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
       pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
@@ -225,7 +230,7 @@
     return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
   // Does this choice have a fixed size in this spot (no size control; always its 100%)?
-  // Logos in spots with a logoBox (5 and 6: LOWER_SPOT; the barber apron's 3 and 4) are fixed too.
+  // Logos in spots with a logoBox (5 and 6: LOWER_SPOT; 3 and 4: LOGO_34) are fixed too.
   function fixedSize(styleKey, p, mode) {
     return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1 || (mode === 'logo' && !!posFor(styleKey, p).logoBox);
   }
