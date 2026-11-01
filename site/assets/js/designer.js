@@ -98,9 +98,10 @@
   // 80% of the earlier standard (70 x 80% = 56), measured the same way as every lettering (inkRef). The letter size is
   // set high so that this limit, or the width, is what decides 100%, which is then the largest size.
   // A logo isn't held to that letter height (a square logo that short looked tiny, the owner said): it follows the
-  // BBQ apron's spot 4 rule instead, a fixed size (no size control) of 126 tall, no wider than 300 (logoBox).
+  // BBQ apron's spot 3 rule instead (the owner's choice), a fixed size (no size control) of 156 tall, no wider than 270
+  // (logoBox), the same as a logo there.
   var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56],
-    logoBox: [300, 126] };
+    logoBox: [270, 156] };
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
