@@ -97,7 +97,11 @@
   // Spots 5 and 6 (BBQ, barber and simple aprons): never taller than "TEST" in Montserrat at the owner's chosen size,
   // 80% of the earlier standard (70 x 80% = 56), measured the same way as every lettering (inkRef). The letter size is
   // set high so that this limit, or the width, is what decides 100%, which is then the largest size.
-  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56] };
+  // A logo isn't held to that letter height (a square logo that short looked tiny, the owner said): it follows the
+  // BBQ apron's spot 3 rule instead (the owner's choice), a fixed size (no size control) of 156 tall, no wider than 270
+  // (logoBox), the same as a logo there.
+  var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56],
+    logoBox: [270, 156] };
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
   var POS_OVERRIDES = {
@@ -219,7 +223,10 @@
     return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
   // Does this choice have a fixed size in this spot (no size control; always its 100%)?
-  function fixedSize(styleKey, p, mode) { return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1; }
+  // Logos in spots with a logoBox (5 and 6: LOWER_SPOT) are fixed too.
+  function fixedSize(styleKey, p, mode) {
+    return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1 || (mode === 'logo' && !!posFor(styleKey, p).logoBox);
+  }
 
   // Suggested designs, drawn in a 1000-wide box (height = 1000 / aspect). Text the customer fills in
   // is drawn live in the lettering they choose. To add a design: give it an entry here (artwork as SVG
@@ -678,7 +685,8 @@
       // Logos and designs: an artwork box of a known aspect, standard size limited by the spot.
       var logo = sl.mode === 'logo' ? logos[p] : null, design = sl.mode === 'design' ? DESIGNS[sl.design] : null;
       var aspect = design ? design.aspect : logo ? logo.aspect : 1.6;
-      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = false;
+      if (sl.mode === 'logo' && box.logoBox) m = { maxW: box.logoBox[0], maxH: box.logoBox[1], stdW: box.logoBox[0], stdH: box.logoBox[1], logoH: box.logoBox[1], inkH: 0 };
+      var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = !!(sl.mode === 'logo' && box.logoBox);
       if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
       var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
