@@ -25,7 +25,9 @@
               positions: 2, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
     barber: { id: 619492033, name: 'Barber apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)', extras: ['wings', 'grease'] },
     simple: { id: 619505538, name: 'Simple apron', positions: 6, pocket: true, secondary: 'Secondary Color (Attachments/Pockets)' },
-    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 4, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
+    // Split-leg: no spot beside the chest pocket (the owner's choice); spot 3 is the left leg, and the right leg's
+    // pocket is a second pocket spot (pocket2). spots: the spots offered, in the order shown.
+    split:  { id: 619501025, name: 'Split-leg forging & tattoo apron', positions: 3, pocket: true, spots: ['1', '2', 'pocket', '3', 'pocket2'], secondary: 'Secondary Color (Attachment/Pockets)' },
     wood:   { id: 619498560, name: 'Woodworking apron', positions: 2, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' }
   };
   // Leather palette taken from the reference illustration.
@@ -102,8 +104,9 @@
   // (logoBox), the same as a logo there.
   var LOWER_SPOT = { fs: 200, stdW: 330, maxW: 330, maxH: 200, stdH: 200, logoH: 180, inkRef: ['montserrat', 'TEST', 56],
     logoBox: [270, 156] };
-  // Spots 3 and 4 (BBQ, barber and split-leg aprons; the simple apron has less room): a logo is the same fixed size in
-  // both, the BBQ apron's spot 3 logo (the owner's choice): 156 tall, no wider than 270, no size control.
+  // Spots 3 and 4 (BBQ and barber aprons, and the split-leg's left leg; the simple apron has less room): a logo is the
+  // same fixed size in both, the BBQ apron's spot 3 logo (the owner's choice): 156 tall, no wider than 270, no size
+  // control.
   var LOGO_34 = [270, 156];
 
   // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
@@ -138,9 +141,10 @@
       1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
       chestBig: { y: 425, maxH: 270, logoH: 240, stdH: 240 },
       2: { y: 515, h: 60, fs: 50, maxW: 420, maxH: 70, logoH: 60 },
-      3: { x: 370, y: 870, w: 200, h: 60, maxW: 240, maxH: 100, logoH: 90, logoBox: LOGO_34 },
-      4: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
-      pocket: { x: 680, y: 790, w: 190, h: 140, fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 }
+      3: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
+      pocket: { x: 680, y: 790, w: 190, h: 140, label: 'Top pocket', fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 },
+      // The right leg's pocket (drawn at 772-1070 x 1335-1717).
+      pocket2: { x: 921, y: 1510, w: 240, h: 150, label: 'Right leg pocket', fs: 56, stdW: 240, maxW: 260, maxH: 320, logoH: 200 }
     },
     simple: {
       1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
@@ -181,9 +185,10 @@
       stdW: b.stdW || Math.min(b.w + 60, maxW * 0.85), stdH: b.stdH || maxH * 0.7, inkAll: !!b.inkAll,
       inkH: b.inkRef ? b.inkRef[2] * inkOf(FONTS[b.inkRef[0]], [b.inkRef[1]]).r : b.inkH || 0 };
   }
-  // Spots offered on a style, in order: '1'..'n', then 'pocket' where the style has one.
+  // Spots offered on a style, in order: the style's own list (spots), or '1'..'n', then 'pocket' where it has one.
   function positionsOf(styleKey) {
     var s = STYLES[styleKey], list = [];
+    if (s.spots) return s.spots.slice();
     for (var i = 1; i <= s.positions; i++) list.push(String(i));
     if (s.pocket) list.push('pocket');
     return list;
@@ -192,15 +197,17 @@
   function curStyle() { return val('style') || 'bbq'; }
   function spotLabel(p, styleKey) {
     var o = (POS_OVERRIDES[styleKey || curStyle()] || {})[p];
-    return o && o.label || (p === 'pocket' ? 'Pocket' : POS[p].label);
+    return o && o.label || (isPocket(p) ? 'Pocket' : POS[p].label);
   }
-  function posLabel(p) { return p === 'pocket' ? 'Pocket' : p + ' (' + spotLabel(p) + ')'; }
+  function posLabel(p) { return isPocket(p) ? spotLabel(p) : p + ' (' + spotLabel(p) + ')'; }
+  // Pocket spots (the split-leg apron has two) are on the accessory leather and have no number.
+  function isPocket(p) { return p === 'pocket' || p === 'pocket2'; }
 
   // What each spot offers and starts with, per apron style (from each apron's sketch): its choices, the
   // one it starts on, and where it sits ("where"). Spot 2 can be removed to make the chest logo or design
   // bigger. Suggested designs: Grill Master, the Grill Master emblem, Best Dad Ever and Dad legend on the BBQ (plain and patterned) and simple aprons' chest, the
   // beer circle on the plain BBQ apron's drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
-  var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket'];
+  var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket', 'pocket2'];
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
   function underChest(designs) {
     return { modes: ['none', 'text'], def: 'text', lines: 2, noneLabel: designs ? 'None (bigger chest design)' : 'None (bigger chest logo)',
@@ -220,7 +227,7 @@
     barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
     bbqpattern: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), pocket: spotPlan('On the pocket') },
     simple: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), 3: spotPlan('Above the pocket'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the centre pocket') },
-    split: { 2: underChest(false), 3: spotPlan('Beside the chest pocket'), 4: spotPlan('Bottom of the left leg'), pocket: spotPlan('On the chest pocket') },
+    split: { 2: underChest(false), 3: spotPlan('Bottom of the left leg'), pocket: spotPlan('On the chest pocket'), pocket2: spotPlan('On the right leg pocket') },
     wood: { 2: underChest(false), pocket: spotPlan('On the chest pocket') }
   };
   function planFor(styleKey, p) {
@@ -485,7 +492,7 @@
   function draw(st) {
     var style = STYLES[st.style], main = COLORS[st.main], acc = COLORS[st.acc];
     // Engraving on the pocket is burned into the accessory leather, everywhere else into the apron body.
-    function inkFor(p) { return p === 'pocket' ? acc : main; }
+    function inkFor(p) { return isPocket(p) ? acc : main; }
     stage.textContent = '';
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'apron-title apron-desc' }, stage);
     el('title', { id: 'apron-title' }, svg).textContent = 'Preview of your ' + style.name;
@@ -666,7 +673,7 @@
   // logo "burned in" (engraving colour plus a faint highlight). fit[spot] records the size drawn as a
   // % of standard and the biggest % that fits, for the size controls and the order description.
   function drawEngraving(svg, defs, st, main, acc) {
-    function inkFor(p) { return p === 'pocket' ? acc : main; }   // the pocket is accessory leather
+    function inkFor(p) { return isPocket(p) ? acc : main; }   // the pocket is accessory leather
     var spots = positionsOf(st.style);
     var guides = el('g', { 'aria-hidden': 'true' }, svg);
     fit = {};
@@ -677,9 +684,9 @@
       el('rect', { x: q.x - q.w / 2, y: q.y - q.h / 2, width: q.w, height: q.h, rx: 8, fill: 'rgba(255,255,255,0)',
         stroke: slotShows(sl) ? 'none' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.45)', 'stroke-dasharray': '14 10', 'stroke-width': on ? 4 : 3 }, g);
       if (slotShows(sl)) return;
-      var t = el('text', { x: q.x, y: q.y + (p === 'pocket' ? 12 : 14), 'text-anchor': 'middle', fill: on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.65)',
-        'font-size': p === 'pocket' ? 34 : 40, 'font-weight': 700, 'font-family': 'Inter, sans-serif' }, g);
-      t.textContent = p === 'pocket' ? 'Pocket' : p;
+      var t = el('text', { x: q.x, y: q.y + (isPocket(p) ? 12 : 14), 'text-anchor': 'middle', fill: on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.65)',
+        'font-size': isPocket(p) ? 34 : 40, 'font-weight': 700, 'font-family': 'Inter, sans-serif' }, g);
+      t.textContent = isPocket(p) ? 'Pocket' : p;
     });
     var activeG = null;
     spots.forEach(function (p) {
@@ -807,13 +814,13 @@
         '><span>' + esc(FONTS[k].label) + '</span></label>';
     }).join('') + '</div>';
   }
-  function slotTitle(p, styleKey) { return p === 'pocket' ? 'Pocket' : p + ' · ' + spotLabel(p, styleKey); }
+  function slotTitle(p, styleKey) { return isPocket(p) ? spotLabel(p, styleKey) : p + ' · ' + spotLabel(p, styleKey); }
   function buildSlots() {
     var allDesigns = Object.keys(DESIGNS);
     slotsBox.innerHTML = SLOT_KEYS.map(function (p) {
       var id = p;
       return '<fieldset class="slot" id="slot-' + id + '" data-slot="' + id + '">' +
-        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p) + '</span> <span class="slot-title">' + esc(slotTitle(p, 'bbq')) + '</span>' +
+        '<legend><span class="slot-num" aria-hidden="true">' + (p === 'pocket' ? 'P' : p === 'pocket2' ? 'P2' : p) + '</span> <span class="slot-title">' + esc(slotTitle(p, 'bbq')) + '</span>' +
           '<span class="slot-where"></span><span class="slot-price"></span></legend>' +
         '<p class="hint slot-hint" id="hint-' + id + '"></p>' +
         '<div class="options mode-opts" role="group" aria-label="What goes in ' + esc(slotTitle(p, 'bbq')) + '">' +
@@ -979,7 +986,7 @@
   function slotLines(st, short) {
     var out = [], list = positionsOf(st.style);
     list.forEach(function (p) {
-      var sl = st.slots[p], where = short ? (p === 'pocket' ? 'Pocket' : p) : 'Position ' + posLabel(p), size = (fit[p] ? fit[p].pct : sl.size) + '%';
+      var sl = st.slots[p], where = short ? (isPocket(p) ? spotLabel(p) : p) : 'Position ' + posLabel(p), size = (fit[p] ? fit[p].pct : sl.size) + '%';
       if (sl.mode === 'text' && sl.text) {
         out.push(short ? where + ': "' + sl.text.replace(/\n/g, ' ') + '"'
           : where + ': text "' + sl.text.replace(/\n/g, ' / ') + '", font ' + fontName(sl.font) + ', size ' + size + ' of standard');
@@ -1055,7 +1062,7 @@
 
   // The WhatsApp message: short, plain lines that open by asking to talk the design through.
   // (The full workshop detail, with fonts and sizes, goes in the order description instead.)
-  function spotName(p) { return p === 'pocket' ? 'Pocket' : spotLabel(p) + ' (' + p + ')'; }
+  function spotName(p) { return isPocket(p) ? spotLabel(p) : spotLabel(p) + ' (' + p + ')'; }
   function waMessage(st) {
     var lines = [], hasLogo = false, extras = [];
     var bigChest = POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig && (st.slots['1'].mode === 'design' || st.slots['1'].mode === 'logo');
@@ -1109,6 +1116,10 @@
   // Show the spots this style has, each with only its own choices and the fields for the chosen one.
   function syncSlots(st) {
     var list = positionsOf(st.style);
+    // Cards in the style's order (the split-leg lists its top pocket before the left leg), moved only when it changes.
+    var order = list.concat(SLOT_KEYS.filter(function (p) { return list.indexOf(p) === -1; }));
+    var now = Array.prototype.map.call(slotsBox.children, function (c) { return c.getAttribute('data-slot'); });
+    if (now.join() !== order.join()) order.forEach(function (p) { slotsBox.appendChild(document.getElementById('slot-' + p)); });
     SLOT_KEYS.forEach(function (p) {
       var card = document.getElementById('slot-' + p), plan = planFor(st.style, p), sl = st.slots[p];
       var shown = list.indexOf(p) !== -1;
