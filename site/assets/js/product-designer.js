@@ -35,7 +35,7 @@
   var COLORS = {
     tan:   { label: 'Tan', ecwid: 'Tanned (Light Brown)', hex: '#b5592f', hi: '#c97a50', edge: '#5e2a14', engrave: '#3b170a' },
     brown: { label: 'Dark brown', ecwid: 'Dark Brown', hex: '#5b3c35', hi: '#7a5650', edge: '#2e1c18', engrave: '#1c100c' },
-    black: { label: 'Black', ecwid: 'Black', hex: '#262322', hi: '#45403d', edge: '#0e0d0c', engrave: '#8a837d' }
+    black: { label: 'Black', ecwid: 'Black', hex: '#262322', hi: '#45403d', edge: '#0e0d0c', engrave: '#0b0a09' }
   };
   // Engraving fonts (the apron designer's). scale evens out how big each one looks at the same size.
   var FONTS = {
