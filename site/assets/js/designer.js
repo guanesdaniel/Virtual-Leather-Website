@@ -141,11 +141,12 @@
       1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
       chestBig: { y: 425, maxH: 270, logoH: 240, stdH: 240 },
       2: { y: 515, h: 60, fs: 50, maxW: 420, maxH: 70, logoH: 60 },
-      3: { x: 235, y: 1610, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
+      // Spot 3 and the right leg pocket are level, both centred on that pocket (1335-1717: 1526), the owner's choice.
+      3: { x: 235, y: 1526, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
       pocket: { x: 680, y: 790, w: 190, h: 140, label: 'Top pocket', fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 },
       // The right leg's pocket (drawn at 772-1070 x 1335-1717), level with the left leg (the owner's choice): a logo is
       // the left leg's fixed 156 tall, kept 240 wide at most to stay inside the pocket's stitching.
-      pocket2: { x: 921, y: 1610, w: 240, h: 150, label: 'Right leg pocket', fs: 56, stdW: 240, maxW: 260, maxH: 320, logoH: 200,
+      pocket2: { x: 921, y: 1526, w: 240, h: 150, label: 'Right leg pocket', fs: 56, stdW: 240, maxW: 260, maxH: 320, logoH: 200,
         logoBox: [240, 156] }
     },
     simple: {
