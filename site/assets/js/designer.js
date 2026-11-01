@@ -123,11 +123,13 @@
       1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
       chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
       2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
-      3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100 },
-      4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100 },
+      // Logos are sized as on the BBQ apron (the owner's choice): spot 3 as its spot 3 and spot 4 as its spot 4, each a
+      // fixed size (logoBox, no size control), and the pocket's largest the same as the BBQ pocket's.
+      3: { x: 326, y: 955, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100, logoBox: [270, 156] },
+      4: { x: 800, y: 955, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100, logoBox: [300, 126] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
-      pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 220, logoH: 150 }
+      pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
     },
     split: {
       1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
@@ -223,7 +225,7 @@
     return p === '1' || p === '2' ? { modes: ['none', 'text', 'logo'], def: 'text' } : { modes: ['none', 'text', 'logo'], def: 'none' };
   }
   // Does this choice have a fixed size in this spot (no size control; always its 100%)?
-  // Logos in spots with a logoBox (5 and 6: LOWER_SPOT) are fixed too.
+  // Logos in spots with a logoBox (5 and 6: LOWER_SPOT; the barber apron's 3 and 4) are fixed too.
   function fixedSize(styleKey, p, mode) {
     return (planFor(styleKey, p).fixedSize || []).indexOf(mode) !== -1 || (mode === 'logo' && !!posFor(styleKey, p).logoBox);
   }
