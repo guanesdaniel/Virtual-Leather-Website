@@ -8,11 +8,13 @@ window.VL_PRODUCT_DESIGN = {
   price: 180,
   viewBox: '0 0 1000 560',
   desc: 'Side view of the duffle bag, and its round end',
+  // One section per place (side, round end), each with text, an image or logo, or nothing.
+  spots: true,
   // Where engravings can go. zone: a box (x, y, w, h) or a circle (cx, cy, r) the engraving stays inside.
   // perMm: drawing units per millimetre there. text / logo: height in mm (min, max, starting size).
   places: {
     body: {
-      label: 'Body', long: 'the body, between the bands',
+      label: 'Side', long: 'the side, between the bands',
       zone: { x: 264, y: 206, w: 240, h: 222 }, perMm: 1.26,
       text: [10, 60, 30], logo: [30, 150, 90]
     },

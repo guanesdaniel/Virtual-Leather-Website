@@ -78,7 +78,7 @@
           <p>Pay at our secure checkout, in US dollars. The payment methods available to you are shown there. Prefer to order by message? We can take your order on <a href="{{site.whatsappUrl}}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="duffle-payment">WhatsApp</a>.</p>
         </div></details>
         <details><summary>Where we engrave it</summary><div>
-          <p>Two places: the body of the bag, between the two leather bands, and the round end. The straps and handles can match the bag or be in another tone.</p>
+          <p>Two places: the side of the bag, between the two leather bands, and the round end. Each can have a text or an image or logo. The straps and handles can match the bag or be in another tone.</p>
         </div></details>
       </div>
     </div>
@@ -126,13 +126,10 @@
           </fieldset>
 
           <fieldset class="card panel">
-            <legend><span class="num">2</span> What name or phrase should we engrave?</legend>
-            <p class="hint">We engrave it exactly as you write it, so please check spelling and capitals.{{#if extraEngraving}} The first engraving is included; each extra text or logo is $5.{{/if extraEngraving}}</p>
+            <legend><span class="num">2</span> What should we engrave, and where?</legend>
+            <p class="hint">Choose a text, an image or logo, or nothing for the side and for the round end.{{#if extraEngraving}} The first engraving is included; the second is $5.{{/if extraEngraving}} We engrave text exactly as you write it, so please check spelling and capitals.</p>
             <div id="pd-engravings"></div>
-            <div class="btn-row pd-add" id="pd-add">
-              <button type="button" class="btn btn-ghost btn-sm" data-add="text">+ Another text{{#if extraEngraving}} <span class="muted">(+$5)</span>{{/if extraEngraving}}</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-add="logo">+ Image or logo{{#if extraEngraving}} <span class="muted">(+$5)</span>{{/if extraEngraving}}</button>
-            </div>
+            <div class="pd-add" id="pd-add" hidden></div>
             <label class="check pd-plain"><input type="checkbox" name="plain" id="pd-plain"> <span>I'd like it plain, without engraving (same price)</span></label>
             <div class="field" style="margin:10px 0 0">
               <label for="pd-for">Who is it for? <span class="muted">(optional)</span></label>
@@ -254,10 +251,10 @@
       <h2 id="pd-faq-title">Questions, answered.</h2>
     </div>
     <div class="faq">
-      <details><summary>Can I engrave a name and a logo?</summary><div><p>Yes. {{#if extraEngraving}}The first engraving is included and each extra text or logo is $5.{{else}}Add as many as you like.{{/if extraEngraving}} They can go on the body of the bag or on the round end.</p></div></details>
+      <details><summary>Can I engrave a name and a logo?</summary><div><p>Yes. Put a name on the side and a logo on the round end, or the other way round.{{#if extraEngraving}} The first engraving is included and the second is $5.{{/if extraEngraving}}</p></div></details>
       <details><summary>Can the straps be a different colour?</summary><div><p>Yes. Choose the tone of the bag and the tone of the straps and handles separately when you design it.</p></div></details>
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before we engrave it, we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
-      <details><summary>How do I send my logo?</summary><div><p>Pick "+ Image or logo" in the designer to see it on the bag. After you add the bag to your cart, send us the original file on WhatsApp or by email. Don't have one? Describe what you'd like and we can draw it for you.</p></div></details>
+      <details><summary>How do I send my logo?</summary><div><p>Choose "Image or logo" for the side or the round end in the designer to see it on the bag. After you add the bag to your cart, send us the original file on WhatsApp or by email. Don't have one? Describe what you'd like and we can draw it for you.</p></div></details>
       <details><summary>Can I return a personalised bag?</summary><div><p>Because each bag is made to order with your personalisation, we can't accept change-of-mind returns. If it arrives faulty or isn't what we agreed in your proof, we'll put it right. See <a href="/shipping-returns/">shipping and returns</a>.</p></div></details>
     </div>
   </div>
@@ -289,5 +286,5 @@
   </div>
 </section>
 
-<script src="/assets/js/designs/duffle.js?v=1" defer></script>
-<script src="/assets/js/product-designer.js?v=5" defer></script>
+<script src="/assets/js/designs/duffle.js?v=2" defer></script>
+<script src="/assets/js/product-designer.js?v=6" defer></script>
