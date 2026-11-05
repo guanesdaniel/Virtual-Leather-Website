@@ -1,7 +1,8 @@
 /* Virtual Leather — designer for products with their own page (the duffle bag, the knife roll): leather tones, text and
    logo engravings the customer drags into place, a live preview, and the Ecwid cart. Each product's
    drawing and engraving places come from window.VL_PRODUCT_DESIGN (site/assets/js/designs/*.js).
-   Optional per product: sizes, views (one part of the drawing at a time) and suggested designs (ideas).
+   Optional per product: sizes, views (one part of the drawing at a time), suggested designs (ideas), and
+   oneAdd (one "add an engraving" button; each engraving picks text or image/logo in its own card).
    Also runs the photo gallery at the top of those pages. */
 (function () {
   'use strict';
@@ -253,6 +254,10 @@
   }
   function card(it, i) {
     var id = 'pd-e' + it.key, r = range(it);
+    // oneAdd: the engraving's card picks what it is (text, or image or logo), next to where it goes.
+    var kinds = P.oneAdd ? '<fieldset class="option-group"><legend>What</legend><div class="options">' + [['text', 'Text'], ['logo', 'Image or logo']].map(function (o) {
+      return '<label class="opt"><input type="radio" name="' + id + '-kind" value="' + o[0] + '" data-k="kind"' + (o[0] === it.kind ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+    }).join('') + '</div></fieldset>' : '';
     var places = PLACES.map(function (k) {
       return '<label class="opt"><input type="radio" name="' + id + '-place" value="' + k + '" data-k="place"' + (k === it.place ? ' checked' : '') + '><span>' + esc(P.places[k].label) + '</span></label>';
     }).join('');
@@ -270,9 +275,9 @@
         '<div class="field"><label for="' + id + '-note">Or tell us what you\'d like <span class="muted">(optional)</span></label>' +
           '<input id="' + id + '-note" type="text" maxlength="120" autocomplete="off" data-k="note" value="' + esc(it.note) + '" placeholder="e.g. our team crest, or a drawing you\'d like us to make"></div>';
     return '<fieldset class="slot' + (i === selected ? ' is-active' : '') + '" data-i="' + i + '">' +
-      '<legend><span class="slot-num" aria-hidden="true">' + (i + 1) + '</span> <span class="slot-title">' + (it.kind === 'text' ? 'Text' : 'Image or logo') + '</span>' +
+      '<legend><span class="slot-num" aria-hidden="true">' + (i + 1) + '</span> <span class="slot-title">' + (P.oneAdd ? 'Engraving' : it.kind === 'text' ? 'Text' : 'Image or logo') + '</span>' +
         '<span class="slot-price' + (priceTag(it).charAt(0) === '+' ? ' is-extra' : '') + '">' + priceTag(it) + '</span></legend>' +
-      '<fieldset class="option-group"><legend>Where</legend><div class="options">' + places + '</div></fieldset>' + body +
+      kinds + '<fieldset class="option-group"><legend>Where</legend><div class="options">' + places + '</div></fieldset>' + body +
       '<div class="size-field"><div class="size-head"><label for="' + id + '-size">Size</label><output id="' + id + '-size-out" for="' + id + '-size">' + it.size + ' mm tall</output></div>' +
         '<div class="size-row"><button type="button" class="size-btn" data-step="-1" aria-label="Smaller">−</button>' +
         '<input id="' + id + '-size" type="range" min="' + r[0] + '" max="' + r[1] + '" step="1" value="' + it.size + '" data-k="size">' +
@@ -429,6 +434,15 @@
       it.size = r[2]; it.x = ctr.x; it.y = ctr.y;
       changed();
       return update(true);
+    }
+    if (k === 'kind') {
+      it.kind = t.value;
+      it.size = range(it)[2];
+      changed();
+      update(true);
+      var kf = cardOf(selected).querySelector('[data-k="kind"]:checked');
+      if (kf) kf.focus();
+      return;
     }
     if (k === 'font') it.font = t.value;
     if (k === 'src') { it.src = t.value; it.size = range(it)[2]; changed(); update(true); var f = cardOf(selected).querySelector('[data-k="src"]:checked'); if (f) f.focus(); return; }
