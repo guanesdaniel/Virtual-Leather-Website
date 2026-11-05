@@ -209,7 +209,7 @@
   // What each spot offers and starts with, per apron style (from each apron's sketch): its choices, the
   // one it starts on, and where it sits ("where"). Spot 2 can be removed to make the chest logo or design
   // bigger. Suggested designs: Grill Master, the Grill Master emblem, Best Dad Ever and Dad legend on the BBQ (plain and patterned) and simple aprons' chest, the
-  // beer circle on the plain BBQ apron's drink holder. Spots without a plan offer text or a logo, starting on text (chest) or none.
+  // beer circle on the plain BBQ apron's drink holder (offered, not chosen at the start). Spots without a plan offer text or a logo, starting on text (chest) or none.
   var SLOT_KEYS = ['1', '2', '3', '4', '5', '6', 'pocket', 'pocket2'];
   var MODE_LABELS = { text: 'Text', design: 'Suggested designs', logo: 'Your logo', none: 'None' };
   function underChest(designs) {
@@ -223,7 +223,7 @@
       1: CHEST_WITH_DESIGNS,
       2: underChest(true),
       // Spots 3 and 4: the beer circle and logos have a fixed size there (the owner's choice), so no size control.
-      3: { modes: ['none', 'design', 'text', 'logo'], def: 'design', designs: ['beer'], where: 'Top of drink holder', fixedSize: ['design', 'logo'] },
+      3: { modes: ['none', 'design', 'text', 'logo'], def: 'none', designs: ['beer'], where: 'Top of drink holder', fixedSize: ['design', 'logo'] },
       4: { modes: ['none', 'text', 'logo'], def: 'none', where: 'Top of pocket', fixedSize: ['logo'] },
       pocket: spotPlan('On the pocket')
     },
