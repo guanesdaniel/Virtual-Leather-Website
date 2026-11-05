@@ -2,7 +2,7 @@
    logo engravings the customer drags into place, a live preview, and the Ecwid cart. Each product's
    drawing and engraving places come from window.VL_PRODUCT_DESIGN (site/assets/js/designs/*.js).
    Optional per product: sizes, views (one part of the drawing at a time), suggested designs (ideas), and
-   spots (one section per place, where the customer picks text, an image or logo, or nothing).
+   oneAdd (one "add an engraving" button; each engraving picks text or image/logo in its own card).
    Also runs the photo gallery at the top of those pages. */
 (function () {
   'use strict';
@@ -80,17 +80,13 @@
   /* ---------- State ---------- */
   // Each engraving: kind 'text' or 'logo', place (a key of P.places), its size (mm tall), and its centre
   // (x, y) in drawing units. Logo pictures stay on the customer's device (they send the file after).
-  // With spots (P.spots), there's one engraving per place, always in place order, and its kind can also be
-  // 'none' (nothing there); the first place starts on text and the others on nothing.
-  var SPOTS = !!P.spots;
   var items = [], selected = 0, nextKey = 1;
   function zoneCentre(place) { var z = P.places[place].zone; return z.r ? { x: z.cx, y: z.cy } : { x: z.x + z.w / 2, y: z.y + z.h / 2 }; }
   function newItem(kind, place) {
     var c = zoneCentre(place);
-    return { key: nextKey++, kind: kind, place: place, text: '', font: 'montserrat', size: P.places[place][kind === 'none' ? 'text' : kind][2], x: c.x, y: c.y, note: '', img: null,
+    return { key: nextKey++, kind: kind, place: place, text: '', font: 'montserrat', size: P.places[place][kind][2], x: c.x, y: c.y, note: '', img: null,
       src: 'own', idea: IDEAS.length ? IDEAS[0].key : '' };
   }
-  function startItems() { return SPOTS ? PLACES.map(function (k, i) { return newItem(i ? 'none' : 'text', k); }) : [newItem('text', PLACES[0])]; }
   // Suggested designs for "Image or logo" (optional, P.ideas: keys of the artwork in design-art.js). With them,
   // a logo is the customer's own (src 'own'), one of ours ('idea'), or one we create for them ('create').
   var IDEAS = (P.ideas || []).filter(function (d) { return (window.VL_DESIGN_ART || {})[d.key]; });
@@ -100,7 +96,7 @@
     var d = ideaOf(it);
     return d ? d.label : it.src === 'create' ? 'Design we create' : 'Logo';
   }
-  function hasContent(it) { return it.kind === 'logo' || (it.kind === 'text' && !!it.text.trim()); }
+  function hasContent(it) { return it.kind === 'logo' || !!it.text.trim(); }
   function isPlain() { return document.getElementById('pd-plain').checked; }
   function engraved() { return isPlain() ? [] : items.filter(hasContent); }
   function extras() { return Math.max(0, engraved().length - 1); }
@@ -191,7 +187,6 @@
     if (isPlain()) return;
     var ink = COLORS[main].engrave;
     items.forEach(function (it, i) {
-      if (it.kind === 'none') return;
       var g = el('g', { 'clip-path': 'url(#pd-clip-' + it.place + ')' }, layer);
       var hit = el('g', { class: 'pd-item', 'data-i': i, tabindex: 0, role: 'button',
         'aria-label': 'Engraving ' + (i + 1) + ' on ' + P.places[it.place].long + '. Drag, or use the arrow keys, to move it.' }, g);
@@ -232,7 +227,7 @@
 
   /* ---------- Form: one card per engraving ---------- */
   var list = document.getElementById('pd-engravings');
-  function range(it) { return P.places[it.place][it.kind === 'none' ? 'text' : it.kind]; }
+  function range(it) { return P.places[it.place][it.kind]; }
   function priceTag(it) {
     if (!ENGRAVING_ID || !hasContent(it)) return '';
     return engraved().indexOf(it) > 0 ? '+$' + ENGRAVING_PRICE : 'Included';
@@ -259,31 +254,14 @@
   }
   function card(it, i) {
     var id = 'pd-e' + it.key, r = range(it);
-    if (SPOTS) return spotCard(it, i, id, r);
+    // oneAdd: the engraving's card picks what it is (text, or image or logo), next to where it goes.
+    var kinds = P.oneAdd ? '<fieldset class="option-group"><legend>What</legend><div class="options">' + [['text', 'Text'], ['logo', 'Image or logo']].map(function (o) {
+      return '<label class="opt"><input type="radio" name="' + id + '-kind" value="' + o[0] + '" data-k="kind"' + (o[0] === it.kind ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+    }).join('') + '</div></fieldset>' : '';
     var places = PLACES.map(function (k) {
       return '<label class="opt"><input type="radio" name="' + id + '-place" value="' + k + '" data-k="place"' + (k === it.place ? ' checked' : '') + '><span>' + esc(P.places[k].label) + '</span></label>';
     }).join('');
-    var body = kindBody(it, id);
-    return '<fieldset class="slot' + (i === selected ? ' is-active' : '') + '" data-i="' + i + '">' +
-      '<legend><span class="slot-num" aria-hidden="true">' + (i + 1) + '</span> <span class="slot-title">' + (it.kind === 'text' ? 'Text' : 'Image or logo') + '</span>' +
-        '<span class="slot-price' + (priceTag(it).charAt(0) === '+' ? ' is-extra' : '') + '">' + priceTag(it) + '</span></legend>' +
-      '<fieldset class="option-group"><legend>Where</legend><div class="options">' + places + '</div></fieldset>' + body + sizeAndActions(it, id, r, true) +
-      '</fieldset>';
-  }
-  // A spot: one section per place, where the customer picks what goes there.
-  function spotCard(it, i, id, r) {
-    var kinds = [['text', 'Text'], ['logo', 'Image or logo'], ['none', 'Nothing']].map(function (o) {
-      return '<label class="opt"><input type="radio" name="' + id + '-kind" value="' + o[0] + '" data-k="kind"' + (o[0] === it.kind ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
-    }).join('');
-    return '<fieldset class="slot' + (i === selected ? ' is-active' : '') + '" data-i="' + i + '">' +
-      '<legend><span class="slot-num" aria-hidden="true">' + (i + 1) + '</span> <span class="slot-title">' + esc(P.places[it.place].label) + '</span>' +
-        '<span class="slot-price' + (priceTag(it).charAt(0) === '+' ? ' is-extra' : '') + '">' + priceTag(it) + '</span></legend>' +
-      '<div class="options mode-opts" role="group" aria-label="What goes on ' + esc(P.places[it.place].long) + '">' + kinds + '</div>' +
-      (it.kind === 'none' ? '' : kindBody(it, id) + sizeAndActions(it, id, r, false)) +
-      '</fieldset>';
-  }
-  function kindBody(it, id) {
-    return it.kind === 'text'
+    var body = it.kind === 'text'
       ? '<div class="field"><label for="' + id + '-text">Text</label>' +
           '<input id="' + id + '-text" type="text" maxlength="40" autocomplete="off" data-k="text" value="' + esc(it.text) + '" placeholder="e.g. a name, initials or a short phrase"></div>' +
         '<fieldset class="option-group"><legend>Font</legend><div class="options font-opts">' + Object.keys(FONTS).map(function (k) {
@@ -296,15 +274,18 @@
           '<input id="' + id + '-file" type="file" accept="image/*" data-k="file"></div>' +
         '<div class="field"><label for="' + id + '-note">Or tell us what you\'d like <span class="muted">(optional)</span></label>' +
           '<input id="' + id + '-note" type="text" maxlength="120" autocomplete="off" data-k="note" value="' + esc(it.note) + '" placeholder="e.g. our team crest, or a drawing you\'d like us to make"></div>';
-  }
-  function sizeAndActions(it, id, r, removable) {
-    return '<div class="size-field"><div class="size-head"><label for="' + id + '-size">Size</label><output id="' + id + '-size-out" for="' + id + '-size">' + it.size + ' mm tall</output></div>' +
+    return '<fieldset class="slot' + (i === selected ? ' is-active' : '') + '" data-i="' + i + '">' +
+      '<legend><span class="slot-num" aria-hidden="true">' + (i + 1) + '</span> <span class="slot-title">' + (P.oneAdd ? 'Engraving' : it.kind === 'text' ? 'Text' : 'Image or logo') + '</span>' +
+        '<span class="slot-price' + (priceTag(it).charAt(0) === '+' ? ' is-extra' : '') + '">' + priceTag(it) + '</span></legend>' +
+      kinds + '<fieldset class="option-group"><legend>Where</legend><div class="options">' + places + '</div></fieldset>' + body +
+      '<div class="size-field"><div class="size-head"><label for="' + id + '-size">Size</label><output id="' + id + '-size-out" for="' + id + '-size">' + it.size + ' mm tall</output></div>' +
         '<div class="size-row"><button type="button" class="size-btn" data-step="-1" aria-label="Smaller">−</button>' +
         '<input id="' + id + '-size" type="range" min="' + r[0] + '" max="' + r[1] + '" step="1" value="' + it.size + '" data-k="size">' +
         '<button type="button" class="size-btn" data-step="1" aria-label="Bigger">+</button></div>' +
         '<p class="fit-note" id="' + id + '-fit" aria-live="polite"></p></div>' +
       '<div class="btn-row pd-item-actions"><button type="button" class="link-button" data-centre>Centre it</button>' +
-        (removable ? '<button type="button" class="link-button" data-remove>Remove</button>' : '') + '</div>';
+        '<button type="button" class="link-button" data-remove>Remove</button></div>' +
+      '</fieldset>';
   }
   function renderList() {
     list.innerHTML = items.map(card).join('') || '<p class="hint">No engraving yet: add a text or a logo below.</p>';
@@ -319,7 +300,7 @@
       var tag = c.querySelector('.slot-price'), t = priceTag(it);
       tag.textContent = t; tag.classList.toggle('is-extra', t.charAt(0) === '+');
       var note = c.querySelector('.fit-note');
-      if (note) note.textContent = it.fit < .995 && hasContent(it)
+      note.textContent = it.fit < .995 && hasContent(it)
         ? 'At this size it doesn\'t fit ' + P.places[it.place].long + ', so we\'ve made it smaller: about ' + Math.round(it.size * it.fit) + ' mm tall.' : '';
     });
   }
@@ -403,11 +384,8 @@
     document.getElementById('pd-notes').value = d.notes || '';
     form.elements.email.value = d.email || '';
     form.elements.phone.value = d.phone || '';
-    var kept = d.items.filter(function (it) { return P.places[it.place] && (it.kind === 'text' || it.kind === 'logo' || (SPOTS && it.kind === 'none')); });
-    // With spots: the first engraving saved on each place, or that place's starting choice.
-    if (SPOTS) kept = startItems().map(function (s) { return kept.filter(function (it) { return it.place === s.place; })[0] || s; });
-    items = kept.map(function (it) {
-      var n = newItem(it.kind, it.place), r = range(n);
+    items = d.items.filter(function (it) { return P.places[it.place] && (it.kind === 'text' || it.kind === 'logo'); }).map(function (it) {
+      var n = newItem(it.kind, it.place), r = P.places[it.place][it.kind];
       n.text = String(it.text || ''); n.font = FONTS[it.font] ? it.font : 'montserrat'; n.note = String(it.note || '');
       n.size = Math.min(r[1], Math.max(r[0], Number(it.size) || r[2])); n.x = Number(it.x) || n.x; n.y = Number(it.y) || n.y;
       if (IDEAS.length && ['own', 'idea', 'create'].indexOf(it.src) !== -1) n.src = it.src;
@@ -425,7 +403,7 @@
     drawBase(val('main'), straps());
     if (rebuild) { renderList(); followSelected(); }
     list.hidden = plain;
-    document.getElementById('pd-add').hidden = plain || SPOTS;
+    document.getElementById('pd-add').hidden = plain;
     drawItems(val('main'));
     refreshCards();
     updateSummary();
@@ -641,8 +619,8 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!isPlain() && !engraved().length) {
-      setStatus(SPOTS ? 'Please choose a text or a logo for at least one place, or tick "I\'d like it plain".' : 'Please write your text or add a logo, or tick "I\'d like it plain".', 'error');
-      var first = list.querySelector('[data-k="text"]') || list.querySelector('[data-k="kind"]:checked');
+      setStatus('Please write your text or add a logo, or tick "I\'d like it plain".', 'error');
+      var first = list.querySelector('[data-k="text"]');
       (first || document.getElementById('pd-add').querySelector('button')).focus();
       return;
     }
@@ -684,7 +662,7 @@
   });
   document.getElementById('pd-again').addEventListener('click', function () {
     items.forEach(function (it) { if (it.img) URL.revokeObjectURL(it.img.url); });
-    items = startItems(); selected = 0;
+    items = [newItem('text', PLACES[0])]; selected = 0;
     document.getElementById('pd-plain').checked = false;
     document.getElementById('pd-for').value = '';
     document.getElementById('pd-notes').value = '';
@@ -693,7 +671,7 @@
     form.querySelector('input[name="main"]:checked').focus();
   });
 
-  if (!loadDraft()) items = startItems();
+  if (!loadDraft()) items = [newItem('text', PLACES[0])];
   update(true);
   // Fonts load on demand: redraw once they arrive, so sizes and fitting use the real letters.
   if (document.fonts && document.fonts.ready) {
