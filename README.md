@@ -65,7 +65,7 @@ The designer (`site/assets/js/designer.js`) builds step 4 spot by spot from `SLO
 
 | Apron | Spots | Notes |
 |---|---|---|
-| BBQ & Grill | 1–6 + pocket | 3 = top of drink holder (beer circle suggested), 4 = top of pocket, lined up with the beer circle (see below) |
+| BBQ & Grill | 1–6 + pocket | 3 = top of drink holder (starts empty; the beer circle is a suggested design), 4 = top of pocket, lined up with the beer circle (see below) |
 | BBQ Pattern | 1–2 + pocket | the BBQ apron in patchwork leather: chest and pocket only |
 | Barber | 1–6 + pocket | 3 = above the scissor loops, 4 = above the pocket |
 | Simple | 1–6 + centre pocket | 3 and 4 above the pocket |
