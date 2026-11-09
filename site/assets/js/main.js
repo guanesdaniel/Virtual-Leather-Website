@@ -68,7 +68,20 @@
     document.addEventListener('click', function (e) {
       if (e.target.closest('[data-open-consent]')) openBanner(true);
     });
-    if (!(VL.consent && VL.consent.get())) openBanner(false);
+    if (!(VL.consent && VL.consent.get())) {
+      openBanner(false);
+      // Scrolling the page counts as accepting, like pressing Accept, so the banner
+      // does not stay on screen. Not while the visitor has "More info" open.
+      var startY = window.scrollY;
+      var onScroll = function () {
+        if (banner.hidden) { window.removeEventListener('scroll', onScroll); return; }
+        if (!opts.hidden) return;
+        if (Math.abs(window.scrollY - startY) < 60) return;
+        window.removeEventListener('scroll', onScroll);
+        close({ analytics: true, marketing: true });
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
   }
 
   /* ---------- Click tracking (data-track attributes) ---------- */
