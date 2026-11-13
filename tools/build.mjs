@@ -200,7 +200,8 @@ function productCta(p) {
   const shop = `<a class="btn btn-dark" href="/shop/#!/p/${p.id}" data-track="select_item" data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price}">Order in our shop</a>`;
   const wa = `<a class="btn btn-ghost" href="${site.whatsappUrl}?text=${encodeURIComponent(`Hi Virtual Leather, I have a question about the ${p.name}.`)}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="product">Ask us on WhatsApp</a>`;
   if (p.designer) return `<a class="btn btn-dark" href="/?style=${p.designer}#design" data-track="select_style" data-style="${p.designer}">Design yours and see a preview</a>${wa}`;
-  if (p.group === 'extras' && p.id !== '619498559') return `<a class="btn btn-dark" href="/#design">Add it in the apron designer</a>${wa}`;
+  // Apron extras can be bought on their own (e.g. a customer who forgot one) or added to a new apron.
+  if (p.group === 'extras' && p.id !== '619498559') return `${shop.replace('Order in our shop', 'Buy it on its own')}<a class="btn btn-ghost" href="/#design">Add it to a new apron</a>${wa}`;
   return shop + wa;
 }
 
