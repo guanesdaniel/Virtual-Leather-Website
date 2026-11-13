@@ -46,18 +46,22 @@ function img(name, alt = '', sizes = '100vw', eager = '') {
   return `<img src="/assets/img/${name}-${ws[0]}.webp" srcset="${srcset}" sizes="${esc(sizes)}" width="${w}" height="${h}" alt="${esc(alt)}" ${loading}>`;
 }
 
+const productUrl = (p) => `/products/${p.slug}/`;
+const imgUrl = (name, largest = true) => {
+  const ws = images[name].widths;
+  return `${site.siteUrl}/assets/img/${name}-${largest ? ws[ws.length - 1] : ws[0]}.webp`;
+};
+
 function productCards(group) {
   return products.filter((p) => p.group === group).map((p) => {
-    // Aprons the designer makes are ordered there (one way to order); other products open in the shop.
-    const href = p.designer ? '/#design' : `/shop/#!/p/${p.id}`;
-    const link = p.designer
-      ? `href="${href}" data-track="select_style" data-style="${p.designer}"`
-      : `href="${href}" data-track="select_item" data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price}"`;
+    // Each card opens the product's own page; aprons also get a button straight into the designer.
+    const href = productUrl(p);
+    const link = `href="${href}" data-track="select_item" data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price}"`;
     const design = p.designer
       ? `<a class="btn btn-sm btn-ghost" href="/#design" data-style="${p.designer}" data-track="select_style">Design it</a>`
       : '';
     return `<article class="card product">
-  <a class="product-media" ${link} tabindex="-1" aria-hidden="true">${img(p.image || `p-${p.id}`, '', '(min-width: 1000px) 300px, (min-width: 640px) 45vw, 90vw')}</a>
+  <a class="product-media" ${link} tabindex="-1">${img(p.image || `p-${p.id}`, p.name, '(min-width: 1000px) 300px, (min-width: 640px) 45vw, 90vw')}</a>
   <div class="product-body">
     <h3><a ${link}>${esc(p.name)}</a></h3>
     <p>${esc(p.summary)}</p>
@@ -65,6 +69,13 @@ function productCards(group) {
   </div>
 </article>`;
   }).join('\n');
+}
+
+// Plain links to every product page (the shop page, so Google can find them without the Ecwid widget).
+function productLinks() {
+  return `<ul class="product-links" role="list">${products.map((p) => `
+  <li><a class="chip" href="${productUrl(p)}">${esc(p.name)}</a></li>`).join('')}
+</ul>`;
 }
 
 // Review cards: the first six, then the rest behind "Show more reviews" (no JavaScript needed).
@@ -125,6 +136,7 @@ async function render(tpl, page, depth = 0) {
   return ifFlags(out)
     .replace(/\{\{img ([^}]+)\}\}/g, (_, a) => img(...a.split('|').map((s) => s.trim())))
     .replace(/\{\{products (\w+)\}\}/g, (_, g) => productCards(g))
+    .replace(/\{\{productLinks\}\}/g, () => productLinks())
     .replace(/\{\{reviews\}\}/g, () => reviews())
     .replace(/\{\{gallery\}\}/g, () => gallery())
     .replace(/\{\{reviewsSummary\}\}/g, () => (rating
@@ -152,6 +164,8 @@ for (const file of pageFiles) {
   page.path = slug === 'index' ? '/' : slug === '404' ? '/404.html' : `/${slug}/`;
   page.canonical = site.siteUrl + (page.path === '/404.html' ? '/' : page.path);
   page.robots = page.noindex ? 'noindex, follow' : 'index, follow';
+  page.ogType ||= 'website';
+  page.ogImage ||= imgUrl('hero-bbq');
   page.jsonldTag = page.jsonld
     ? `<script type="application/ld+json">${JSON.stringify(page.jsonld).replace(/</g, '\\u003c')}</script>`
     : '';
@@ -161,6 +175,96 @@ for (const file of pageFiles) {
   await fs.mkdir(path.dirname(path.join(outDir, dest)), { recursive: true });
   await fs.writeFile(path.join(outDir, dest), html);
   if (!page.noindex && slug !== '404') sitemap.push(page.canonical);
+  console.log('built', dest);
+}
+
+// One page per product: /products/<slug>/ (one stable slug per Ecwid product id; the Google Merchant
+// Center feed links to these too). Copy comes from src/data/products.json, photos from gallery.json.
+const tick = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m4 10 4 4 8-9"/></svg>';
+const GROUP_LABEL = { aprons: 'Leather aprons', more: 'Leather bags & cases', extras: 'Extras & leather care' };
+const engravingLine = FLAGS.extraEngraving ? 'Two engravings included (name, phrase or logo), extra spots $5 each' : 'Name, phrase or logo engraving included';
+
+function productFacts(p) {
+  if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Real leather, handmade in Colombia', engravingLine,
+    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included, worldwide'];
+  if (p.group === 'more') return ['Real leather, handmade in Colombia', 'Personalised with your name, phrase or logo',
+    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping cost shown at checkout'];
+  return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
+}
+
+function productCta(p) {
+  const shop = `<a class="btn btn-dark" href="/shop/#!/p/${p.id}" data-track="select_item" data-id="${p.id}" data-name="${esc(p.name)}" data-price="${p.price}">Order in our shop</a>`;
+  const wa = `<a class="btn btn-ghost" href="${site.whatsappUrl}?text=${encodeURIComponent(`Hi Virtual Leather, I have a question about the ${p.name}.`)}" target="_blank" rel="noopener" data-track="contact" data-channel="whatsapp" data-location="product">Ask us on WhatsApp</a>`;
+  if (p.designer) return `<a class="btn btn-dark" href="/?style=${p.designer}#design" data-track="select_style" data-style="${p.designer}">Design yours and see a preview</a>${wa}`;
+  if (p.group === 'extras' && p.id !== '619498559') return `<a class="btn btn-dark" href="/#design">Add it in the apron designer</a>${wa}`;
+  return shop + wa;
+}
+
+const productPhotos = (p) => [[p.image || `p-${p.id}`, p.name],
+  ...((galleryData[p.gallery] || {}).photos || []).map(([, alt], i) => [`gal-${p.gallery}-${i}`, alt])];
+
+function productBody(p) {
+  const photos = productPhotos(p);
+  const about = (galleryData[p.gallery] || {}).about || p.summary;
+  const related = products.filter((x) => x.group === p.group && x.id !== p.id);
+  return `<div class="wrap product-page">
+  <nav class="breadcrumb small" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/shop/">Shop</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(p.name)}</span></nav>
+  <div class="product-layout">
+    <div class="product-photos">
+      <div class="product-main">${img(photos[0][0], photos[0][1], '(min-width: 900px) 560px, 100vw', 'eager')}</div>
+${photos.length > 1 ? `      <ul class="product-thumbs" role="list">${photos.slice(1).map(([n, alt]) => `
+        <li>${img(n, alt, '(min-width: 900px) 180px, 45vw')}</li>`).join('')}
+      </ul>` : ''}
+    </div>
+    <div class="product-info">
+      <p class="eyebrow">${esc(GROUP_LABEL[p.group])}</p>
+      <h1>${esc(p.name)}</h1>
+      <p class="product-price"><strong>${money(p.price)}</strong> <span class="muted">USD${p.group === 'aprons' ? ' · shipping included' : ''}</span></p>
+      <p class="product-lead">${esc(about)}</p>
+      <ul class="hero-facts product-facts" role="list">${productFacts(p).map((f) => `
+        <li>${tick}${esc(f)}</li>`).join('')}
+      </ul>
+      <div class="btn-row">${productCta(p)}</div>
+      <p class="small muted">Questions about sizes, delivery or returns? See our <a href="/#faq">FAQ</a> and <a href="/shipping-returns/">shipping &amp; returns</a>.</p>
+    </div>
+  </div>
+${related.length ? `  <section class="product-related" aria-labelledby="related-title">
+    <h2 id="related-title" class="subhead">You might also like</h2>
+    <div class="grid">
+${productCards(p.group).split('</article>').filter((c) => c.trim() && !c.includes(`data-id="${p.id}"`)).map((c) => c + '</article>').join('')}
+    </div>
+  </section>` : ''}
+</div>`;
+}
+
+function productJsonld(p, url) {
+  const offer = { '@type': 'Offer', url, price: Number(p.price).toFixed(2), priceCurrency: site.currency,
+    availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition',
+    seller: { '@type': 'Organization', name: site.siteName } };
+  if (p.group === 'aprons') offer.shippingDetails = { '@type': 'OfferShippingDetails', shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: site.currency } };
+  return { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Product', '@id': `${url}#product`, name: p.name, description: (galleryData[p.gallery] || {}).about || p.summary,
+      image: productPhotos(p).slice(0, 4).map(([n]) => imgUrl(n)), sku: p.id, productID: p.id,
+      brand: { '@type': 'Brand', name: site.siteName }, offers: offer },
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site.siteUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Shop', item: `${site.siteUrl}/shop/` },
+      { '@type': 'ListItem', position: 3, name: p.name, item: url }] }] };
+}
+
+await fs.rm(path.join(outDir, 'products'), { recursive: true, force: true });
+for (const p of products) {
+  if (!p.slug) throw new Error(`products.json: ${p.id} has no slug`);
+  const page = { title: `${p.title || p.name} | ${site.siteName}`, description: p.description || p.summary, bodyClass: 'product-page-body',
+    path: productUrl(p), robots: 'index, follow', ogType: 'product' };
+  page.canonical = site.siteUrl + page.path;
+  page.ogImage = imgUrl(productPhotos(p)[0][0]);
+  page.jsonldTag = `<script type="application/ld+json">${JSON.stringify(productJsonld(p, page.canonical)).replace(/</g, '\\u003c')}</script>`;
+  page.body = await render(productBody(p), page);
+  const dest = `products/${p.slug}/index.html`;
+  await fs.mkdir(path.dirname(path.join(outDir, dest)), { recursive: true });
+  await fs.writeFile(path.join(outDir, dest), await render(await read('src/partials/layout.html'), page));
+  sitemap.push(page.canonical);
   console.log('built', dest);
 }
 
