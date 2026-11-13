@@ -8,7 +8,8 @@
 //   {{page.key}}           value from the page's JSON header
 //   {{img name|alt|sizes|eager}}   responsive <img> for an image from tools/images.json
 //   {{products group}}     product cards for a group in src/data/products.json
-//                          ({{products group not <id>}} leaves that product out)
+//                          ({{products group not <id>}} leaves that product out;
+//                          {{products ids <id>,<id>}} shows just those products)
 //   {{gallery}}            real photos per apron style for the designer (src/data/gallery.json)
 //   {{reviews}}            Etsy review cards from src/data/reviews.json (see tools/etsy-reviews.mjs)
 //   {{#if reviews}}…{{/if reviews}}  kept only when there are reviews
@@ -56,7 +57,9 @@ const imgUrl = (name, largest = true) => {
 };
 
 function productCards(group, not) {
-  return products.filter((p) => p.group === group && p.id !== not).map((p) => {
+  // group 'ids' takes a comma-separated list of product ids instead ({{products ids 1,2,3}}), in that order.
+  const list = group === 'ids' ? not.split(',').map((id) => products.find((p) => p.id === id)) : products.filter((p) => p.group === group && p.id !== not);
+  return list.map((p) => {
     // Each card opens the product's own page; aprons and products with a designer page also get a
     // button straight into the designer.
     const href = productUrl(p);
@@ -139,6 +142,7 @@ async function render(tpl, page, depth = 0) {
   }
   return ifFlags(out)
     .replace(/\{\{img ([^}]+)\}\}/g, (_, a) => img(...a.split('|').map((s) => s.trim())))
+    .replace(/\{\{products ids ([\d,]+)\}\}/g, (_, ids) => productCards('ids', ids))
     .replace(/\{\{products (\w+)(?: not (\d+))?\}\}/g, (_, g, not) => productCards(g, not))
     .replace(/\{\{productLinks\}\}/g, () => productLinks())
     .replace(/\{\{reviews\}\}/g, () => reviews())

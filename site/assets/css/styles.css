@@ -489,3 +489,14 @@ fieldset.panel { margin: 0; min-width: 0; }
   .product-thumbs { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
   .product-thumbs li { flex: 0 0 38%; scroll-snap-align: start; }
 }
+
+/* ---------- Search landing pages (logo aprons, BBQ gifts, chef aprons, gifts for men) ---------- */
+.lp-hero { padding-top: clamp(28px, 4vw, 48px); }
+.lp-hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
+.lp-lead { font-size: 1.12rem; margin-bottom: 24px; }
+.lp-tight { padding-top: clamp(32px, 5vw, 56px); padding-bottom: clamp(32px, 5vw, 56px); }
+.lp-steps { padding-left: 1.3em; display: grid; gap: 12px; }
+.lp-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px 28px; }
+.prose-narrow { max-width: 780px; }
+.landing .breadcrumb { margin-bottom: 16px; }
+.lp-tight .split { align-items: start; }
