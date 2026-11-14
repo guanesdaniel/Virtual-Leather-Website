@@ -196,7 +196,7 @@ function productFacts(p) {
   if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Real leather, handmade in Colombia', engravingLine,
     'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included, worldwide'];
   if (p.group === 'more') return ['Real leather, handmade in Colombia', 'Personalised with your name, phrase or logo',
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping cost shown at checkout'];
+    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included, worldwide'];
   return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
 }
 
@@ -300,6 +300,56 @@ if (hasReviews) {
 // GitHub Pages: custom domain + serve files as-is (no Jekyll processing).
 await fs.writeFile(path.join(outDir, 'CNAME'), new URL(site.siteUrl).hostname + '\n');
 await fs.writeFile(path.join(outDir, '.nojekyll'), '');
+
+// Google Merchant Center product feed (free listings and Shopping ads), US only for now. Merchant Center
+// fetches https://virtualleather.net/feed/google.xml daily, so prices on Google always match the site.
+// Apron extras and the leather grease are left out: they're add-ons, not products people search for.
+// Shipping (free, from Colombia), handling time and returns are also set in Merchant Center itself.
+const us = (s) => s.replace(/personalis/g, 'personaliz').replace(/Personalis/g, 'Personaliz'); // US spelling for US shoppers
+const FEED_TYPE = { aprons: 'Leather aprons', more: 'Leather bags & cases' };
+const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
+  const photos = productPhotos(p).map(([n]) => imgUrl(n));
+  const about = (galleryData[p.gallery] || {}).about || p.description || p.summary;
+  const description = `${about} Personalised: engraved with your name, phrase or logo. Handmade to order in Colombia; you approve a design proof before we make it.`;
+  const tags = [
+    ['g:id', p.id],
+    ['g:title', us(p.title || p.name)],
+    ['g:description', us(description)],
+    ['g:link', site.siteUrl + productUrl(p)],
+    ['g:image_link', photos[0]],
+    ...photos.slice(1, 11).map((u) => ['g:additional_image_link', u]),
+    ['g:availability', 'in_stock'],
+    ['g:price', `${Number(p.price).toFixed(2)} ${site.currency}`],
+    ['g:condition', 'new'],
+    ['g:brand', site.siteName],
+    ['g:identifier_exists', 'no'],
+    ['g:product_type', `${FEED_TYPE[p.group]} > ${p.name}`],
+    ['g:material', 'Leather'],
+    ['g:color', 'Brown'],
+    ['g:age_group', 'adult'],
+    ['g:gender', 'unisex'],
+    ['g:size', 'One Size'],
+    ['g:is_bundle', 'no'],
+    ['g:min_handling_time', '3'],
+    ['g:max_handling_time', '5'],
+    ['g:custom_label_0', p.group],
+  ];
+  return `    <item>\n${tags.map(([k, v]) => `      <${k}>${esc(v)}</${k}>`).join('\n')}
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 ${site.currency}</g:price></g:shipping>
+    </item>`;
+});
+await fs.mkdir(path.join(outDir, 'feed'), { recursive: true });
+await fs.writeFile(path.join(outDir, 'feed/google.xml'), `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>${esc(site.siteName)}</title>
+    <link>${site.siteUrl}/</link>
+    <description>${esc(site.siteName)} products for Google Merchant Center</description>
+${feedItems.join('\n')}
+  </channel>
+</rss>
+`);
+console.log(`built feed/google.xml (${feedItems.length} products)`);
 
 const today = new Date().toISOString().slice(0, 10);
 await fs.writeFile(path.join(outDir, 'sitemap.xml'),
