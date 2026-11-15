@@ -3,6 +3,15 @@
   "description": "This page doesn't exist.",
   "noindex": true
 }-->
+<script>
+// Product and category links shared from the Ecwid app look like /<name>-p619498559 or /<name>-c123456
+// (Ecwid's own clean URLs). This site has no such pages, so send them to the same product or
+// category in our shop instead of showing "page not found".
+(function () {
+  var m = location.pathname.replace(/\/+$/, '').match(/-([pc])(\d+)$/);
+  if (m) location.replace('/shop/#!/' + m[1] + '/' + m[2]);
+})();
+</script>
 <div class="wrap prose">
   <h1>We couldn't find that page.</h1>
   <p>It may have moved. Try one of these instead:</p>
