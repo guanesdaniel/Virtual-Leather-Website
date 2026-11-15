@@ -381,3 +381,5 @@ await fs.writeFile(path.join(outDir, 'sitemap.xml'),
 await fs.writeFile(path.join(outDir, 'robots.txt'),
   `User-agent: *\nAllow: /\n\nSitemap: ${site.siteUrl}/sitemap.xml\n`);
 console.log('done');
+// TEMP-DEBUG
+{ const c = {}; for (const r of allReviews) for (const n of (r.items || [])) c[n] = (c[n] || 0) + 1; for (const [n, k] of Object.entries(c).sort((a, b) => b[1] - a[1])) console.log('ETSYNAME', k, n, '=>', products.find((p) => p.id === productFor(n))?.slug || products.find((p) => p.id === productFor(n))?.page || '-'); }
