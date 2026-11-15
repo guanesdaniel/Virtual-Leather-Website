@@ -113,10 +113,9 @@ function reviewList(list, withPhotos = true) {
 </ul></details>` : '');
 }
 const allReviews = reviewData.reviews || [];
-// Home page: the 12 most recent reviews with words, whatever their rating. Their photos are in the strip
-// above them ({{reviewPhotos}}), so the cards there stay short.
+// Home page: the 12 most recent reviews with words, whatever their rating, each with its photo beside it.
 const homeReviews = allReviews.filter((r) => r.text).slice(0, 12);
-const reviews = () => reviewList(homeReviews, false);
+const reviews = () => reviewList(homeReviews);
 
 // Which product an Etsy product name is for, by each product's "reviewMatch" in src/data/products.json.
 // Apron names go to an apron (the BBQ apron last, as the most general), so "BBQ apron with bottle opener" is
@@ -155,11 +154,13 @@ function productReviewsSummary(id) {
   const name = esc(p ? p.name.replace(/\s*\(.*\)$/, '') : 'product');
   return `${shop} Here's what customers said about the ${name}${n < 6 ? ', then recent reviews of our other pieces' : ''}, in their own words.`;
 }
-// Photos customers added to their reviews (home page strip): up to 8, newest first.
+// More photos customers added to their reviews (a row of small photos on the home page): up to 8, newest
+// first, leaving out the ones already beside a home page review.
 function reviewPhotos() {
-  const withPhoto = allReviews.filter((r) => /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '')).slice(0, 8);
+  const withPhoto = allReviews.filter((r) => !homeReviews.includes(r) && /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '')).slice(0, 8);
   if (withPhoto.length < 2) return '';
-  return `<ul class="review-photos" role="list" aria-label="Photos from our customers">${withPhoto.map((r) => `
+  return `<p class="small muted review-photos-title">More photos from our customers (tap to enlarge)</p>
+<ul class="review-photos" role="list" aria-label="More photos from our customers">${withPhoto.map((r) => `
   <li><a href="${esc(r.photo)}" target="_blank" rel="noopener"><img src="${esc(r.photo)}" alt="Customer's photo of their ${esc(r.item || 'order')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a></li>`).join('')}
 </ul>`;
 }
