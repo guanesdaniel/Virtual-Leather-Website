@@ -194,9 +194,9 @@ const engravingLine = FLAGS.extraEngraving ? 'Two engravings included (name, phr
 
 function productFacts(p) {
   if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Real leather, handmade in Colombia', engravingLine,
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included, worldwide'];
+    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping and import duties included'];
   if (p.group === 'more') return ['Real leather, handmade in Colombia', 'Personalised with your name, phrase or logo',
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included, worldwide'];
+    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping and import duties included'];
   return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
 }
 
