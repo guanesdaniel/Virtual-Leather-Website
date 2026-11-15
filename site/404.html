@@ -26,7 +26,7 @@
 
 <script src="/assets/js/config.js?v=5"></script>
 <script src="/assets/js/analytics.js?v=4"></script>
-<script src="/assets/js/main.js?v=7" defer></script>
+<script src="/assets/js/main.js?v=8" defer></script>
 </head>
 <body class="">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -65,6 +65,15 @@
 </header>
 
 <main id="main" tabindex="-1">
+<script>
+// Product and category links shared from the Ecwid app look like /<name>-p619498559 or /<name>-c123456
+// (Ecwid's own clean URLs). This site has no such pages, so send them to the same product or
+// category in our shop instead of showing "page not found".
+(function () {
+  var m = location.pathname.replace(/\/+$/, '').match(/-([pc])(\d+)$/);
+  if (m) location.replace('/shop/#!/' + m[1] + '/' + m[2]);
+})();
+</script>
 <div class="wrap prose">
   <h1>We couldn't find that page.</h1>
   <p>It may have moved. Try one of these instead:</p>
