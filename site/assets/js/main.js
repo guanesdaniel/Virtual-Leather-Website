@@ -75,15 +75,23 @@
       openBanner(false);
       // Scrolling the page counts as accepting, like pressing Accept, so the banner
       // does not stay on screen. Not while the visitor has "More info" open.
-      var startY = window.scrollY;
-      var onScroll = function () {
-        if (banner.hidden) { window.removeEventListener('scroll', onScroll); return; }
-        if (!opts.hidden) return;
-        if (Math.abs(window.scrollY - startY) < 60) return;
-        window.removeEventListener('scroll', onScroll);
-        close({ analytics: true, marketing: true });
+      // Listens to the page scroll and to the finger/wheel gesture itself, because
+      // iPhone Safari does not always report the scroll while the finger is moving.
+      var startY = window.scrollY || document.documentElement.scrollTop || 0;
+      var touchY = null;
+      var events = ['scroll', 'touchstart', 'touchmove', 'wheel'];
+      var stop = function () { events.forEach(function (n) { document.removeEventListener(n, onMove, true); }); };
+      var accept = function () { stop(); close({ analytics: true, marketing: true }); };
+      var onMove = function (e) {
+        if (banner.hidden) return stop();
+        if (!opts.hidden || banner.contains(e.target)) return;
+        if (e.type === 'touchstart') { touchY = e.touches[0].clientY; return; }
+        if (e.type === 'touchmove') { if (touchY !== null && Math.abs(e.touches[0].clientY - touchY) >= 40) accept(); return; }
+        if (e.type === 'wheel') { if (Math.abs(e.deltaY) >= 20) accept(); return; }
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (Math.abs(y - startY) >= 60) accept();
       };
-      window.addEventListener('scroll', onScroll, { passive: true });
+      events.forEach(function (n) { document.addEventListener(n, onMove, { capture: true, passive: true }); });
     }
   }
 
