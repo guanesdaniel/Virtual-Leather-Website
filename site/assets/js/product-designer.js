@@ -30,7 +30,16 @@
   if (!P) { document.getElementById('pd-failed').hidden = false; document.getElementById('pd-designer').hidden = true; return; }
 
   // Extra engravings add the Ecwid "Extra engraving" product, unless the product includes them all.
-  var ENGRAVING_PRICE = 5, ENGRAVING_ID = P.extraEngravings === false ? 0 : Number(C.extraEngravingId) || 0;
+  // Prices come from the store (VL_CONFIG.products, kept in step with Ecwid at each build); the design file's are fall-backs.
+  var CP = (C.products || {})[String(P.id)] || {};
+  if (CP.price > 0) P.price = Number(CP.price);
+  function squash(s) { return String(s).replace(/[\s\u200b-\u200f\ufeff]+/g, ' ').trim().toLowerCase(); }
+  (P.sizes || []).forEach(function (z) {
+    var names = [].concat(z.ecwid || []).map(squash);
+    Object.keys(CP.choices || {}).forEach(function (k) { if (names.indexOf(squash(k)) >= 0 && CP.choices[k] > 0) z.price = Number(CP.choices[k]); });
+  });
+  function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, ''); }
+  var ENGRAVING_PRICE = Number(C.extraEngravingPrice) || 5, ENGRAVING_ID = P.extraEngravings === false ? 0 : Number(C.extraEngravingId) || 0;
   // Leather tones, as on the apron designer (ecwid = the value of the product's colour option in the store,
   // P.colorOption, "Main Color" unless the product says otherwise).
   var COLORS = {
@@ -230,7 +239,7 @@
   function range(it) { return P.places[it.place][it.kind]; }
   function priceTag(it) {
     if (!ENGRAVING_ID || !hasContent(it)) return '';
-    return engraved().indexOf(it) > 0 ? '+$' + ENGRAVING_PRICE : 'Included';
+    return engraved().indexOf(it) > 0 ? '+' + money(ENGRAVING_PRICE) : 'Included';
   }
   // "Image or logo" with suggested designs: yours, one of ours, or one we create for you.
   function logoBody(it, id) {
@@ -353,8 +362,8 @@
     }).join(', ') : 'None';
     var n = ENGRAVING_ID ? extras() : 0;
     sum.extra.hidden = sum.extraDt.hidden = !n;
-    sum.extra.textContent = n + ' × $' + ENGRAVING_PRICE;
-    sum.total.textContent = '$' + total();
+    sum.extra.textContent = n + ' × ' + money(ENGRAVING_PRICE);
+    sum.total.textContent = money(total());
     if (waLink) waLink.href = 'https://wa.me/' + C.whatsappNumber + '?text=' + encodeURIComponent(
       'Hi Virtual Leather! I\'d like to order a ' + (curSize() ? curSize().label.toLowerCase() + ' ' : '') + P.name + ': ' + COLORS[val('main')].label + ' leather. ' + describe('').replace(/ \| Designed on virtualleather\.net$/, '') + '.');
     document.getElementById('pd-svg-desc').textContent = P.desc + ' in ' + shortTone(val('main')) + ' leather' + (hasStraps ? ' with ' + shortTone(val('straps')) + ' ' + ACCENT[1] : '') +

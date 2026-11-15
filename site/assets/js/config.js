@@ -8,6 +8,7 @@ window.VL_CONFIG = {
   "extraEngravingId": "619492030",
   "ga4MeasurementId": "",
   "metaPixelId": "298202042517671",
+  "extraEngravingPrice": 5,
   "products": {
     "619483308": {
       "name": "Leather Bottle Opener (apron extra)",
@@ -24,7 +25,11 @@ window.VL_CONFIG = {
       "name": "Leather Knife Roll for Chefs & Butchers",
       "price": 170,
       "group": "more",
-      "page": "/knife-case/"
+      "page": "/knife-case/",
+      "choices": {
+        "Small: 45cm x 36 cm": 170,
+        "Large: 76cm x 52 cm": 190
+      }
     },
     "619492033": {
       "name": "Barber Leather Apron",

@@ -3,6 +3,9 @@
 # see README "Publishing". Pull requests only build and check.
 # Etsy reviews are fetched before each build (when the ETSY_API_KEY secret is set) and refreshed
 # every 6 hours by the schedule below; if Etsy can't be reached, the reviews already on the site are kept.
+# Prices are read from the Ecwid store the same way (tools/ecwid-prices.mjs, with the ECWID_TOKEN secret or
+# ecwidPublicToken in src/config.json), so a price changed in Ecwid reaches every page within 6 hours.
+# To update at once: Actions > Build and deploy > Run workflow.
 name: Build and deploy
 
 on:
@@ -45,6 +48,21 @@ jobs:
         env:
           ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
           ETSY_SHARED_SECRET: ${{ secrets.ETSY_SHARED_SECRET }}
+      # Start from the prices already on the site (when they came from Ecwid), then read Ecwid's current ones.
+      - name: Start from the published prices
+        if: github.event_name != 'pull_request'
+        run: |
+          if git fetch -q --depth=1 origin gh-pages && git show FETCH_HEAD:assets/data/prices.json > "$RUNNER_TEMP/prices.json" \
+             && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')).fetched ? 0 : 1)" "$RUNNER_TEMP/prices.json"; then
+            mv "$RUNNER_TEMP/prices.json" src/data/prices.json && echo "Starting from the prices on the site."
+          else
+            echo "Using the prices in the repository."
+          fi
+      - name: Fetch Ecwid prices (public token; skipped without one)
+        if: github.event_name != 'pull_request'
+        run: npm run prices
+        env:
+          ECWID_TOKEN: ${{ secrets.ECWID_TOKEN }}
       - run: npm run build
       - run: npm run check
       - name: Publish to GitHub Pages (gh-pages branch)

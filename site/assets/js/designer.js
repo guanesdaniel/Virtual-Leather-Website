@@ -11,11 +11,15 @@
   var C = window.VL_CONFIG || {};
   var VL = window.VL = window.VL || {};
   var NS = 'http://www.w3.org/2000/svg';
-  var PRICE = 185, EXTRA_PRICE = 15;
+  // Prices come from the store (VL_CONFIG.products, kept in step with Ecwid at each build); the numbers here are fall-backs.
+  function priceOf(id, fallback) { var p = (C.products || {})[String(id)]; return p && p.price > 0 ? Number(p.price) : fallback; }
+  function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, ''); }
+  function stylePrice(k) { return priceOf(STYLES[k] && STYLES[k].id, 185); }
+  var EXTRA_PRICES = { wings: priceOf(688211109, 15), opener: priceOf(619483308, 15), grease: priceOf(619498559, 15) };
   // Engraving: the first FREE_ENGRAVINGS spots are included and the chest (spots 1 and 2) counts as one.
   // Each spot after that adds one "Extra engraving" product to the cart. This is off until that Ecwid
   // product's ID is set (extraEngravingProductId in src/config.json).
-  var FREE_ENGRAVINGS = 2, ENGRAVING_PRICE = 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
+  var FREE_ENGRAVINGS = 2, ENGRAVING_PRICE = Number(C.extraEngravingPrice) || 5, ENGRAVING_ID = Number(C.extraEngravingId) || 0;
 
   var STYLES = {
     bbq:    { id: 619498562, name: 'BBQ apron with beer holder', positions: 6, pocket: true, secondary: 'Secondary Color (Attachment/Pockets)' },
@@ -1059,7 +1063,7 @@
   }
 
   function total(st) {
-    return PRICE + (st.wings ? EXTRA_PRICE : 0) + (st.opener ? EXTRA_PRICE : 0) + (st.grease ? EXTRA_PRICE : 0) +
+    return stylePrice(st.style) + (st.wings ? EXTRA_PRICES.wings : 0) + (st.opener ? EXTRA_PRICES.opener : 0) + (st.grease ? EXTRA_PRICES.grease : 0) +
       engravings(st).extra * ENGRAVING_PRICE;
   }
 
@@ -1090,7 +1094,7 @@
       }
     });
     var eng = engravings(st);
-    if (eng.extra) lines.push('Extra engravings: ' + eng.extra + ' (+$' + eng.extra * ENGRAVING_PRICE + ')');
+    if (eng.extra) lines.push('Extra engravings: ' + eng.extra + ' (+' + money(eng.extra * ENGRAVING_PRICE) + ')');
     if (st.wings) extras.push('leather wings (' + wingName(st) + ')');
     if (st.opener) extras.push('bottle opener (' + openerName(st) + ')');
     if (st.grease) extras.push('protective leather grease');
@@ -1198,7 +1202,7 @@
     var tags = engravings(st).tags;
     SLOT_KEYS.forEach(function (p) {
       var tag = document.getElementById('slot-' + p).querySelector('.slot-price');
-      var text = tags[p] === 'extra' ? '+$' + ENGRAVING_PRICE : tags[p] === 'included' ? 'Included' : '';
+      var text = tags[p] === 'extra' ? '+' + money(ENGRAVING_PRICE) : tags[p] === 'included' ? 'Included' : '';
       if (tag.textContent !== text) tag.textContent = text;
       tag.classList.toggle('is-extra', tags[p] === 'extra');
     });
@@ -1254,8 +1258,8 @@
     summaryEls.extras.textContent = ex.length ? ex.join(', ') : 'None';
     var extraEng = engravings(st).extra;
     summaryEls.engravings.hidden = summaryEls.engravingsDt.hidden = !extraEng;
-    summaryEls.engravings.textContent = extraEng + ' × $' + ENGRAVING_PRICE;
-    summaryEls.total.textContent = '$' + total(st);
+    summaryEls.engravings.textContent = extraEng + ' × ' + money(ENGRAVING_PRICE);
+    summaryEls.total.textContent = money(total(st));
     // Real photos and description of the chosen apron, under the preview.
     var galleryKey = STYLES[st.style].gallery || st.style;
     Array.prototype.forEach.call(document.querySelectorAll('.style-gallery'), function (g) { g.hidden = g.getAttribute('data-style') !== galleryKey; });
@@ -1269,12 +1273,12 @@
   var viewed = {}, designerSeen = false, picked = {};
   function itemFor(styleKey) {
     var s = STYLES[styleKey];
-    return { item_id: String(s.id), item_name: s.name, item_category: 'Aprons', price: PRICE, quantity: 1 };
+    return { item_id: String(s.id), item_name: s.name, item_category: 'Aprons', price: stylePrice(styleKey), quantity: 1 };
   }
   function trackView(styleKey) {
     if (!designerSeen || viewed[styleKey] || !VL.track) return;
     viewed[styleKey] = true;
-    VL.track('view_item', { currency: C.currency, value: PRICE, items: [itemFor(styleKey)] });
+    VL.track('view_item', { currency: C.currency, value: stylePrice(styleKey), items: [itemFor(styleKey)] });
   }
   function trackPick(type, id, spot) {
     var key = type + ':' + id + ':' + spot;
@@ -1322,7 +1326,7 @@
     if (!customised) {
       customised = true;
       var st = read();
-      VL.track && VL.track('customize_product', { currency: C.currency, value: PRICE, items: [itemFor(st.style)] });
+      VL.track && VL.track('customize_product', { currency: C.currency, value: stylePrice(st.style), items: [itemFor(st.style)] });
     }
     // A suggested design chosen (by switching a spot to designs, or picking another design)
     if (n.indexOf('mode-') === 0 || n.indexOf('design-') === 0) {
