@@ -2090,11 +2090,14 @@
   }
 
   // Photo viewer for the real photos under the preview.
-  var viewer = document.getElementById('photo-viewer'), viewerImg = document.getElementById('photo-viewer-img');
+  // The big photo's <img> is only added when the viewer first opens, so the page has no empty image in it
+  // (SEO checkers list one as an unnamed image).
+  var viewer = document.getElementById('photo-viewer'), viewerImg = null;
   var viewerCap = document.getElementById('photo-viewer-caption'), viewerList = [], viewerAt = 0;
   function showPhoto(i) {
     viewerAt = (i + viewerList.length) % viewerList.length;
     var b = viewerList[viewerAt];
+    if (!viewerImg) { viewerImg = document.createElement('img'); viewerCap.parentNode.insertBefore(viewerImg, viewerCap); }
     viewerImg.src = b.getAttribute('data-full');
     viewerImg.alt = b.getAttribute('data-alt');
     viewerCap.textContent = b.getAttribute('data-alt');
