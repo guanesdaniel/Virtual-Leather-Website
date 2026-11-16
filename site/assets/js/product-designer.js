@@ -320,13 +320,13 @@
     if (ideaOf(it)) return n + ') Our design "' + ideaOf(it).label + '" on ' + P.places[it.place].long + ', ' + size + ', ' + where(it);
     if (it.src === 'create') return n + ') Image for us to create on ' + P.places[it.place].long + ' (' + (it.note || 'ask the customer') + '), ' + size + ', ' + where(it);
     return n + ') Image or logo on ' + P.places[it.place].long + ' (' + (it.note ? it.note + '; ' : '') +
-      (it.url ? 'file "' + it.file.name.slice(0, 60) + '": ' + it.url : 'customer sends the file') + '), ' + size + ', ' + where(it);
+      (it.url ? 'file "' + it.file.name.slice(0, 60) + '" received' : 'customer sends the file') + '), ' + size + ', ' + where(it);
   }
   // The engravings on one place, for a store option of their own ('' if none).
   function linesOn(place) {
     return engraved().map(function (it, i) { return it.place === place ? line(it, i + 1) : ''; }).filter(Boolean).join(' | ');
   }
-  function describe(ref, picture) {
+  function describe(ref) {
     var parts = (curSize() ? ['Size: ' + curSize().label] : []).concat(hasStraps ? [ACCENT[0] + ': ' + COLORS[val('straps')].label] : []);
     var list = engraved();
     if (!list.length) parts.push('Engraving: none (plain)');
@@ -335,7 +335,6 @@
     var who = document.getElementById('pd-for').value.trim(), notes = document.getElementById('pd-notes').value.trim();
     if (who) parts.push('For: ' + who);
     if (notes) parts.push('Notes: ' + notes);
-    if (picture) parts.push('Design picture: ' + picture);
     parts.push('Designed on virtualleather.net' + (ref ? ' (ref ' + ref + ')' : ''));
     return parts.join(' | ');
   }
@@ -639,8 +638,14 @@
     (VL.uploadOrderFiles ? VL.uploadOrderFiles(jobs, ref) : Promise.resolve({})).then(function (urls) {
       own.forEach(function (it) { if (urls[it.key]) it.url = urls[it.key]; });
       logos = own.filter(function (it) { return !it.url; }).length;
+      // The links go to the shop owner only (a hidden order field; see VL.orderFiles in main.js).
+      var fileLines = own.filter(function (it) { return it.url; }).map(function (it) {
+        return 'Logo on ' + P.places[it.place].long + ' "' + it.file.name.slice(0, 60) + '": ' + it.url;
+      });
+      if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
+      if (VL.orderFiles) VL.orderFiles.add(ref, P.label, fileLines);
       options = {
-        'Description For Personalization': describe(ref, urls.picture),
+        'Description For Personalization': describe(ref),
         'Email for design confirmation': form.elements.email.value.trim(),
         'Phone Number for shipping confirmation': form.elements.phone.value.trim()
       };

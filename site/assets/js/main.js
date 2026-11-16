@@ -271,6 +271,52 @@
     box.appendChild(document.createTextNode('. Everything you entered is kept.'));
   }
 
+  /* ---------- Order file links: for the shop owner only ---------- */
+  // The links to a design's uploaded files (VL.uploadOrderFile) are kept on this device by design ref and,
+  // for the designs still in the cart, put in a hidden order field: the customer doesn't see it, the shop
+  // owner sees it in the order in Ecwid. The order description itself only says "file received".
+  // (The files are also tagged with the ref in Cloudinary, so they can be found from any order.)
+  var FILES_KEY = 'vl_order_files', FILES_FIELD = 'vl_design_files', filesValue = null;
+  VL.orderFiles = {
+    add: function (ref, label, lines) {
+      if (!ref || !lines || !lines.length) return;
+      var all = readJSON(FILES_KEY, {});
+      if (typeof all !== 'object' || Array.isArray(all)) all = {};
+      Object.keys(all).forEach(function (r) { if (!fresh(all[r])) delete all[r]; });
+      all[ref] = { time: Date.now(), label: label || '', lines: lines };
+      writeJSON(FILES_KEY, all);
+      if (window.Ecwid && window.Ecwid.Cart) window.Ecwid.Cart.get(syncFiles);
+    },
+    clear: function () { writeJSON(FILES_KEY, null); }
+  };
+  // The hidden field's value for the designs in this cart ('' when none), e.g.
+  // "VL-7K2P (BBQ apron): Position 1 logo "logo.png": https://… ; Design picture: https://…".
+  function filesFor(cart) {
+    var all = readJSON(FILES_KEY, {}) || {}, text = (cart && cart.items || []).map(function (it) {
+      return Object.keys(it.options || {}).map(function (k) { return String(it.options[k]); }).join(' ');
+    }).join(' ');
+    return Object.keys(all).filter(function (r) { return fresh(all[r]) && (!cart || text.indexOf(r) !== -1); }).map(function (r) {
+      return r + (all[r].label ? ' (' + all[r].label + ')' : '') + ': ' + all[r].lines.join(' ; ');
+    }).join(' || ');
+  }
+  function setFilesField(value) {
+    window.ec = window.ec || {};
+    window.ec.order = window.ec.order || {};
+    window.ec.order.extraFields = window.ec.order.extraFields || {};
+    if (value) {
+      window.ec.order.extraFields[FILES_FIELD] = { title: 'Design files', type: 'hidden', value: value,
+        orderDetailsDisplaySection: 'order_comments', showInInvoice: false, showInNotifications: false };
+    } else delete window.ec.order.extraFields[FILES_FIELD];
+  }
+  function syncFiles(cart) {
+    if (VL.cartBusy) return;
+    var v = filesFor(cart);
+    if (v === filesValue) return;
+    filesValue = v;
+    setFilesField(v);
+    if (window.Ecwid && window.Ecwid.refreshConfig) window.Ecwid.refreshConfig();
+  }
+
   /* ---------- Ecwid loader ---------- */
   var ecwidPromise = null;
   VL.loadEcwid = function () {
@@ -284,6 +330,8 @@
       window.ec.config.storefrontUrls = { cleanUrls: false };
       // Our cookie banner decides, before the store loads (see VL.consent.ecwid in analytics.js).
       window.ec.config.tracking = { ask_consent: true, user_response: VL.consent && VL.consent.ecwid ? VL.consent.ecwid() : 'DECLINE' };
+      filesValue = filesFor(null);
+      setFilesField(filesValue);
       var s = document.createElement('script');
       s.src = 'https://app.ecwid.com/script.js?' + C.ecwidStoreId + '&data_platform=code';
       s.charset = 'utf-8';
@@ -345,12 +393,13 @@
       setCount(cart && cart.productsQuantity || 0);
       syncSaved(cart);
       dropLoneEngraving(cart);
+      syncFiles(cart);
     });
 
     E.OnCartChanged.add(function (cart) {
       var now = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
-      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); });
+      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); syncFiles(c); });
       // While the designer swaps an edited design into the cart, re-adding it isn't a new add to cart.
       if (lastQty && !VL.cartBusy) {
         Object.keys(now).forEach(function (id) {
@@ -398,6 +447,7 @@
       E.OnOrderPlaced.add(function (order) {
         if (!order) return;
         VL.saved.clear();
+        VL.orderFiles.clear();
         var id = String(order.vendorOrderNumber || order.orderNumber || order.id || '');
         var seenKey = 'vl_order_' + id;
         try { if (sessionStorage.getItem(seenKey)) return; sessionStorage.setItem(seenKey, '1'); } catch (e) { /* ignore */ }
