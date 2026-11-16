@@ -86,6 +86,9 @@ The designer remembers each design on the customer's own device (browser storage
 - **In the cart:** "Added to your cart" offers **Change this design**. The designer and the shop page (above the cart) link back to each apron in the cart.
 - **Saving a change:** the button reads "Update my apron in the cart". It takes that apron and the extras added with it out of the cart and puts the updated ones in, so there are no duplicates.
 
+### Logo files and design pictures with each order
+When a design goes in the cart (aprons, knife roll, backpack, duffle bag), the site uploads the customer's logo files, exactly as they chose them, and a JPEG picture of the preview to Cloudinary (account `cloudinaryCloud`, unsigned upload preset `cloudinaryPreset` in `src/config.json`; the preset puts files in the `orders` folder, tagged with the design ref). The links go in the order's description, for example `Position 1 (Chest): customer's logo, size 100% of standard, file "logo.png": https://res.cloudinary.com/...` and `Design picture: https://...`. In Cloudinary's Media Library, search for the ref (e.g. `VL-7K2P`) to see an order's files. If an upload fails or the customer didn't add a file, the description says "customer will send the file" and the "send us your logo" step appears as before. The code is `VL.uploadOrderFile`, `VL.uploadOrderFiles` and `VL.svgToPicture` in `main.js`.
+
 Each design gets a reference (for example `VL-7K2P`) at the end of its order description and in the "send your logo" message, so a logo file can be matched to its order. Saved designs are dropped once the apron leaves the cart, cleared when an order is placed, and deleted after 30 days. The code is `VL.saved` in `main.js` and the "Saved designs" part of `designer.js`.
 
 ### Apron sizes
