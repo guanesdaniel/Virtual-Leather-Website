@@ -23,7 +23,7 @@ const IMAGES = {
   'work-crest': ['619498562', 22, [480, 800]],
   'work-tan-logo': ['619492033', 5, [480, 800]],
   'workshop': ['619501025', 4, [640, 1080]],
-  'team-aprons': ['619498562', 20, [640, 1080]],
+  'team-aprons': ['619498562', 20, [640, 1000]],
   'sketch': ['619498562', 2, [640]],
 };
 // Real photos for the designer, per apron style (src/data/gallery.json).

@@ -125,6 +125,89 @@
     setTimeout(function () { t.remove(); }, ms || 7000);
   };
 
+  /* ---------- Order files: the customer's logo files and a picture of the design ---------- */
+  // When a design goes in the cart, its logo files (as the customer chose them) and a picture of the preview
+  // are uploaded to the shop's Cloudinary account (cloudinaryCloud + cloudinaryPreset in src/config.json,
+  // an unsigned upload preset that can only add files), and their links go in the order's description.
+  // Uploads that fail or take too long are left out: the customer is then asked to send the file instead.
+  VL.uploadOrderFile = function (blob, name, ref) {
+    if (!C.cloudinaryCloud || !C.cloudinaryPreset || !window.fetch || !window.FormData) return Promise.reject(new Error('off'));
+    var fd = new FormData();
+    fd.append('file', blob, name || 'file');
+    fd.append('upload_preset', C.cloudinaryPreset);
+    if (ref) { fd.append('tags', ref); fd.append('context', 'ref=' + ref); }
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl && setTimeout(function () { ctl.abort(); }, 45000);
+    return fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(C.cloudinaryCloud) + '/auto/upload',
+      { method: 'POST', body: fd, signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('upload ' + r.status)); })
+      .then(function (j) { clearTimeout(timer); if (!j.secure_url) throw new Error('no url'); return j.secure_url; },
+        function (err) { clearTimeout(timer); throw err; });
+  };
+  // Several uploads at once: resolves to { key: url } with whichever ones worked (never rejects).
+  VL.uploadOrderFiles = function (jobs, ref) {
+    var out = {};
+    return Promise.all(jobs.map(function (j) {
+      return Promise.resolve().then(function () { return typeof j.blob === 'function' ? j.blob() : j.blob; }).then(function (b) { return b && VL.uploadOrderFile(b, j.name, ref); })
+        .then(function (url) { if (url) out[j.key] = url; }, function () {});
+    })).then(function () { return out; });
+  };
+  // A JPEG picture of an SVG preview, with the web fonts and pictures it uses built in (an SVG drawn as an image can't
+  // load anything itself). Resolves to a Blob, or null if the browser can't make one.
+  var fontData = {};
+  function asDataUrl(url) {
+    return fetch(url).then(function (r) { return r.blob(); }).then(function (b) {
+      return new Promise(function (res, rej) { var f = new FileReader(); f.onload = function () { res(f.result); }; f.onerror = rej; f.readAsDataURL(b); });
+    });
+  }
+  function fontFaces(used) {
+    var rules = [];
+    $$('link[rel="stylesheet"], style').forEach(function (n) {
+      try { Array.prototype.forEach.call(n.sheet.cssRules, function (r) { if (r.type === 5) rules.push(r); }); } catch (e) {}
+    });
+    return Promise.all(rules.filter(function (r) {
+      var fam = r.style.getPropertyValue('font-family').replace(/["']/g, '').trim().toLowerCase();
+      return used.some(function (u) { return u.indexOf(fam) !== -1; });
+    }).map(function (r) {
+      var m = /url\(["']?([^"')]+)["']?\)/.exec(r.style.getPropertyValue('src'));
+      if (!m) return '';
+      var url = new URL(m[1], r.parentStyleSheet.href || location.href).href;
+      return (fontData[url] || (fontData[url] = asDataUrl(url))).then(function (d) {
+        return '@font-face{font-family:' + r.style.getPropertyValue('font-family') + ';font-weight:' + (r.style.getPropertyValue('font-weight') || 'normal') +
+          ';src:url(' + d + ') format("woff2");}';
+      }, function () { return ''; });
+    })).then(function (css) { return css.join(''); });
+  }
+  VL.svgToPicture = function (svg, width) {
+    if (!svg || !window.XMLSerializer || !window.fetch) return Promise.resolve(null);
+    var copy = svg.cloneNode(true), vb = (svg.getAttribute('viewBox') || '0 0 1000 1000').split(/[\s,]+/).map(Number);
+    var w = width || 1000, h = Math.round(w * vb[3] / vb[2]);
+    copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    copy.setAttribute('width', w); copy.setAttribute('height', h);
+    var used = [];
+    Array.prototype.forEach.call(copy.querySelectorAll('[font-family]'), function (t) { used.push(t.getAttribute('font-family').replace(/["']/g, '').toLowerCase()); });
+    var images = Array.prototype.filter.call(copy.querySelectorAll('image'), function (i) { return !/^data:/.test(i.getAttribute('href') || ''); });
+    return Promise.all([fontFaces(used)].concat(images.map(function (i) {
+      return asDataUrl(i.getAttribute('href')).then(function (d) { i.setAttribute('href', d); }, function () { i.remove(); });
+    }))).then(function (r) {
+      var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      style.textContent = r[0];
+      copy.insertBefore(style, copy.firstChild);
+      var src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(copy));
+      return new Promise(function (res) {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            var g = c.getContext('2d'); g.fillStyle = '#f6f0e7'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+            c.toBlob(function (b) { res(b); }, 'image/jpeg', .9);
+          } catch (e) { res(null); }
+        };
+        img.onerror = function () { res(null); };
+        img.src = src;
+      });
+    }).catch(function () { return null; });
+  };
+
   /* ---------- Saved apron designs (kept on this device only) ---------- */
   // The designer keeps the design in progress and each apron design added to the cart, so customers can
   // come back and change it without starting again. A design is dropped once its apron leaves the cart,
@@ -188,6 +271,52 @@
     box.appendChild(document.createTextNode('. Everything you entered is kept.'));
   }
 
+  /* ---------- Order file links: for the shop owner only ---------- */
+  // The links to a design's uploaded files (VL.uploadOrderFile) are kept on this device by design ref and,
+  // for the designs still in the cart, put in a hidden order field: the customer doesn't see it, the shop
+  // owner sees it in the order in Ecwid. The order description itself only says "file received".
+  // (The files are also tagged with the ref in Cloudinary, so they can be found from any order.)
+  var FILES_KEY = 'vl_order_files', FILES_FIELD = 'vl_design_files', filesValue = null;
+  VL.orderFiles = {
+    add: function (ref, label, lines) {
+      if (!ref || !lines || !lines.length) return;
+      var all = readJSON(FILES_KEY, {});
+      if (typeof all !== 'object' || Array.isArray(all)) all = {};
+      Object.keys(all).forEach(function (r) { if (!fresh(all[r])) delete all[r]; });
+      all[ref] = { time: Date.now(), label: label || '', lines: lines };
+      writeJSON(FILES_KEY, all);
+      if (window.Ecwid && window.Ecwid.Cart) window.Ecwid.Cart.get(syncFiles);
+    },
+    clear: function () { writeJSON(FILES_KEY, null); }
+  };
+  // The hidden field's value for the designs in this cart ('' when none), e.g.
+  // "VL-7K2P (BBQ apron): Position 1 logo "logo.png": https://… ; Design picture: https://…".
+  function filesFor(cart) {
+    var all = readJSON(FILES_KEY, {}) || {}, text = (cart && cart.items || []).map(function (it) {
+      return Object.keys(it.options || {}).map(function (k) { return String(it.options[k]); }).join(' ');
+    }).join(' ');
+    return Object.keys(all).filter(function (r) { return fresh(all[r]) && (!cart || text.indexOf(r) !== -1); }).map(function (r) {
+      return r + (all[r].label ? ' (' + all[r].label + ')' : '') + ': ' + all[r].lines.join(' ; ');
+    }).join(' || ');
+  }
+  function setFilesField(value) {
+    window.ec = window.ec || {};
+    window.ec.order = window.ec.order || {};
+    window.ec.order.extraFields = window.ec.order.extraFields || {};
+    if (value) {
+      window.ec.order.extraFields[FILES_FIELD] = { title: 'Design files', type: 'hidden', value: value,
+        orderDetailsDisplaySection: 'order_comments', showInInvoice: false, showInNotifications: false };
+    } else delete window.ec.order.extraFields[FILES_FIELD];
+  }
+  function syncFiles(cart) {
+    if (VL.cartBusy) return;
+    var v = filesFor(cart);
+    if (v === filesValue) return;
+    filesValue = v;
+    setFilesField(v);
+    if (window.Ecwid && window.Ecwid.refreshConfig) window.Ecwid.refreshConfig();
+  }
+
   /* ---------- Ecwid loader ---------- */
   var ecwidPromise = null;
   VL.loadEcwid = function () {
@@ -201,6 +330,8 @@
       window.ec.config.storefrontUrls = { cleanUrls: false };
       // Our cookie banner decides, before the store loads (see VL.consent.ecwid in analytics.js).
       window.ec.config.tracking = { ask_consent: true, user_response: VL.consent && VL.consent.ecwid ? VL.consent.ecwid() : 'DECLINE' };
+      filesValue = filesFor(null);
+      setFilesField(filesValue);
       var s = document.createElement('script');
       s.src = 'https://app.ecwid.com/script.js?' + C.ecwidStoreId + '&data_platform=code';
       s.charset = 'utf-8';
@@ -262,12 +393,13 @@
       setCount(cart && cart.productsQuantity || 0);
       syncSaved(cart);
       dropLoneEngraving(cart);
+      syncFiles(cart);
     });
 
     E.OnCartChanged.add(function (cart) {
       var now = cartItems(cart);
       setCount(cart && cart.productsQuantity || 0);
-      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); });
+      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); syncFiles(c); });
       // While the designer swaps an edited design into the cart, re-adding it isn't a new add to cart.
       if (lastQty && !VL.cartBusy) {
         Object.keys(now).forEach(function (id) {
@@ -315,6 +447,7 @@
       E.OnOrderPlaced.add(function (order) {
         if (!order) return;
         VL.saved.clear();
+        VL.orderFiles.clear();
         var id = String(order.vendorOrderNumber || order.orderNumber || order.id || '');
         var seenKey = 'vl_order_' + id;
         try { if (sessionStorage.getItem(seenKey)) return; sessionStorage.setItem(seenKey, '1'); } catch (e) { /* ignore */ }

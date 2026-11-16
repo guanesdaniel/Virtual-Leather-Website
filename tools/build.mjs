@@ -13,7 +13,7 @@
 //   {{gallery}}            real photos per apron style for the designer (src/data/gallery.json)
 //   {{reviews}}            Etsy review cards from src/data/reviews.json (see tools/etsy-reviews.mjs)
 //   {{reviews <id>}}       reviews of one product (+ recent others if it has few); {{reviewsSummary <id>}} its intro
-//   {{reviewPhotos}}       strip of photos customers added to their reviews
+//   {{reviewPhotos}}       row of small photos customers added to their reviews ({{reviewPhotos <id>}}: one product's)
 //   {{#if reviews}}…{{/if reviews}}  kept only when there are reviews
 //   {{#if extraEngraving}}…{{else}}…{{/if extraEngraving}}  first part once the Ecwid "Extra engraving"
 //                          product is set (extraEngravingProductId in src/config.json), else the second.
@@ -131,10 +131,11 @@ function productLinks() {
 function reviewCard(r, withPhoto = true) {
   const n = Math.max(0, Math.min(5, Number(r.rating) || 0));
   const photo = withPhoto && /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '') ? r.photo : '';
+  const thumb = photo && /^https:\/\/i\.etsystatic\.com\//.test(r.thumb || '') ? r.thumb : photo;
   const about = r.item ? `${r.item}` : 'our leather goods';
   return `
   <li class="card review${photo ? ' has-photo' : ''}">
-${photo ? `    <a class="review-photo" href="${esc(photo)}" target="_blank" rel="noopener"><img src="${esc(photo)}" alt="Customer's photo of their ${esc(about)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>
+${photo ? `    <a class="review-photo" href="${esc(photo)}" target="_blank" rel="noopener"><img src="${esc(thumb)}" width="96" height="96" alt="Customer's photo of their ${esc(about)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>
 ` : ''}    <p class="stars" role="img" aria-label="${n} out of 5 stars">${'★'.repeat(n)}<span aria-hidden="true" class="stars-off">${'★'.repeat(5 - n)}</span></p>
 ${r.text ? `    <blockquote><p>${esc(r.text).replace(/\n+/g, '<br>')}</p></blockquote>
 ` : ''}    <p class="review-meta">${esc(r.name || 'Etsy buyer')}${r.date ? ` · ${esc(r.date)}` : ''}${r.item ? ` · ${esc(r.item)}` : ''}</p>
@@ -177,7 +178,8 @@ for (const r of allReviews) {
 // first six. If it has fewer than six, recent reviews of other products fill up the list (each card names
 // the product it's about).
 function productReviews(id) {
-  const own = (reviewsById[id] || []).slice(0, 12);
+  // Reviews with words only: a photo without words goes in the row of photos below ({{reviewPhotos <id>}}).
+  const own = (reviewsById[id] || []).filter((r) => r.text).slice(0, 12);
   const top = [...own.slice(0, 6)].sort((a, b) => !!b.photo - !!a.photo);
   const list = [...top, ...own.slice(6)];
   const ids = new Set(list);
@@ -185,7 +187,7 @@ function productReviews(id) {
   return reviewList(list);
 }
 function productReviewsSummary(id) {
-  const n = (reviewsById[id] || []).length;
+  const n = (reviewsById[id] || []).filter((r) => r.text).length;
   const p = products.find((x) => x.id === id);
   const shop = rating ? `Our Etsy shop is rated <strong>${esc(rating.score)} out of 5</strong> from ${esc(rating.count)} reviews.` : '';
   if (!n) return `${shop} Here are some recent ones, in the customers' own words.`;
@@ -194,12 +196,15 @@ function productReviewsSummary(id) {
 }
 // More photos customers added to their reviews (a row of small photos on the home page): up to 8, newest
 // first, leaving out the ones already beside a home page review.
-function reviewPhotos() {
-  const withPhoto = allReviews.filter((r) => !homeReviews.includes(r) && /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '')).slice(0, 8);
+// On a product page ({{reviewPhotos <id>}}), that product's photos not already beside one of its reviews.
+function reviewPhotos(id) {
+  const shown = id ? (reviewsById[id] || []).filter((r) => r.text).slice(0, 12) : homeReviews;
+  const pool = id ? reviewsById[id] || [] : allReviews;
+  const withPhoto = pool.filter((r) => !shown.includes(r) && /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '')).slice(0, 8);
   if (withPhoto.length < 2) return '';
   return `<p class="small muted review-photos-title">More photos from our customers (tap to enlarge)</p>
 <ul class="review-photos" role="list" aria-label="More photos from our customers">${withPhoto.map((r) => `
-  <li><a href="${esc(r.photo)}" target="_blank" rel="noopener"><img src="${esc(r.photo)}" alt="Customer's photo of their ${esc(r.item || 'order')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a></li>`).join('')}
+  <li><a href="${esc(r.photo)}" target="_blank" rel="noopener"><img src="${esc(/^https:\/\/i\.etsystatic\.com\//.test(r.thumb || '') ? r.thumb : r.photo)}" width="84" height="84" alt="Customer's photo of their ${esc(r.item || 'order')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a></li>`).join('')}
 </ul>`;
 }
 const hasReviews = homeReviews.length > 0;
@@ -245,7 +250,7 @@ async function render(tpl, page, depth = 0) {
     .replace(/\{\{reviews\}\}/g, () => reviews())
     .replace(/\{\{reviews (\d+)\}\}/g, (_, id) => productReviews(id))
     .replace(/\{\{reviewsSummary (\d+)\}\}/g, (_, id) => productReviewsSummary(id))
-    .replace(/\{\{reviewPhotos\}\}/g, () => reviewPhotos())
+    .replace(/\{\{reviewPhotos(?: (\d+))?\}\}/g, (_, id) => reviewPhotos(id))
     .replace(/\{\{gallery\}\}/g, () => gallery())
     .replace(/\{\{reviewsSummary\}\}/g, () => (rating
       ? `Rated <strong>${esc(rating.score)} out of 5</strong> from ${esc(rating.count)} reviews on our Etsy shop.`
@@ -342,6 +347,7 @@ ${hasReviews ? `  <section class="product-reviews" id="reviews" aria-labelledby=
     <h2 id="reviews-title" class="subhead">What our customers say</h2>
     <p>{{reviewsSummary ${p.id}}}</p>
 {{reviews ${p.id}}}
+{{reviewPhotos ${p.id}}}
     <p class="small muted etsy-notice">Reviews from our Etsy shop, shown with the Etsy API. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.</p>
   </section>
 ` : ''}${related.length ? `  <section class="product-related" aria-labelledby="related-title">
@@ -389,6 +395,7 @@ const pub = {
   siteUrl: site.siteUrl, whatsappNumber: site.whatsappNumber, email: site.email,
   ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
+  cloudinaryCloud: site.cloudinaryCloud || '', cloudinaryPreset: site.cloudinaryPreset || '',
   extraEngravingPrice: priceOf('engraving'),
   products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {},
     priceData.products?.[p.id]?.choices ? { choices: priceData.products[p.id].choices } : {})])),
@@ -426,4 +433,30 @@ await fs.writeFile(path.join(outDir, 'sitemap.xml'),
     .map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 await fs.writeFile(path.join(outDir, 'robots.txt'),
   `User-agent: *\nAllow: /\n\nSitemap: ${site.siteUrl}/sitemap.xml\n`);
+// Each page asks for its CSS and JavaScript files with a fingerprint of their content (?v=…), so browsers
+// that kept an older copy fetch the new one as soon as it changes.
+const { createHash } = await import('node:crypto');
+const fingerprints = new Map();
+async function fingerprint(file) {
+  if (!fingerprints.has(file)) {
+    fingerprints.set(file, await fs.readFile(path.join(outDir, file)).then((b) => createHash('sha256').update(b).digest('hex').slice(0, 10), () => null));
+  }
+  return fingerprints.get(file);
+}
+async function htmlFiles(dir) {
+  const out = [];
+  for (const e of await fs.readdir(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...await htmlFiles(f));
+    else if (e.name.endsWith('.html')) out.push(f);
+  }
+  return out;
+}
+for (const f of await htmlFiles(outDir)) {
+  const html = await fs.readFile(f, 'utf8');
+  const ASSET = /"\/(assets\/(?:css|js)\/[^"?#]+)\?v=[^"]*"/g;
+  for (const [, ref] of html.matchAll(ASSET)) await fingerprint(ref);
+  const out = html.replace(ASSET, (m, ref) => (fingerprints.get(ref) ? `"/${ref}?v=${fingerprints.get(ref)}"` : m));
+  if (out !== html) await fs.writeFile(f, out);
+}
 console.log('done');

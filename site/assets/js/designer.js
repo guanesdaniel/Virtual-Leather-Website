@@ -810,6 +810,7 @@
   // spot -> { src (in black and white, as engraved), aspect, name, ok, bw } once a logo file is chosen (kept
   // on this device only); raw = shown as uploaded, not (yet) in black and white.
   var logos = {};
+  var logoFiles = {};    // spot -> the logo file as chosen (uploaded with the order; see VL.uploadOrderFile)
   var fit = {};          // spot -> { pct, maxPct } as drawn (set by drawEngraving)
   var modeTouched = {};  // spots whose choice the customer changed (others follow each style's default)
   var slotsBox = document.getElementById('slots');
@@ -865,7 +866,7 @@
         '<div class="slot-body logo-file" data-for="logo">' +
           '<div class="field"><label for="logo-' + id + '">Upload your logo to see it on the preview <span class="muted">(optional)</span></label>' +
           '<input type="file" id="logo-' + id + '" data-slot="' + id + '" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-describedby="logo-hint-' + id + ' logo-' + id + '-error">' +
-          '<p class="hint" id="logo-hint-' + id + '">PNG, JPG, WebP or SVG, up to 15 MB. The preview shows it in black and white, the way it\'s engraved, and it stays on your device. After ordering, send us the original file by WhatsApp or email: we engrave from it, and you approve a proof first.</p>' +
+          '<p class="hint" id="logo-hint-' + id + '">PNG, JPG, WebP or SVG, up to 15 MB. The preview shows it in black and white, the way it\'s engraved, and the file is sent to us with your order when you add it to your cart. We engrave from it, and you approve a proof first.</p>' +
           '<p class="hint logo-kept" id="logo-' + id + '-kept" hidden></p>' +
           '<p class="error" id="logo-' + id + '-error" aria-live="polite"></p></div>' +
         '</div>' +
@@ -1004,7 +1005,8 @@
           ((d.fields || []).length ? ', font ' + fontName(sl.dfont) : '') + ', size ' + size + ' of standard');
       } else if (sl.mode === 'logo') {
         out.push(short ? where + ': your logo' : where + ': customer\'s logo, size ' + size + ' of standard' +
-          (logos[p] ? ', previewed with "' + logos[p].name.slice(0, 60) + '"' : '') + ' (customer will send the file by WhatsApp or email)');
+          (logos[p] && logos[p].url ? ', file "' + logos[p].name.slice(0, 60) + '" received'
+            : (logos[p] ? ', previewed with "' + logos[p].name.slice(0, 60) + '"' : '') + ' (customer will send the file by WhatsApp or email)'));
       }
     });
     if (!short && st.slots['2'].mode === 'none' && list.indexOf('2') !== -1 && POS_OVERRIDES[st.style] && POS_OVERRIDES[st.style].chestBig &&
@@ -1722,6 +1724,7 @@
     var f = input.files && input.files[0];
     err.textContent = '';
     document.getElementById('logo-' + p + '-kept').hidden = true;
+    delete logoFiles[p];
     if (!f) { delete logos[p]; update(); return; }
     if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type)) {
       err.textContent = 'Please choose a PNG, JPG, WebP or SVG image.'; input.value = ''; return;
@@ -1741,6 +1744,7 @@
         l.src = url; l.raw = true; l.ok = true; l.aspect = (img.naturalWidth || 1) / (img.naturalHeight || 1);
       }
       logos[p] = l;
+      logoFiles[p] = f;
       if (!l.ok) err.textContent = 'This image looks blank on the preview. You can still send it to us after ordering.';
       trackPick('logo_upload', 'customer_logo', p);
       update();
@@ -1841,6 +1845,7 @@
     for (k in snap.touched || {}) modeTouched[k] = snap.touched[k];
     for (k in colourPicked) colourPicked[k] = !!(snap.picked || {})[k];
     for (k in logos) delete logos[k];
+    for (k in logoFiles) delete logoFiles[k];
     SLOT_KEYS.forEach(function (p) {
       var l = (snap.logos || {})[p], name = (snap.logoNames || {})[p], note = document.getElementById('logo-' + p + '-kept');
       document.getElementById('logo-' + p).value = '';
@@ -1863,6 +1868,7 @@
     for (k in modeTouched) delete modeTouched[k];
     for (k in colourPicked) colourPicked[k] = false;
     for (k in logos) delete logos[k];
+    for (k in logoFiles) delete logoFiles[k];
     SLOT_KEYS.forEach(function (p) { document.getElementById('logo-' + p + '-kept').hidden = true; });
     applyDefaults(style, true);
     followAccessory();
@@ -2029,21 +2035,39 @@
     var style = STYLES[st.style];
     // Changing a design that's in the cart keeps its ref, and replaces it there instead of adding another.
     var editing = editingRef && SAVE ? SAVE.find(editingRef) : null, ref = editing ? editing.ref : newRef();
-    var options = {
-      'Main Color': COLORS[st.main].ecwid,
-      'Customer Height': st.height,
-      'Customer Weight': st.weight,
-      'Description For Personalization': describe(st, ref),
-      'Email for design confirmation': st.email,
-      'Phone Number for shipping confirmation': st.phone
-    };
-    options[style.secondary] = COLORS[st.acc].ecwid;
-    var lines = cartLines(st, options);
+    var logoSpots = positionsOf(st.style).filter(function (p) { return st.slots[p].mode === 'logo' && logos[p]; });
+    var lines;
 
     submit.disabled = true;
     busy = true;
-    setStatus(editing ? 'Updating your cart…' : 'Adding to your cart…');
-    VL.loadEcwid().then(function (E) {
+    // The logo files and a picture of the design go with the order (links in its description).
+    var jobs = logoSpots.filter(function (p) { return logoFiles[p] && !logos[p].url; })
+      .map(function (p) { return { key: p, name: logoFiles[p].name, blob: logoFiles[p] }; });
+    var svgNow = stage.querySelector('svg');
+    if (VL.svgToPicture) jobs.push({ key: 'picture', name: ref + '-design.jpg', blob: function () { return VL.svgToPicture(svgNow, 1000); } });
+    setStatus(jobs.length > 1 ? 'Sending us your logo and design…' : 'Saving your design…');
+    var uploads = VL.uploadOrderFiles ? VL.uploadOrderFiles(jobs, ref) : Promise.resolve({});
+    uploads.then(function (urls) {
+      logoSpots.forEach(function (p) { if (urls[p]) logos[p].url = urls[p]; });
+      // The links go to the shop owner only (a hidden order field; see VL.orderFiles in main.js).
+      var fileLines = logoSpots.filter(function (p) { return logos[p].url; }).map(function (p) {
+        return 'Position ' + posLabel(p) + ' logo "' + logos[p].name.slice(0, 60) + '": ' + logos[p].url;
+      });
+      if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
+      if (VL.orderFiles) VL.orderFiles.add(ref, styleLabel(st), fileLines);
+      var options = {
+        'Main Color': COLORS[st.main].ecwid,
+        'Customer Height': st.height,
+        'Customer Weight': st.weight,
+        'Description For Personalization': describe(st, ref),
+        'Email for design confirmation': st.email,
+        'Phone Number for shipping confirmation': st.phone
+      };
+      options[style.secondary] = COLORS[st.acc].ecwid;
+      lines = cartLines(st, options);
+      setStatus(editing ? 'Updating your cart…' : 'Adding to your cart…');
+      return VL.loadEcwid();
+    }).then(function (E) {
       if (!editing) return addLines(E, lines);
       VL.cartBusy = true;
       return takeOut(E, editing).then(function (qty) { lines[0].qty = qty; return addLines(E, lines); });
@@ -2077,12 +2101,12 @@
     });
   });
 
-  // Logo files can't travel with the cart (adding from this page carries text and choices only), so
-  // when a spot uses a logo, the last step is sending the file on WhatsApp or by email.
+  // Logo files are uploaded with the order (VL.uploadOrderFile); when a spot's file didn't upload, or the
+  // customer didn't add one, the last step is sending it on WhatsApp or by email.
   function showLogoStep(st, ref) {
     var box = document.getElementById('logo-next');
     if (!box) return;
-    var spots = positionsOf(st.style).filter(function (p) { return st.slots[p].mode === 'logo'; });
+    var spots = positionsOf(st.style).filter(function (p) { return st.slots[p].mode === 'logo' && !(logos[p] && logos[p].url); });
     box.hidden = !spots.length;
     if (!spots.length) return;
     var where = spots.map(spotName).join(' and ');
@@ -2094,11 +2118,14 @@
   }
 
   // Photo viewer for the real photos under the preview.
-  var viewer = document.getElementById('photo-viewer'), viewerImg = document.getElementById('photo-viewer-img');
+  // The big photo's <img> is only added when the viewer first opens, so the page has no empty image in it
+  // (SEO checkers list one as an unnamed image).
+  var viewer = document.getElementById('photo-viewer'), viewerImg = null;
   var viewerCap = document.getElementById('photo-viewer-caption'), viewerList = [], viewerAt = 0;
   function showPhoto(i) {
     viewerAt = (i + viewerList.length) % viewerList.length;
     var b = viewerList[viewerAt];
+    if (!viewerImg) { viewerImg = document.createElement('img'); viewerCap.parentNode.insertBefore(viewerImg, viewerCap); }
     viewerImg.src = b.getAttribute('data-full');
     viewerImg.alt = b.getAttribute('data-alt');
     viewerCap.textContent = b.getAttribute('data-alt');
