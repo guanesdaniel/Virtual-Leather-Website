@@ -57,6 +57,8 @@
       "campaign": "business_profile"
     }
   },
+  "_indexNowKey": "Public key that lets Bing, Yandex and other IndexNow search engines know about new and changed pages at each deploy (tools/indexnow.mjs). It is meant to be public.",
+  "indexNowKey": "4e3af49e533bc47ecaddb91ed53455ab",
   "instagramUrl": "https://www.instagram.com/virtualleatherintl/",
   "instagramHandle": "@virtualleatherintl",
   "etsyUrl": "https://virtualleathershop.etsy.com/",

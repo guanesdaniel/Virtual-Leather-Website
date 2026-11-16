@@ -56,3 +56,8 @@ jobs:
           publish_branch: gh-pages
           cname: virtualleather.net
           force_orphan: true
+      # Tell Bing (which ChatGPT search and Copilot use) and the other IndexNow engines about the pages, on
+      # deploys from a change only (not the 6-hourly refresh). Waits a minute for GitHub Pages to go live first.
+      - name: Notify search engines (IndexNow)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: sleep 60 && npm run indexnow
