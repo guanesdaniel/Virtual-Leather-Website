@@ -32,6 +32,27 @@ const SHOP = process.env.ETSY_SHOP_NAME || 'virtualleathershop';
 const BASE = process.env.ETSY_API_BASE || 'https://openapi.etsy.com/v3/application';
 const KEEP = 300;
 
+// Smaller sizes Etsy serves review photos in, best first for a ~100-pixel thumbnail (twice that on sharp
+// screens). The first that answers is moved to the front, so the rest of the photos are checked once each.
+const THUMB_SIZES = ['iap_300x300', 'iap_340x270', 'iap_640xN', 'iap_570xN', 'iap_794xN'];
+async function thumbOf(url) {
+  if (!/\/iap_fullxfull\./.test(url)) return '';
+  for (const size of [...THUMB_SIZES]) {
+    const u = url.replace('/iap_fullxfull.', `/${size}.`);
+    try {
+      const res = await fetch(u);
+      const ok = res.ok && /^image\//.test(res.headers.get('content-type') || '');
+      await res.body?.cancel();
+      if (ok) {
+        THUMB_SIZES.splice(THUMB_SIZES.indexOf(size), 1);
+        THUMB_SIZES.unshift(size);
+        return u;
+      }
+    } catch { /* try the next size */ }
+  }
+  return '';
+}
+
 if (!KEY) {
   console.log('ETSY_API_KEY is not set: keeping src/data/reviews.json as it is.');
   process.exit(0);
@@ -143,7 +164,14 @@ try {
       photo: photo(r.image_url_fullxfull)
     }))
   };
+  // A small copy of each buyer's photo for the thumbnails beside the reviews: Etsy serves the same photo in
+  // smaller sizes when the size in its address is changed. Full-size photos are 2250 x 3000 pixels, far too
+  // heavy for a 96-pixel thumbnail (SEO checkers flag them and phones load slower); the full one still opens on tap.
+  // Each smaller address is checked before it's used, and a photo with none keeps the full-size one.
+  let thumbs = 0;
+  for (const r of out.reviews) if (r.photo && (r.thumb = await thumbOf(r.photo))) thumbs++;
   await writeFile('src/data/reviews.json', JSON.stringify(out, null, 2) + '\n');
+  console.log(`Small thumbnails for ${thumbs} of ${out.reviews.filter((r) => r.photo).length} photos` + (thumbs ? ` (size ${THUMB_SIZES[0]}).` : '.'));
   console.log(`Saved ${out.reviews.length} Etsy reviews, ${out.reviews.filter((r) => r.photo).length} with a customer photo ` +
     `(shop average ${out.etsyRating || 'n/a'} from ${out.etsyReviewCount} reviews).`);
 } catch (e) {

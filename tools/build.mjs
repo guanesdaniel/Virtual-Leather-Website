@@ -93,10 +93,11 @@ function productLinks() {
 function reviewCard(r, withPhoto = true) {
   const n = Math.max(0, Math.min(5, Number(r.rating) || 0));
   const photo = withPhoto && /^https:\/\/i\.etsystatic\.com\//.test(r.photo || '') ? r.photo : '';
+  const thumb = photo && /^https:\/\/i\.etsystatic\.com\//.test(r.thumb || '') ? r.thumb : photo;
   const about = r.item ? `${r.item}` : 'our leather goods';
   return `
   <li class="card review${photo ? ' has-photo' : ''}">
-${photo ? `    <a class="review-photo" href="${esc(photo)}" target="_blank" rel="noopener"><img src="${esc(photo)}" alt="Customer's photo of their ${esc(about)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>
+${photo ? `    <a class="review-photo" href="${esc(photo)}" target="_blank" rel="noopener"><img src="${esc(thumb)}" width="96" height="96" alt="Customer's photo of their ${esc(about)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>
 ` : ''}    <p class="stars" role="img" aria-label="${n} out of 5 stars">${'★'.repeat(n)}<span aria-hidden="true" class="stars-off">${'★'.repeat(5 - n)}</span></p>
 ${r.text ? `    <blockquote><p>${esc(r.text).replace(/\n+/g, '<br>')}</p></blockquote>
 ` : ''}    <p class="review-meta">${esc(r.name || 'Etsy buyer')}${r.date ? ` · ${esc(r.date)}` : ''}${r.item ? ` · ${esc(r.item)}` : ''}</p>
@@ -161,7 +162,7 @@ function reviewPhotos() {
   if (withPhoto.length < 2) return '';
   return `<p class="small muted review-photos-title">More photos from our customers (tap to enlarge)</p>
 <ul class="review-photos" role="list" aria-label="More photos from our customers">${withPhoto.map((r) => `
-  <li><a href="${esc(r.photo)}" target="_blank" rel="noopener"><img src="${esc(r.photo)}" alt="Customer's photo of their ${esc(r.item || 'order')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a></li>`).join('')}
+  <li><a href="${esc(r.photo)}" target="_blank" rel="noopener"><img src="${esc(/^https:\/\/i\.etsystatic\.com\//.test(r.thumb || '') ? r.thumb : r.photo)}" width="84" height="84" alt="Customer's photo of their ${esc(r.item || 'order')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a></li>`).join('')}
 </ul>`;
 }
 const hasReviews = homeReviews.length > 0;
