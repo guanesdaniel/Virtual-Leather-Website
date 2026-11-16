@@ -1001,7 +1001,7 @@
           ((d.fields || []).length ? ', font ' + fontName(sl.dfont) : '') + ', size ' + size + ' of standard');
       } else if (sl.mode === 'logo') {
         out.push(short ? where + ': your logo' : where + ': customer\'s logo, size ' + size + ' of standard' +
-          (logos[p] && logos[p].url ? ', file "' + logos[p].name.slice(0, 60) + '": ' + logos[p].url
+          (logos[p] && logos[p].url ? ', file "' + logos[p].name.slice(0, 60) + '" received'
             : (logos[p] ? ', previewed with "' + logos[p].name.slice(0, 60) + '"' : '') + ' (customer will send the file by WhatsApp or email)'));
       }
     });
@@ -1013,7 +1013,7 @@
     var l = slotLines(st, true);
     return l.length ? prefix + l.join(', ') : none;
   }
-  function describe(st, ref, picture) {
+  function describe(st, ref) {
     var parts = slotLines(st, false);
     if (!parts.length) parts.push('Engraving: none');
     var eng = engravings(st);
@@ -1022,7 +1022,6 @@
     if (z) parts.push('Size guide: ' + z.width + ' x ' + z.length + ' cm (pattern ' + z.pattern + (z.letter ? ' ' + z.letter : '') + ')');
     if (st.patterned) parts.push('Finish: patterned (patchwork panels)');
     if (st.notes) parts.push('Notes: ' + st.notes);
-    if (picture) parts.push('Design picture: ' + picture);
     parts.push('Designed on virtualleather.net' + (ref ? ' (ref ' + ref + ')' : ''));
     return parts.join(' | ');
   }
@@ -2046,11 +2045,17 @@
     var uploads = VL.uploadOrderFiles ? VL.uploadOrderFiles(jobs, ref) : Promise.resolve({});
     uploads.then(function (urls) {
       logoSpots.forEach(function (p) { if (urls[p]) logos[p].url = urls[p]; });
+      // The links go to the shop owner only (a hidden order field; see VL.orderFiles in main.js).
+      var fileLines = logoSpots.filter(function (p) { return logos[p].url; }).map(function (p) {
+        return 'Position ' + posLabel(p) + ' logo "' + logos[p].name.slice(0, 60) + '": ' + logos[p].url;
+      });
+      if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
+      if (VL.orderFiles) VL.orderFiles.add(ref, styleLabel(st), fileLines);
       var options = {
         'Main Color': COLORS[st.main].ecwid,
         'Customer Height': st.height,
         'Customer Weight': st.weight,
-        'Description For Personalization': describe(st, ref, urls.picture),
+        'Description For Personalization': describe(st, ref),
         'Email for design confirmation': st.email,
         'Phone Number for shipping confirmation': st.phone
       };
