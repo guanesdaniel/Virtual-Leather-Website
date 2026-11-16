@@ -25,6 +25,41 @@
   "cloudinaryCloud": "ndixlyhg",
   "cloudinaryPreset": "vl_orders",
   "metaPixelId": "298202042517671",
+  "_shortLinks": "Short links that send visitors to the home page tagged with where they came from, so Google Analytics can tell them apart (virtualleather.net/bio and so on). Add one here, then run the build.",
+  "shortLinks": {
+    "bio": {
+      "use": "Instagram bio",
+      "source": "instagram",
+      "medium": "social",
+      "campaign": "bio"
+    },
+    "story": {
+      "use": "Instagram stories and posts",
+      "source": "instagram",
+      "medium": "social",
+      "campaign": "story"
+    },
+    "fb": {
+      "use": "Facebook page",
+      "source": "facebook",
+      "medium": "social",
+      "campaign": "page"
+    },
+    "etsy": {
+      "use": "Etsy shop",
+      "source": "etsy",
+      "medium": "referral",
+      "campaign": "etsy_shop"
+    },
+    "maps": {
+      "use": "Google Business Profile (Maps)",
+      "source": "google_business_profile",
+      "medium": "organic",
+      "campaign": "business_profile"
+    }
+  },
+  "_indexNowKey": "Public key that lets Bing, Yandex and other IndexNow search engines know about new and changed pages at each deploy (tools/indexnow.mjs). It is meant to be public.",
+  "indexNowKey": "4e3af49e533bc47ecaddb91ed53455ab",
   "instagramUrl": "https://www.instagram.com/virtualleatherintl/",
   "instagramHandle": "@virtualleatherintl",
   "etsyUrl": "https://virtualleathershop.etsy.com/",
