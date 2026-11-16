@@ -357,6 +357,7 @@ const pub = {
   siteUrl: site.siteUrl, whatsappNumber: site.whatsappNumber, email: site.email,
   ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
+  cloudinaryCloud: site.cloudinaryCloud || '', cloudinaryPreset: site.cloudinaryPreset || '',
   products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {})])),
 };
 await fs.writeFile(path.join(outDir, 'assets/js/config.js'),
