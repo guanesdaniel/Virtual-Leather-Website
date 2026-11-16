@@ -27,6 +27,66 @@
   var C = window.VL_CONFIG || {};
   var KEY = 'vl_consent_v1';
   var debug = /[?&]vl_debug=1/.test(location.search);
+
+  /* ---------- The owner's own visits ----------
+   * virtualleather.net/?me=on marks this browser as the shop owner's: from then on it sends nothing to Google
+   * Analytics or Meta, so his own visits and test orders don't count as customers. ?me=off undoes it.
+   * Once per browser and device (phone, laptop...). Kept in local storage as vl_owner. */
+  var OWNER_KEY = 'vl_owner';
+  var meParam = (location.search.match(/[?&]me=(on|off)\b/) || [])[1];
+  if (meParam) {
+    try { meParam === 'on' ? localStorage.setItem(OWNER_KEY, '1') : localStorage.removeItem(OWNER_KEY); } catch (e) { /* storage blocked */ }
+    try { history.replaceState(history.state, '', location.href.replace(/([?&])me=(on|off)&?/, '$1').replace(/[?&](#|$)/, '$1')); } catch (e) { /* old browser */ }
+    document.addEventListener('DOMContentLoaded', function () {
+      var n = document.createElement('div');
+      n.setAttribute('role', 'status');
+      n.textContent = meParam === 'on'
+        ? 'Done: your visits on this browser are no longer counted in Google Analytics or Meta.'
+        : 'Done: your visits on this browser are counted again.';
+      n.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:560px;margin:0 auto;padding:14px 16px;' +
+        'border-radius:10px;background:#1f1a17;color:#fff;font:15px/1.4 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.25)';
+      document.body.appendChild(n);
+      setTimeout(function () { n.remove(); }, 6000);
+    });
+  }
+  var owner = false;
+  try { owner = localStorage.getItem(OWNER_KEY) === '1'; } catch (e) { /* storage blocked */ }
+
+  /* ---------- Where the visit came from ----------
+   * Google Analytics only starts once the visitor allows it, which can be a page or two after they arrive
+   * (from Instagram, an Etsy link, a tagged short link like /bio/ ...). The landing page's tags and the site
+   * that sent them are kept for this tab only (session storage vl_landing) and handed to Google Analytics
+   * when it starts, so the visit is still put down to the right place. Nothing is sent without consent. */
+  var LANDING_KEY = 'vl_landing';
+  var CAMPAIGN = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id'];
+  (function noteLanding() {
+    try {
+      var params = new URLSearchParams(location.search), utm = {}, has = false;
+      CAMPAIGN.forEach(function (k) { var v = params.get(k); if (v) { utm[k] = v.slice(0, 100); has = true; } });
+      var ref = document.referrer, external = false;
+      try { external = !!ref && new URL(ref).hostname.replace(/^www\./, '') !== location.hostname.replace(/^www\./, ''); } catch (e) { /* bad referrer */ }
+      if (!has && !external) return;
+      // A tagged link always wins; a plain outside referrer only fills in when nothing is kept yet.
+      if (!has && sessionStorage.getItem(LANDING_KEY)) return;
+      sessionStorage.setItem(LANDING_KEY, JSON.stringify({ utm: utm, ref: external ? ref.split('#')[0].slice(0, 300) : '', page: location.pathname }));
+    } catch (e) { /* storage blocked: Google Analytics uses what it sees itself */ }
+  })();
+  // Extra settings for Google Analytics' first start in this tab, when it starts on a later page than the landing one.
+  function landingFields() {
+    try {
+      var l = JSON.parse(sessionStorage.getItem(LANDING_KEY));
+      if (!l || l.used) return {};
+      l.used = true;
+      sessionStorage.setItem(LANDING_KEY, JSON.stringify(l));
+      if (l.page === location.pathname) return {};   // started on the landing page itself: it sees the tags and referrer
+      var f = {};
+      if (l.ref) f.page_referrer = l.ref;
+      var map = { utm_source: 'campaign_source', utm_medium: 'campaign_medium', utm_campaign: 'campaign_name',
+        utm_content: 'campaign_content', utm_term: 'campaign_term', utm_id: 'campaign_id' };
+      Object.keys(l.utm || {}).forEach(function (k) { f[map[k]] = l.utm[k]; });
+      return f;
+    } catch (e) { return {}; }
+  }
   var gaLoaded = false, fbLoaded = false;
 
   window.dataLayer = window.dataLayer || [];
@@ -98,15 +158,15 @@
   }
 
   function loadGA() {
-    if (gaLoaded || !C.ga4MeasurementId) return;
+    if (gaLoaded || !C.ga4MeasurementId || owner) return;
     gaLoaded = true;
     loadScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(C.ga4MeasurementId));
     gtag('js', new Date());
-    gtag('config', C.ga4MeasurementId, { page_location: cleanUrl() });
+    gtag('config', C.ga4MeasurementId, Object.assign({ page_location: cleanUrl() }, landingFields()));
   }
 
   function loadPixel() {
-    if (fbLoaded || !C.metaPixelId || !window.fbq || privateUrl()) return;
+    if (fbLoaded || !C.metaPixelId || !window.fbq || privateUrl() || owner) return;
     fbLoaded = true;
     loadScript('https://connect.facebook.net/en_US/fbevents.js');
     metaConsent('grant');
