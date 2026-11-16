@@ -406,8 +406,76 @@ const today = new Date().toISOString().slice(0, 10);
 await fs.writeFile(path.join(outDir, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap
     .map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}\n</urlset>\n`);
+// Every crawler may read the whole site. The AI assistants' crawlers are also named one by one, so it's
+// plain to them (and to anyone checking) that they're welcome: being found through ChatGPT, Claude, Gemini,
+// Perplexity, Copilot and the like matters as much as Google search.
+const AI_BOTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
+  'Perplexity-User', 'Google-Extended', 'GoogleOther', 'Applebot', 'Applebot-Extended', 'bingbot', 'DuckAssistBot', 'Amazonbot',
+  'meta-externalagent', 'MistralAI-User', 'CCBot'];
 await fs.writeFile(path.join(outDir, 'robots.txt'),
-  `User-agent: *\nAllow: /\n\nSitemap: ${site.siteUrl}/sitemap.xml\n`);
+  `User-agent: *\nAllow: /\n\n# AI assistants and AI search\n${AI_BOTS.map((b) => `User-agent: ${b}`).join('\n')}\nAllow: /\n\n` +
+  `# A plain-text summary of the shop for AI assistants: ${site.siteUrl}/llms.txt\nSitemap: ${site.siteUrl}/sitemap.xml\n`);
+
+// IndexNow: the key file that proves tools/indexnow.mjs speaks for this site (see deploy.yml).
+if (site.indexNowKey) await fs.writeFile(path.join(outDir, `${site.indexNowKey}.txt`), site.indexNowKey + '\n');
+
+// llms.txt (llmstxt.org): the shop in plain words for AI assistants, with its products, prices and links,
+// the key facts and the FAQ (taken from the home page's structured data, so it says exactly what the page says).
+{
+  const home = await fs.readFile(path.join(outDir, 'index.html'), 'utf8');
+  const faq = [...home.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((m) => { try { return JSON.parse(m[1]); } catch { return {}; } })
+    .flatMap((d) => d['@graph'] || [d]).filter((d) => d['@type'] === 'FAQPage')
+    .flatMap((d) => d.mainEntity || []).map((q) => [q.name, q.acceptedAnswer?.text]).filter(([q, a]) => q && a);
+  const line = (p) => `- [${p.name}](${site.siteUrl}${productUrl(p)}): ${p.summary} ${money(p.price)} USD${p.group === 'extras' ? ', added to an apron order' : ', shipping included'}.`;
+  const rating = reviewData.etsyRating && reviewData.etsyReviewCount ? `${reviewData.etsyRating} out of 5 from ${reviewData.etsyReviewCount} reviews on Etsy` : '';
+  const md = `# ${site.siteName}
+
+> ${site.siteName} makes personalised leather goods by hand in ${site.madeIn}: made-to-measure leather aprons (BBQ, chef, barber, woodworking, tattoo and forging), knife rolls, backpacks and duffle bags, engraved with the customer's name, phrase or logo. Customers design their piece online at ${site.siteUrl}, approve a design proof before it is made, and it is shipped worldwide with tracking. Prices are in US dollars${products.some((p) => p.group === 'aprons') ? `; aprons start at ${money(Math.min(...products.filter((p) => p.group === 'aprons').map((p) => p.price)))} with engraving and shipping included` : ''}.
+
+Key facts:
+
+- Seller: ${site.legalName} (${site.siteName}), ${site.legalForm}; founder ${site.ownerName}. Products are handmade in ${site.madeIn}.
+- Personalisation: names, short phrases, dates, monograms and logos, laser engraved. A free online designer on the website shows a live preview; a design proof is sent by email or WhatsApp before production.
+- Fit: aprons are made to measure from the wearer's height and weight.
+- Timing: made in about 3 days after the design proof is approved, then shipped from ${site.madeIn} with a tracking number.
+- Business and team orders: aprons with a company logo for restaurants, cafés, barbershops, breweries and teams; prices for several aprons are agreed directly (WhatsApp or email).
+- Gifts: popular for Father's Day, birthdays, Christmas, BBQ lovers, chefs, barbers, woodworkers and tattoo artists.${rating ? `\n- Reviews: ${rating} (${site.etsyUrl}).` : ''}
+- Contact: WhatsApp ${site.whatsappDisplay}, email ${site.email}, Instagram ${site.instagramHandle} (${site.instagramUrl}).
+- Order online: ${site.siteUrl}/shop/ (secure checkout) or design an apron at ${site.siteUrl}/#design.
+
+## Aprons
+
+${products.filter((p) => p.group === 'aprons').map(line).join('\n')}
+
+## More leather goods
+
+${products.filter((p) => p.group === 'more').map(line).join('\n')}
+
+## Apron extras
+
+${products.filter((p) => p.group === 'extras').map(line).join('\n')}
+
+## Guides
+
+- [Custom logo aprons for businesses and teams](${site.siteUrl}/custom-logo-aprons/)
+- [BBQ apron gifts](${site.siteUrl}/bbq-apron-gifts/)
+- [Leather chef aprons](${site.siteUrl}/leather-chef-apron/)
+- [Leather gifts for men](${site.siteUrl}/leather-gifts-for-men/)
+- [About ${site.siteName}](${site.siteUrl}/about/)
+- [Shipping and returns](${site.siteUrl}/shipping-returns/)
+${faq.length ? `
+## Frequently asked questions
+
+${faq.map(([q, a]) => `### ${q}\n\n${a}`).join('\n\n')}
+` : ''}
+## Optional
+
+- [Sitemap](${site.siteUrl}/sitemap.xml): every page on the site
+- [Etsy shop](${site.etsyUrl}): the same maker's Etsy shop and its reviews
+`;
+  await fs.writeFile(path.join(outDir, 'llms.txt'), md);
+}
 // Each page asks for its CSS and JavaScript files with a fingerprint of their content (?v=…), so browsers
 // that kept an older copy fetch the new one as soon as it changes.
 const { createHash } = await import('node:crypto');
