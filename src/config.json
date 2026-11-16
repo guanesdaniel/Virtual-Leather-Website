@@ -19,11 +19,14 @@
   "currency": "USD",
   "ecwidStoreId": "97299801",
   "extraEngravingProductId": "619492030",
-  "ga4MeasurementId": "",
+  "ga4MeasurementId": "G-E8BMXTPN7L",
+  "_cloudinary": "Customer logo files and design pictures are uploaded here with each order (unsigned upload preset; see README).",
+  "cloudinaryCloud": "ndixlyhg",
+  "cloudinaryPreset": "vl_orders",
   "metaPixelId": "298202042517671",
   "instagramUrl": "https://www.instagram.com/virtualleatherintl/",
   "instagramHandle": "@virtualleatherintl",
   "etsyUrl": "https://virtualleathershop.etsy.com/",
   "etsyReviewsUrl": "https://www.etsy.com/shop/virtualleathershop/reviews",
-  "policiesUpdated": "4 October 2026"
+  "policiesUpdated": "16 November 2026"
 }

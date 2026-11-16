@@ -7,7 +7,9 @@
 // the existing file is kept.
 //
 // We show the most recent written reviews whatever their rating (not a hand-picked selection), with
-// the shop's real average and count, and Etsy's required API notice next to them.
+// the shop's real average and count, and Etsy's required API notice next to them. The file keeps up to KEEP
+// reviews (newest first) with the Etsy product each one is for and the buyer's photo, if they added one, so
+// each product page can show the reviews for that product (see reviewsFor() in tools/build.mjs).
 import { writeFile } from 'node:fs/promises';
 
 // Common paste slips are tidied: spaces and line breaks anywhere (Etsy's codes have none), invisible
@@ -28,7 +30,28 @@ function keyShape() {
 }
 const SHOP = process.env.ETSY_SHOP_NAME || 'virtualleathershop';
 const BASE = process.env.ETSY_API_BASE || 'https://openapi.etsy.com/v3/application';
-const SHOW = 12;
+const KEEP = 300;
+
+// Smaller sizes Etsy serves review photos in, best first for a ~100-pixel thumbnail (twice that on sharp
+// screens). The first that answers is moved to the front, so the rest of the photos are checked once each.
+const THUMB_SIZES = ['iap_300x300', 'iap_340x270', 'iap_640xN', 'iap_570xN', 'iap_794xN'];
+async function thumbOf(url) {
+  if (!/\/iap_fullxfull\./.test(url)) return '';
+  for (const size of [...THUMB_SIZES]) {
+    const u = url.replace('/iap_fullxfull.', `/${size}.`);
+    try {
+      const res = await fetch(u);
+      const ok = res.ok && /^image\//.test(res.headers.get('content-type') || '');
+      await res.body?.cancel();
+      if (ok) {
+        THUMB_SIZES.splice(THUMB_SIZES.indexOf(size), 1);
+        THUMB_SIZES.unshift(size);
+        return u;
+      }
+    } catch { /* try the next size */ }
+  }
+  return '';
+}
 
 if (!KEY) {
   console.log('ETSY_API_KEY is not set: keeping src/data/reviews.json as it is.');
@@ -95,25 +118,33 @@ try {
   // words (and stars) on each. Those are shown once, naming every item, rather than as repeats. Without a
   // buyer ID (hidden by some buyers' privacy settings), the same words within the same hour count as one.
   const unique = new Map();
-  for (const r of all.filter((r) => plain(r.review)).sort((a, b) => time(b) - time(a))) {
+  // Reviews with words, or with only a photo (a photo says plenty).
+  for (const r of all.filter((r) => plain(r.review) || r.image_url_fullxfull).sort((a, b) => time(b) - time(a))) {
     const who = r.buyer_user_id || 'h' + Math.floor(time(r) / 3600);
-    const key = [who, r.rating, plain(r.review).toLowerCase().replace(/\s+/g, ' ')].join('|');
-    if (unique.has(key)) unique.get(key).listings.push(r.listing_id);
-    else unique.set(key, { ...r, listings: [r.listing_id] });
+    const key = [who, r.rating, plain(r.review).toLowerCase().replace(/\s+/g, ' ') || 'photo ' + r.image_url_fullxfull].join('|');
+    if (unique.has(key)) {
+      const u = unique.get(key);
+      u.listings.push(r.listing_id);
+      u.image_url_fullxfull ||= r.image_url_fullxfull;
+    } else unique.set(key, { ...r, listings: [r.listing_id] });
   }
-  const written = [...unique.values()].slice(0, SHOW);
+  const written = [...unique.values()].slice(0, KEEP);
 
   // Product names for the reviews shown (optional: reviews still show if this fails).
   const titles = {};
   const ids = [...new Set(written.flatMap((r) => r.listings).filter(Boolean))];
-  if (ids.length) {
+  // Etsy takes up to 100 listings per request. Listings no longer on sale may be missing: those reviews
+  // still show on the home page, just without a product name.
+  for (let i = 0; i < ids.length; i += 100) {
     try {
-      const listings = await api('/listings/batch?listing_ids=' + ids.join(','));
+      const listings = await api('/listings/batch?listing_ids=' + ids.slice(i, i + 100).join(','));
       for (const l of listings.results || []) titles[l.listing_id] = shortTitle(l.title);
     } catch (e) {
       console.warn('Could not fetch product names: ' + e.message);
     }
   }
+  // Only Etsy's own image addresses are kept (they're shown straight from Etsy, not copied).
+  const photo = (u) => (/^https:\/\/i\.etsystatic\.com\/[^\s"'<>]+$/.test(String(u || '')) ? String(u) : '');
 
   const average = Number(shop.review_average);
   const out = {
@@ -126,11 +157,23 @@ try {
       rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
       text: plain(r.review),
       date: monthYear(time(r)),
-      item: [...new Set(r.listings.map((id) => titles[id]).filter(Boolean))].join(' + ')
+      // Each product the review is for, by its Etsy name (matched to the product pages here by "reviewMatch"
+      // in src/data/products.json), and all of them as one line for the review card.
+      items: [...new Set(r.listings.map((id) => titles[id]).filter(Boolean))],
+      item: [...new Set(r.listings.map((id) => titles[id]).filter(Boolean))].join(' + '),
+      photo: photo(r.image_url_fullxfull)
     }))
   };
+  // A small copy of each buyer's photo for the thumbnails beside the reviews: Etsy serves the same photo in
+  // smaller sizes when the size in its address is changed. Full-size photos are 2250 x 3000 pixels, far too
+  // heavy for a 96-pixel thumbnail (SEO checkers flag them and phones load slower); the full one still opens on tap.
+  // Each smaller address is checked before it's used, and a photo with none keeps the full-size one.
+  let thumbs = 0;
+  for (const r of out.reviews) if (r.photo && (r.thumb = await thumbOf(r.photo))) thumbs++;
   await writeFile('src/data/reviews.json', JSON.stringify(out, null, 2) + '\n');
-  console.log(`Saved ${out.reviews.length} Etsy reviews (shop average ${out.etsyRating || 'n/a'} from ${out.etsyReviewCount} reviews).`);
+  console.log(`Small thumbnails for ${thumbs} of ${out.reviews.filter((r) => r.photo).length} photos` + (thumbs ? ` (size ${THUMB_SIZES[0]}).` : '.'));
+  console.log(`Saved ${out.reviews.length} Etsy reviews, ${out.reviews.filter((r) => r.photo).length} with a customer photo ` +
+    `(shop average ${out.etsyRating || 'n/a'} from ${out.etsyReviewCount} reviews).`);
 } catch (e) {
   console.warn('Could not fetch Etsy reviews (' + e.message.trim() + '). Keeping src/data/reviews.json as it is.');
   if (/ 40[13]:/.test(e.message)) {

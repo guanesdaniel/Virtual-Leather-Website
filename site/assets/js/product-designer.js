@@ -79,7 +79,7 @@
 
   /* ---------- State ---------- */
   // Each engraving: kind 'text' or 'logo', place (a key of P.places), its size (mm tall), and its centre
-  // (x, y) in drawing units. Logo pictures stay on the customer's device (they send the file after).
+  // (x, y) in drawing units. Logo files are uploaded with the order (VL.uploadOrderFile).
   var items = [], selected = 0, nextKey = 1;
   function zoneCentre(place) { var z = P.places[place].zone; return z.r ? { x: z.cx, y: z.cy } : { x: z.x + z.w / 2, y: z.y + z.h / 2 }; }
   function newItem(kind, place) {
@@ -249,7 +249,7 @@
       return out + '<div class="field"><label for="' + id + '-note">What should we create?</label>' +
         '<input id="' + id + '-note" type="text" maxlength="120" autocomplete="off" data-k="note" value="' + esc(it.note) + '" placeholder="e.g. a chef\'s hat with crossed knives"></div>';
     }
-    return out + '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; you send us the file after)</span></label>' +
+    return out + '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; it\'s sent to us with your order)</span></label>' +
       '<input id="' + id + '-file" type="file" accept="image/*" data-k="file"></div>';
   }
   function card(it, i) {
@@ -270,7 +270,7 @@
             '<span style="font-family:' + esc(f.family) + ';font-weight:' + f.weight + '">' + esc(f.label) + '</span></label>';
         }).join('') + '</div></fieldset>'
       : IDEAS.length ? logoBody(it, id)
-      : '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; you send us the file after)</span></label>' +
+      : '<div class="field logo-file"><label for="' + id + '-file">Your image or logo <span class="muted">(to see it here; it\'s sent to us with your order)</span></label>' +
           '<input id="' + id + '-file" type="file" accept="image/*" data-k="file"></div>' +
         '<div class="field"><label for="' + id + '-note">Or tell us what you\'d like <span class="muted">(optional)</span></label>' +
           '<input id="' + id + '-note" type="text" maxlength="120" autocomplete="off" data-k="note" value="' + esc(it.note) + '" placeholder="e.g. our team crest, or a drawing you\'d like us to make"></div>';
@@ -319,7 +319,8 @@
     if (it.kind === 'text') return n + ') Text "' + it.text.trim() + '" on ' + P.places[it.place].long + ', font ' + fontName(it.font) + ', ' + size + ', ' + where(it);
     if (ideaOf(it)) return n + ') Our design "' + ideaOf(it).label + '" on ' + P.places[it.place].long + ', ' + size + ', ' + where(it);
     if (it.src === 'create') return n + ') Image for us to create on ' + P.places[it.place].long + ' (' + (it.note || 'ask the customer') + '), ' + size + ', ' + where(it);
-    return n + ') Image or logo on ' + P.places[it.place].long + ' (' + (it.note ? it.note + '; ' : '') + 'customer sends the file), ' + size + ', ' + where(it);
+    return n + ') Image or logo on ' + P.places[it.place].long + ' (' + (it.note ? it.note + '; ' : '') +
+      (it.url ? 'file "' + it.file.name.slice(0, 60) + '" received' : 'customer sends the file') + '), ' + size + ', ' + where(it);
   }
   // The engravings on one place, for a store option of their own ('' if none).
   function linesOn(place) {
@@ -448,10 +449,11 @@
     if (k === 'src') { it.src = t.value; it.size = range(it)[2]; changed(); update(true); var f = cardOf(selected).querySelector('[data-k="src"]:checked'); if (f) f.focus(); return; }
     if (k === 'idea') it.idea = t.value;
     if (k === 'file' && t.files && t.files[0]) {
-      var url = URL.createObjectURL(t.files[0]), probe = new Image();
+      var f = t.files[0], url = URL.createObjectURL(f), probe = new Image();
       probe.onload = function () {
         if (it.img) URL.revokeObjectURL(it.img.url);
         it.img = { url: url, ratio: probe.naturalWidth / probe.naturalHeight || 1 };
+        it.file = f; it.url = '';
         update(false);
       };
       probe.onerror = function () { URL.revokeObjectURL(url); };
@@ -626,19 +628,34 @@
     }
     var bad = [form.elements.email, form.elements.phone].filter(function (f) { return !validate(f); });
     if (bad.length) { setStatus('Please check the highlighted fields.', 'error'); bad[0].focus(); return; }
-    var ref = newRef(), n = ENGRAVING_ID ? extras() : 0, logos = engraved().filter(function (it) { return it.kind === 'logo' && it.src === 'own'; }).length;
-    var options = {
-      'Description For Personalization': describe(ref),
-      'Email for design confirmation': form.elements.email.value.trim(),
-      'Phone Number for shipping confirmation': form.elements.phone.value.trim()
-    };
-    options[P.colorOption || 'Main Color'] = COLORS[val('main')].ecwid;
-    if (curSize()) options.Size = [].concat(curSize().ecwid)[0];
-    // A product whose store options differ maps them itself (P.cartOptions).
-    if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[straps()], description: options['Description For Personalization'], lines: linesOn });
+    var ref = newRef(), n = ENGRAVING_ID ? extras() : 0, own = engraved().filter(function (it) { return it.kind === 'logo' && it.src === 'own'; }), logos = 0, options;
     submit.disabled = true;
-    setStatus('Adding to your cart…');
-    VL.loadEcwid().then(function (E) {
+    // The image files and a picture of the design go with the order (links in its description).
+    var jobs = own.filter(function (it) { return it.file && !it.url; }).map(function (it) { return { key: it.key, name: it.file.name, blob: it.file }; });
+    var svgNow = document.getElementById('pd-svg');
+    if (VL.svgToPicture) jobs.push({ key: 'picture', name: ref + '-design.jpg', blob: function () { return VL.svgToPicture(svgNow, 1000); } });
+    setStatus(jobs.length > 1 ? 'Sending us your image and design…' : 'Saving your design…');
+    (VL.uploadOrderFiles ? VL.uploadOrderFiles(jobs, ref) : Promise.resolve({})).then(function (urls) {
+      own.forEach(function (it) { if (urls[it.key]) it.url = urls[it.key]; });
+      logos = own.filter(function (it) { return !it.url; }).length;
+      // The links go to the shop owner only (a hidden order field; see VL.orderFiles in main.js).
+      var fileLines = own.filter(function (it) { return it.url; }).map(function (it) {
+        return 'Logo on ' + P.places[it.place].long + ' "' + it.file.name.slice(0, 60) + '": ' + it.url;
+      });
+      if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
+      if (VL.orderFiles) VL.orderFiles.add(ref, P.label, fileLines);
+      options = {
+        'Description For Personalization': describe(ref),
+        'Email for design confirmation': form.elements.email.value.trim(),
+        'Phone Number for shipping confirmation': form.elements.phone.value.trim()
+      };
+      options[P.colorOption || 'Main Color'] = COLORS[val('main')].ecwid;
+      if (curSize()) options.Size = [].concat(curSize().ecwid)[0];
+      // A product whose store options differ maps them itself (P.cartOptions).
+      if (P.cartOptions) options = P.cartOptions(options, { straps: COLORS[straps()], description: options['Description For Personalization'], lines: linesOn });
+      setStatus('Adding to your cart…');
+      return VL.loadEcwid();
+    }).then(function (E) {
       return addMain(E, options, ref).then(function () { if (n) return addProduct(E, ENGRAVING_ID, {}, n); });
     }).then(function () {
       setStatus('');

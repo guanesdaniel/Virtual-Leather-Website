@@ -6,8 +6,10 @@ window.VL_CONFIG = {
   "ecwidStoreId": "97299801",
   "currency": "USD",
   "extraEngravingId": "619492030",
-  "ga4MeasurementId": "",
+  "ga4MeasurementId": "G-E8BMXTPN7L",
   "metaPixelId": "298202042517671",
+  "cloudinaryCloud": "ndixlyhg",
+  "cloudinaryPreset": "vl_orders",
   "products": {
     "619483308": {
       "name": "Leather Bottle Opener (apron extra)",
