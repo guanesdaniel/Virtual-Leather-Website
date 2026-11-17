@@ -113,38 +113,45 @@
   // control.
   var LOGO_34 = [270, 156];
 
-  // Engraving boxes that differ per style (to stay clear of that style's pockets and straps).
+  // Engraving boxes that differ per style (to stay clear of that style's pockets and straps). Since 17 Nov 2026 they
+  // follow Juan Miguel's (MarketCenter) limits: no engraving wider than 180 mm (360) or taller than 160 mm (320).
   var POS_OVERRIDES = {
     bbq: {
-      1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
-      chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
-      2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
-      3: { x: 378, y: 972, fs: 58, maxW: 330, maxH: 190, logoH: 156, stdH: 156 },
+      1: { y: 440, fs: 84, stdW: 356, maxW: 356, maxH: 270, logoH: 225, stdH: 225 },
+      chestBig: { y: 485, stdW: 360, maxW: 360, maxH: 320, logoH: 320, stdH: 320 },   // spot 1 when spot 2 is removed
+      2: { y: 615, fs: 54, stdW: 360, maxW: 360, maxH: 80, stdH: 56, logoH: 70 },
+      // Juan Miguel's limits (MarketCenter, 17 Nov 2026): text no taller than 73 mm; a logo fixed at 78 tall, no wider than
+      // 120.5 mm; the beer circle stays 78 mm across (logoBox applies to it too).
+      3: { x: 378, y: 972, fs: 58, stdW: 270, maxW: 330, maxH: 146, logoH: 156, stdH: 146, logoBox: [241, 156] },
       // Spot 4 sits level with the beer circle in spot 3, as the owner asked, clear of the pocket below it (its top is at
       // 1065): its guide is the circle's band. A logo has spot 3's fixed size (LOGO_34). Text, all its lines together, is
       // centred on the band and at 100% is as tall as the circle when it fits the width; bigger isn't offered.
-      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 600, logoH: 126, stdH: 600, inkH: BEER_BAND, inkAll: true, logoBox: LOGO_34 },
+      // Juan Miguel's limits: the text box is 74 mm tall (148 units) and its letters at most 74 mm. A logo is the same
+      // size as in spot 3 (the owner's choice), so the two line up top and bottom.
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 148, logoH: 126, stdH: 148, inkH: 148, inkAll: true, logoBox: [241, 156] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
-      pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
+      pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 220, maxH: 239, stdH: 175, logoH: 150 }
     },
     barber: {
-      1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
-      chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
-      2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
+      1: { y: 440, fs: 84, stdW: 356, maxW: 356, maxH: 270, logoH: 225, stdH: 225 },
+      chestBig: { y: 485, stdW: 360, maxW: 360, maxH: 320, logoH: 320, stdH: 320 },
+      2: { y: 615, fs: 54, stdW: 360, maxW: 360, maxH: 80, stdH: 56, logoH: 70 },
       // Logos are sized as on the BBQ apron (the owner's choice): spots 3 and 4 at LOGO_34, and the pocket's largest the
       // same as the BBQ pocket's.
       // Spots 3 and 4 a little higher (945, was 955) so a LOGO_34 logo clears the scissor loops and pocket (tops 1037).
-      3: { x: 326, y: 945, w: 250, h: 64, maxW: 320, maxH: 120, logoH: 100, logoBox: LOGO_34 },
-      4: { x: 800, y: 945, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100, logoBox: LOGO_34 },
+      // Juan Miguel's limits: spot 3 stays clear of the scissor loops, so a logo there is 62 x 107 mm at most.
+      3: { x: 326, y: 945, w: 250, h: 64, stdW: 221, maxW: 221, maxH: 120, stdH: 84, logoH: 100, logoBox: [214, 124] },
+      // Spot 4 matches spot 3 exactly (the owner's choice), so the two line up top and bottom.
+      4: { x: 800, y: 945, w: 250, h: 64, stdW: 221, maxW: 221, maxH: 120, stdH: 84, logoH: 100, logoBox: [214, 124] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
-      pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 250, logoH: 150 }
+      pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 211, stdH: 175, logoH: 150 }
     },
     split: {
-      1: { y: 380, fs: 80, maxW: 420, maxH: 200, logoH: 170, stdH: 170 },
-      chestBig: { y: 425, maxH: 270, logoH: 240, stdH: 240 },
-      2: { y: 515, h: 60, fs: 50, maxW: 420, maxH: 70, logoH: 60 },
+      1: { y: 380, fs: 80, stdW: 356, maxW: 356, maxH: 200, logoH: 170, stdH: 170 },
+      chestBig: { y: 425, stdW: 342, maxW: 342, maxH: 257, logoH: 240, stdH: 240 },
+      2: { y: 515, h: 60, fs: 50, stdW: 357, maxW: 360, maxH: 70, logoH: 60 },
       // Spot 3 and the right leg pocket are level, both centred on that pocket (1335-1717: 1526), the owner's choice.
       3: { x: 235, y: 1526, w: 260, h: 120, label: 'Left leg', fs: 70, maxW: 320, maxH: 200, logoH: 170, logoBox: LOGO_34 },
       pocket: { x: 680, y: 790, w: 190, h: 140, label: 'Top pocket', fs: 46, stdW: 180, maxW: 220, maxH: 190, logoH: 130 },
@@ -154,21 +161,21 @@
         logoBox: [240, 156] }
     },
     simple: {
-      1: { y: 440, fs: 84, maxW: 470, maxH: 270, logoH: 225, stdH: 225 },
-      chestBig: { y: 485, maxH: 380, logoH: 320, stdH: 320 },
-      2: { y: 615, fs: 54, maxW: 470, maxH: 80, logoH: 70 },
+      1: { y: 440, fs: 84, stdW: 356, maxW: 356, maxH: 270, logoH: 225, stdH: 225 },
+      chestBig: { y: 485, stdW: 360, maxW: 360, maxH: 320, logoH: 320, stdH: 320 },
+      2: { y: 615, fs: 54, stdW: 360, maxW: 360, maxH: 80, stdH: 56, logoH: 70 },
       // Spots 3 and 4 sit between the leather band (bottom 870) and the pocket (top 978), only 108 apart, so a logo there
-      // can't be LOGO_34's 156 tall: both get the same fixed size that fits, 96 tall, centred in that gap.
-      3: { x: 378, y: 924, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96, logoBox: [270, 96] },
-      4: { x: 822, y: 924, w: 250, h: 64, maxW: 300, maxH: 110, logoH: 96, logoBox: [270, 96] },
+      // can't be LOGO_34's 156 tall: both get the same fixed size, 84 tall (42 mm, Juan Miguel's limit), centred in that gap.
+      3: { x: 378, y: 924, w: 250, h: 64, maxW: 300, maxH: 84, stdH: 77, logoH: 84, logoBox: [270, 84] },
+      4: { x: 822, y: 924, w: 250, h: 64, maxW: 300, maxH: 84, stdH: 77, logoH: 84, logoBox: [270, 84] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
-      pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 420, maxH: 260, logoH: 180 }
+      pocket: { x: 600, y: 1200, w: 300, h: 150, fs: 60, stdW: 280, maxW: 319, maxH: 260, logoH: 180 }
     },
     wood: {
-      1: { y: 330, w: 300, h: 85, fs: 74, maxW: 400, maxH: 170, logoH: 150, stdH: 150 },
+      1: { y: 330, w: 300, h: 85, fs: 74, stdW: 340, maxW: 360, maxH: 170, logoH: 150, stdH: 150 },
       chestBig: { y: 375, maxH: 250, logoH: 220, stdH: 220 },
-      2: { y: 455, w: 300, h: 60, fs: 48, maxW: 400, maxH: 60, logoH: 54 },
+      2: { y: 455, w: 300, h: 60, fs: 48, stdW: 340, maxW: 360, maxH: 60, logoH: 54 },
       pocket: { x: 690, y: 645, w: 170, h: 150, fs: 44, stdW: 160, maxW: 190, maxH: 200, logoH: 130 }
     }
   };
@@ -706,14 +713,15 @@
       // Logos and designs: an artwork box of a known aspect, standard size limited by the spot.
       var logo = sl.mode === 'logo' ? logos[p] : null, design = sl.mode === 'design' ? DESIGNS[sl.design] : null;
       var aspect = design ? design.aspect : logo ? logo.aspect : 1.6;
-      if (sl.mode === 'logo' && box.logoBox) m = { maxW: box.logoBox[0], maxH: box.logoBox[1], stdW: box.logoBox[0], stdH: box.logoBox[1], logoH: box.logoBox[1], inkH: 0 };
+      var boxed = box.logoBox && (sl.mode === 'logo' || (sl.mode === 'design' && fixedSize(st.style, p, 'design')));
+      if (boxed) m = { maxW: box.logoBox[0], maxH: box.logoBox[1], stdW: box.logoBox[0], stdH: box.logoBox[1], logoH: box.logoBox[1], inkH: 0 };
       var std = Math.min(m.logoH, m.stdW / aspect, m.stdH), capped = !!(sl.mode === 'logo' && box.logoBox);
       if (m.inkH) std = Math.min(std, m.inkH);
       var maxPct = Math.max(100, Math.floor(100 * Math.min(m.maxW / (std * aspect), m.maxH / std)));
       var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
       if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
       var pct = Math.min(sl.size, maxPct), h = std * pct / 100, w = h * aspect, x = box.x - w / 2, y = box.y - h / 2;
-      fit[p] = { pct: pct, maxPct: maxPct, capped: capped };
+      fit[p] = { pct: pct, maxPct: maxPct, capped: capped, h: h, h100: std };
       if (design) {
         var k = w / 1000;
         [['#ffe1c8', 0.22, 2], [ink, 1, 0]].forEach(function (layer) {
@@ -740,6 +748,7 @@
         ph.textContent = 'LOGO';
       }
     });
+    chestShare(st);
     // Outline the spot being edited.
     if (activeG) {
       try {
@@ -748,6 +757,20 @@
           stroke: 'rgba(255,255,255,.85)', 'stroke-width': 3, 'stroke-dasharray': '10 8', 'pointer-events': 'none', 'aria-hidden': 'true' }, svg);
       } catch (e) { /* not rendered yet */ }
     }
+  }
+
+  // Spots 1 and 2 share one chest area no taller than 160 mm (320), Juan Miguel's limit: with something in spot 2, the
+  // two heights together can't pass 2 x (320 - the distance between their centres) (145 mm on the BBQ, barber and
+  // simple aprons). The spot being edited stops growing there (its "+" turns off), but never below 100%; if that
+  // isn't enough (spot 1 was large before spot 2 was filled in), the other spot gives way (clampSizes redraws).
+  function chestShare(st) {
+    if (!fit['1'] || !fit['2'] || !fit['1'].h100 || !fit['2'].h100) return;
+    var limit = 2 * (320 - Math.abs(boxFor(st, '2').y - boxFor(st, '1').y));
+    var g = fit[active === '2' ? '2' : '1'], k = fit[active === '2' ? '1' : '2'];
+    g.maxPct = Math.min(g.maxPct, Math.max(50, pctOf(limit - k.h, g.h100), Math.min(g.pct, 100)));
+    var hg = g.h100 * Math.min(g.pct, g.maxPct) / 100;
+    k.maxPct = Math.min(k.maxPct, Math.max(50, pctOf(limit - hg, k.h100)));
+    g.shared = k.shared = true;
   }
 
   // Engraved text at the chosen size; the standard size shrinks for long text so 100% always fits.
@@ -772,11 +795,12 @@
     if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
     var pct = Math.min(sl.size, maxPct), size = Math.max(12, std * pct / 100);
     texts.concat(hl).forEach(function (t) { t.setAttribute('font-size', size.toFixed(1)); });
+    var inkTall = (function (k) { return k.bottom > k.top ? k.bottom - k.top : 0.75; })(inkOf(font, lines));
     // First baseline: lines centred on the spot (the letters as they look, for a band spot).
     var lh = size * 1.08, top = block ? box.y - (looks.top + looks.bottom) / 2 * size : box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
     texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
     hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
-    return { pct: pct, maxPct: maxPct, capped: capped };
+    return { pct: pct, maxPct: maxPct, capped: capped, h: inkTall * size, h100: inkTall * std };
   }
   // a as a whole % of b, with a hair of slack so that a size capped at exactly the limit reads 100%, not 99%.
   function pctOf(a, b) { return Math.floor(100 * a / b + 1e-6); }
@@ -1236,6 +1260,7 @@
       document.getElementById('size-' + p + '-fit').textContent = !atFit || v >= Number(input.max) ? '' :
         f.capped ? 'That\'s the biggest size for this spot.' :
         'That\'s the biggest that fits this spot.' + (st.slots[p].mode === 'text' ? ' For bigger letters, use fewer letters or another line.' : '') +
+        (f.shared ? ' Spots 1 and 2 share the chest, so a smaller spot ' + (p === '1' ? '2' : '1') + ' leaves more room.' : '') +
         (bigChest && st.slots[p].mode !== 'text' ? ' Set spot 2 to "None" to make it bigger.' : '');
     });
   }
