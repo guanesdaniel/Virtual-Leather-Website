@@ -1,6 +1,6 @@
 <!--{
   "title": "Personalised Leather Duffle & Gym Bag | Virtual Leather",
-  "description": "Handmade 50 × 27 cm leather duffle and gym bag, engraved with your name or logo. See a live preview before you order. $180.",
+  "description": "Handmade 50 × 27 cm leather duffle and gym bag, engraved with your name or logo. See a live preview before you order. {{price 619501024}}.",
   "bodyClass": "product-page",
   "jsonld": {
     "@context": "https://schema.org",
@@ -11,7 +11,7 @@
     "image": "https://virtualleather.net/assets/img/p-619501024-800.webp",
     "brand": { "@type": "Brand", "name": "Virtual Leather" },
     "sku": "619501024",
-    "offers": { "@type": "Offer", "price": "180.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/duffle-bag/", "shippingDetails": { "@type": "OfferShippingDetails", "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" } } }
+    "offers": { "@type": "Offer", "price": "{{priceNum 619501024}}", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://virtualleather.net/duffle-bag/", "shippingDetails": { "@type": "OfferShippingDetails", "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" } } }
   }
 }-->
 <div class="wrap">
@@ -49,8 +49,8 @@
       <p class="eyebrow">Travel &amp; gym · 100% real leather</p>
       <h1 id="pdp-title">Personalised leather duffle bag</h1>
       <p class="pdp-lead">A round, roomy holdall with two carry handles and a shoulder strap, engraved with your name, initials or logo.</p>
-      <p class="pdp-price"><strong>$180</strong></p>
-      <p class="pdp-price-note">{{#if extraEngraving}}One engraving included · each extra text or logo adds $5.{{else}}Engraving included.{{/if extraEngraving}}</p>
+      <p class="pdp-price"><strong>{{price 619501024}}</strong></p>
+      <p class="pdp-price-note">{{#if extraEngraving}}One engraving included · each extra text or logo adds {{price engraving}}.{{else}}Engraving included.{{/if extraEngraving}}</p>
 
       <dl class="pdp-size">
         <div><dt>Size</dt><dd>50 cm long × 27 cm across</dd></div>
@@ -127,10 +127,10 @@
 
           <fieldset class="card panel">
             <legend><span class="num">2</span> What should we engrave, and where?</legend>
-            <p class="hint">Each engraving can be a text or an image or logo, on the side or the round end, and you can add more than one.{{#if extraEngraving}} The first engraving is included; each extra one is $5.{{/if extraEngraving}} We engrave text exactly as you write it, so please check spelling and capitals.</p>
+            <p class="hint">Each engraving can be a text or an image or logo, on the side or the round end, and you can add more than one.{{#if extraEngraving}} The first engraving is included; each extra one is {{price engraving}}.{{/if extraEngraving}} We engrave text exactly as you write it, so please check spelling and capitals.</p>
             <div id="pd-engravings"></div>
             <div class="btn-row pd-add" id="pd-add">
-              <button type="button" class="btn btn-ghost btn-sm" data-add="text">+ Add another engraving{{#if extraEngraving}} <span class="muted">(+$5)</span>{{/if extraEngraving}}</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-add="text">+ Add another engraving{{#if extraEngraving}} <span class="muted">(+{{price engraving}})</span>{{/if extraEngraving}}</button>
             </div>
             <label class="check pd-plain"><input type="checkbox" name="plain" id="pd-plain"> <span>I'd like it plain, without engraving (same price)</span></label>
             <div class="field" style="margin:10px 0 0">
@@ -167,7 +167,7 @@
               <dt>Leather</dt><dd id="pd-sum-colors"></dd>
               <dt>Engraving</dt><dd id="pd-sum-engraving"></dd>
               <dt id="pd-sum-extra-dt" hidden>Extra engravings</dt><dd id="pd-sum-extra" hidden></dd>
-              <dt class="total">Total</dt><dd class="total" id="pd-sum-total" aria-live="polite">$180</dd>
+              <dt class="total">Total</dt><dd class="total" id="pd-sum-total" aria-live="polite">{{price 619501024}}</dd>
             </dl>
             <p class="small sum-note">Prices in US dollars, shipping included. Any tax due is added at checkout.</p>
             <button type="submit" class="btn btn-light btn-block" id="pd-submit">Add to cart</button>
@@ -253,7 +253,7 @@
       <h2 id="pd-faq-title">Questions, answered.</h2>
     </div>
     <div class="faq">
-      <details><summary>Can I engrave a name and a logo?</summary><div><p>Yes. Each engraving can be a text or a logo, on the side or the round end, and both can go on the same place.{{#if extraEngraving}} The first engraving is included and each extra one is $5.{{/if extraEngraving}}</p></div></details>
+      <details><summary>Can I engrave a name and a logo?</summary><div><p>Yes. Each engraving can be a text or a logo, on the side or the round end, and both can go on the same place.{{#if extraEngraving}} The first engraving is included and each extra one is {{price engraving}}.{{/if extraEngraving}}</p></div></details>
       <details><summary>Can the straps be a different colour?</summary><div><p>Yes. Choose the tone of the bag and the tone of the straps and handles separately when you design it.</p></div></details>
       <details><summary>Will I see my design before you make it?</summary><div><p>Yes. Before we engrave it, we send you a design proof by email or WhatsApp. We only start once you approve it.</p></div></details>
       <details><summary>How do I send my logo?</summary><div><p>In the designer, choose "Image or logo" for an engraving to see it on the bag. After you add the bag to your cart, send us the original file on WhatsApp or by email. Don't have one? Describe what you'd like and we can draw it for you.</p></div></details>
