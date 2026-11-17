@@ -126,8 +126,9 @@
       // Spot 4 sits level with the beer circle in spot 3, as the owner asked, clear of the pocket below it (its top is at
       // 1065): its guide is the circle's band. A logo has spot 3's fixed size (LOGO_34). Text, all its lines together, is
       // centred on the band and at 100% is as tall as the circle when it fits the width; bigger isn't offered.
-      // Juan Miguel's limits: the text box is 74 mm tall (148 units) and its letters at most 74 mm.
-      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 148, logoH: 126, stdH: 148, inkH: 148, inkAll: true, logoBox: LOGO_34 },
+      // Juan Miguel's limits: the text box is 74 mm tall (148 units) and its letters at most 74 mm. A logo is the same
+      // size as in spot 3 (the owner's choice), so the two line up top and bottom.
+      4: { x: 851, y: 972, h: BEER_BAND, fs: 400, stdW: 300, maxW: 300, maxH: 148, logoH: 126, stdH: 148, inkH: 148, inkAll: true, logoBox: [241, 156] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
       pocket: { x: 860, y: 1222, w: 200, h: 150, label: 'Pocket', fs: 50, stdW: 190, maxW: 220, maxH: 239, stdH: 175, logoH: 150 }
@@ -141,7 +142,8 @@
       // Spots 3 and 4 a little higher (945, was 955) so a LOGO_34 logo clears the scissor loops and pocket (tops 1037).
       // Juan Miguel's limits: spot 3 stays clear of the scissor loops, so a logo there is 62 x 107 mm at most.
       3: { x: 326, y: 945, w: 250, h: 64, stdW: 221, maxW: 221, maxH: 120, stdH: 84, logoH: 100, logoBox: [214, 124] },
-      4: { x: 800, y: 945, w: 250, h: 64, maxW: 300, maxH: 120, logoH: 100, logoBox: LOGO_34 },
+      // Spot 4 matches spot 3 exactly (the owner's choice), so the two line up top and bottom.
+      4: { x: 800, y: 945, w: 250, h: 64, stdW: 221, maxW: 221, maxH: 120, stdH: 84, logoH: 100, logoBox: [214, 124] },
       5: LOWER_SPOT,
       6: LOWER_SPOT,
       pocket: { x: 800, y: 1166, w: 200, h: 150, fs: 50, stdW: 190, maxW: 230, maxH: 211, stdH: 175, logoH: 150 }
