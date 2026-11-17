@@ -28,11 +28,49 @@ const json = async (p) => JSON.parse(await read(p));
 const site = await json('src/config.json');
 const images = await json('tools/images.json');
 const products = await json('src/data/products.json');
+// Live prices from the Ecwid store (tools/ecwid-prices.mjs); products.json's prices are the fall-back.
+const priceData = await json('src/data/prices.json').catch(() => ({ products: {} }));
+for (const p of products) {
+  const live = priceData.products?.[p.id]?.price;
+  if (live > 0) p.price = live;
+}
 const reviewData = await json('src/data/reviews.json');
 const galleryData = await json('src/data/gallery.json');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `$${Number(n).toFixed(2).replace(/\.00$/, '')}`;
+
+// Prices in page text, so a price changed in Ecwid changes everywhere on the next build:
+//   {{price <id>}}  "$185"     {{price <id> Large}}  the price of the option choice starting "Large"
+//   {{priceNum <id>}}  "185.00" (for structured data)   {{price engraving}}  one extra engraving
+//   {{fromPrice <group>}}  the lowest price in a products.json group   {{priceRange <group>}}  "$185" or "$185 to $195"
+const ENGRAVING_FALLBACK = 5;
+const squash = (s) => String(s).replace(/[\s​-‏﻿]+/g, ' ').trim().toLowerCase();
+function priceOf(id, choice) {
+  if (id === 'engraving') id = String(site.extraEngravingProductId || '');
+  const live = priceData.products?.[id];
+  const base = live?.price ?? products.find((p) => p.id === id)?.price ?? (id === String(site.extraEngravingProductId) ? ENGRAVING_FALLBACK : null);
+  if (base == null) throw new Error(`No price for product ${id}`);
+  if (!choice) return base;
+  const key = Object.keys(live?.choices || {}).find((k) => squash(k).startsWith(squash(choice)));
+  if (!key) throw new Error(`No price for "${choice}" on product ${id} (src/data/prices.json choices)`);
+  return live.choices[key];
+}
+function groupPrices(g) {
+  const ps = products.filter((p) => p.group === g).map((p) => p.price);
+  if (!ps.length) throw new Error(`No products in group ${g}`);
+  return ps;
+}
+function prices(s) {
+  return String(s)
+    .replace(/\{\{price (\w+)(?: ([^}]+))?\}\}/g, (_, id, c) => money(priceOf(id, c && c.trim())))
+    .replace(/\{\{priceNum (\w+)(?: ([^}]+))?\}\}/g, (_, id, c) => Number(priceOf(id, c && c.trim())).toFixed(2))
+    .replace(/\{\{fromPrice (\w+)\}\}/g, (_, g) => money(Math.min(...groupPrices(g))))
+    .replace(/\{\{priceRange (\w+)\}\}/g, (_, g) => {
+      const ps = groupPrices(g), lo = Math.min(...ps), hi = Math.max(...ps);
+      return lo === hi ? money(lo) : `${money(lo)} to ${money(hi)}`;
+    });
+}
 
 site.whatsappUrl = `https://wa.me/${site.whatsappNumber}`;
 site.year = String(new Date().getFullYear());
@@ -226,7 +264,7 @@ async function render(tpl, page, depth = 0) {
   for (const [tag, name] of partials) {
     out = out.replace(tag, await render(await read(`src/partials/${name}.html`), page, depth + 1));
   }
-  return ifFlags(out)
+  return prices(ifFlags(out))
     .replace(/\{\{img ([^}]+)\}\}/g, (_, a) => img(...a.split('|').map((s) => s.trim())))
     .replace(/\{\{products ids ([\d,]+)\}\}/g, (_, ids) => productCards('ids', ids))
     .replace(/\{\{products (\w+)(?: not (\d+))?\}\}/g, (_, g, not) => productCards(g, not))
@@ -253,7 +291,7 @@ const pageFiles = (await fs.readdir(path.join(root, 'src/pages'))).filter((f) =>
 const sitemap = [];
 
 for (const file of pageFiles) {
-  const src = ifFlags(await read(`src/pages/${file}`));
+  const src = prices(ifFlags(await read(`src/pages/${file}`)));
   const m = src.match(/^<!--(\{[\s\S]*?\})-->\n?/);
   if (!m) throw new Error(`${file}: missing JSON header`);
   const page = JSON.parse(m[1]);
@@ -361,7 +399,7 @@ function productJsonld(p, url) {
 await fs.rm(path.join(outDir, 'products'), { recursive: true, force: true });
 for (const p of products.filter((x) => !x.page)) {
   if (!p.slug) throw new Error(`products.json: ${p.id} has no slug`);
-  const page = { title: `${p.title || p.name} | ${site.siteName}`, description: p.description || p.summary, bodyClass: 'product-page-body',
+  const page = { title: `${p.title || p.name} | ${site.siteName}`, description: prices(p.description || p.summary), bodyClass: 'product-page-body',
     path: productUrl(p), robots: 'index, follow', ogType: 'product' };
   page.canonical = site.siteUrl + page.path;
   await setOgImage(page, productPhotos(p)[0][0], productPhotos(p)[0][1]);
@@ -380,7 +418,9 @@ const pub = {
   ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
   cloudinaryCloud: site.cloudinaryCloud || '', cloudinaryPreset: site.cloudinaryPreset || '',
-  products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {})])),
+  extraEngravingPrice: priceOf('engraving'),
+  products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {},
+    priceData.products?.[p.id]?.choices ? { choices: priceData.products[p.id].choices } : {})])),
 };
 await fs.writeFile(path.join(outDir, 'assets/js/config.js'),
   `// Generated by tools/build.mjs from src/config.json. Do not edit by hand.\nwindow.VL_CONFIG = ${JSON.stringify(pub, null, 2)};\n`);
@@ -420,6 +460,11 @@ for (const [slug, l] of Object.entries(site.shortLinks || {})) {
   console.log('short link', `/${slug}/`, '->', to);
 }
 
+// The prices used, published with the site: each deploy starts from this copy (see deploy.yml), so the
+// site keeps the latest Ecwid prices even when Ecwid can't be reached during a build.
+await fs.mkdir(path.join(outDir, 'assets/data'), { recursive: true });
+await fs.writeFile(path.join(outDir, 'assets/data/prices.json'), JSON.stringify(priceData, null, 2) + '\n');
+
 // GitHub Pages: custom domain + serve files as-is (no Jekyll processing).
 await fs.writeFile(path.join(outDir, 'CNAME'), new URL(site.siteUrl).hostname + '\n');
 await fs.writeFile(path.join(outDir, '.nojekyll'), '');
@@ -433,7 +478,7 @@ const FEED_TYPE = { aprons: 'Leather aprons', more: 'Leather bags & cases' };
 const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
   const photos = productPhotos(p).map(([n]) => imgUrl(n));
   const about = (galleryData[p.gallery] || {}).about || p.description || p.summary;
-  const description = `${about} Personalised: engraved with your name, phrase or logo. Handmade to order in Colombia; you approve a design proof before we make it.`;
+  const description = `${prices(about)} Personalised: engraved with your name, phrase or logo. Handmade to order in Colombia; you approve a design proof before we make it.`;
   const tags = [
     ['g:id', p.id],
     ['g:title', us(p.title || p.name)],
