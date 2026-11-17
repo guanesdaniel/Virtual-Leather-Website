@@ -53,6 +53,28 @@ function img(name, alt = '', sizes = '100vw', eager = '') {
 // Every product has its own page: the designer pages (/backpack/ etc., "page" in products.json) or
 // /products/<slug>/ built below.
 const productUrl = (p) => p.page || `/products/${p.slug}/`;
+
+// The picture a page offers when it's shared or shown by search engines and AI assistants (og:image): a JPEG
+// copy of that page's own main photo, made at build time. JPEG because not every app reads WebP (link
+// previews, some AI answers), and each page names its own photo ("ogImage" in its header, an image name
+// from tools/images.json) so a knife roll page never shows up with an apron.
+const ogMade = new Map();
+async function ogImage(name) {
+  if (!images[name]) throw new Error(`ogImage: unknown image "${name}"`);
+  if (!ogMade.has(name)) {
+    const { default: sharp } = await import('sharp');
+    const ws = images[name].widths;
+    await fs.mkdir(path.join(outDir, 'assets/img/og'), { recursive: true });
+    const info = await sharp(path.join(outDir, `assets/img/${name}-${ws[ws.length - 1]}.webp`))
+      .jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(outDir, `assets/img/og/${name}.jpg`));
+    ogMade.set(name, { url: `${site.siteUrl}/assets/img/og/${name}.jpg`, width: info.width, height: info.height });
+  }
+  return ogMade.get(name);
+}
+async function setOgImage(page, name, alt) {
+  const og = await ogImage(name);
+  Object.assign(page, { ogImage: og.url, ogImageWidth: og.width, ogImageHeight: og.height, ogImageAlt: alt || page.ogImageAlt || page.title });
+}
 const imgUrl = (name, largest = true) => {
   const ws = images[name].widths;
   return `${site.siteUrl}/assets/img/${name}-${largest ? ws[ws.length - 1] : ws[0]}.webp`;
@@ -240,7 +262,7 @@ for (const file of pageFiles) {
   page.canonical = site.siteUrl + (page.path === '/404.html' ? '/' : page.path);
   page.robots = page.noindex ? 'noindex, follow' : 'index, follow';
   page.ogType ||= 'website';
-  page.ogImage ||= imgUrl('hero-bbq');
+  await setOgImage(page, page.ogImage || 'hero-bbq', page.ogImageAlt || (page.ogImage ? '' : 'A man wearing a tan leather BBQ apron engraved "Paul Smith", with a beer bottle in the drink holder'));
   page.jsonldTag = page.jsonld
     ? `<script type="application/ld+json">${JSON.stringify(page.jsonld).replace(/</g, '\\u003c')}</script>`
     : '';
@@ -342,7 +364,7 @@ for (const p of products.filter((x) => !x.page)) {
   const page = { title: `${p.title || p.name} | ${site.siteName}`, description: p.description || p.summary, bodyClass: 'product-page-body',
     path: productUrl(p), robots: 'index, follow', ogType: 'product' };
   page.canonical = site.siteUrl + page.path;
-  page.ogImage = imgUrl(productPhotos(p)[0][0]);
+  await setOgImage(page, productPhotos(p)[0][0], productPhotos(p)[0][1]);
   page.jsonldTag = `<script type="application/ld+json">${JSON.stringify(productJsonld(p, page.canonical)).replace(/</g, '\\u003c')}</script>`;
   page.body = await render(productBody(p), page);
   const dest = `products/${p.slug}/index.html`;
