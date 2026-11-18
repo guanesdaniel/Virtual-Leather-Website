@@ -1,0 +1,53 @@
+# Posts the queued Instagram and Facebook posts and Stories (social/queue.json) when they're due.
+# Each week's posts arrive as a pull request; merging it is the approval. See social/README.md.
+name: Social posts
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'post = post what is due; dry-run = show what would post; check = test the Meta connection'
+        type: choice
+        options: [check, dry-run, post]
+        default: check
+
+concurrency:
+  group: social-posts
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Post what's due
+        run: |
+          case "${{ inputs.mode || 'post' }}" in
+            check) node tools/social-post.mjs --check ;;
+            dry-run) node tools/social-post.mjs --dry-run ;;
+            *) node tools/social-post.mjs ;;
+          esac
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+      # Record what was posted (even if one platform failed), so nothing is posted twice.
+      - name: Save what was posted
+        if: always()
+        run: |
+          if ! git diff --quiet social/posted.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898900+github-actions[bot]@users.noreply.github.com"
+            git add social/posted.json
+            git commit -m "Record social posts [skip ci]"
+            git pull --rebase -q origin main && git push -q origin HEAD:main
+          fi

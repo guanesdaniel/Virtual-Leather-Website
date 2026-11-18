@@ -11,7 +11,8 @@
     "designs": "node tools/trace-designs.mjs",
     "reviews": "node tools/etsy-reviews.mjs",
     "prices": "node tools/ecwid-prices.mjs",
-    "indexnow": "node tools/indexnow.mjs"
+    "indexnow": "node tools/indexnow.mjs",
+    "social": "node tools/social-post.mjs"
   },
   "devDependencies": {
     "@fontsource-variable/fraunces": "^5.0.0",

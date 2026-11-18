@@ -178,6 +178,9 @@ All tracking is **consent-first**. GA4 and the Meta Pixel load only after the vi
 - **Meta:** keep Ecwid's Meta pixel as it is; the website works with it (see "Who sends what to Meta" above). Don't add the pixel a second way, for example as custom code in Ecwid.
 - **Google:** **don't** turn on Ecwid's own Google Analytics. The website sends GA4 with the visitor's cookie choice; Ecwid's would count everything twice and skip the cookie banner.
 
+### Automatic Instagram and Facebook posts
+Queued posts and Stories (`social/queue.json`, images in `site/social/`) are posted at their time by the **Social posts** workflow through Meta's official API. Each week's posts come as a pull request, and merging it approves them. Setup and format: [`social/README.md`](social/README.md).
+
 ### Google Merchant Center feed (free listings and Shopping ads)
 `npm run build` also writes **`/feed/google.xml`**, a Google product feed made from `src/data/products.json`: the 6 aprons, the knife roll, the backpack and the duffle bag (extras and leather grease are left out). Each item links to its product page, uses the same price as the site, and says free tracked shipping to the US, made to order in 3 to 5 days. In Merchant Center, add it once under *Products → Add products → Add products from a file → Enter a link to your file* with `https://virtualleather.net/feed/google.xml`, fetched daily. Change a price in `products.json` (and Ecwid), and Google picks it up on the next fetch.
 
