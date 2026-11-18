@@ -1,0 +1,35 @@
+# Deploys the order Worker (worker/) to Cloudflare when it changes on main, or by hand (Actions > Deploy order
+# Worker > Run workflow). Skipped until the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets are set and
+# worker/wrangler.toml has the KV namespace id. See worker/README.md.
+name: Deploy order Worker
+
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', '.github/workflows/worker.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the setup
+        id: ready
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then echo "No Cloudflare secrets yet: skipping."; echo "go=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if grep -q REPLACE_WITH_KV_NAMESPACE_ID worker/wrangler.toml; then echo "No KV namespace id in worker/wrangler.toml yet: skipping."; echo "go=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "go=yes" >> "$GITHUB_OUTPUT"
+      - name: Deploy
+        if: steps.ready.outputs.go == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker

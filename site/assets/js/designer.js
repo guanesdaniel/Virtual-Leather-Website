@@ -721,7 +721,7 @@
       var capPct = m.inkH ? pctOf(m.inkH, std) : 0;
       if (capPct && capPct <= maxPct) { maxPct = capPct; capped = true; }
       var pct = Math.min(sl.size, maxPct), h = std * pct / 100, w = h * aspect, x = box.x - w / 2, y = box.y - h / 2;
-      fit[p] = { pct: pct, maxPct: maxPct, capped: capped, h: h, h100: std };
+      fit[p] = { pct: pct, maxPct: maxPct, capped: capped, h: h, h100: std, ink: { x: box.x, y: box.y, w: w, h: h } };
       if (design) {
         var k = w / 1000;
         [['#ffe1c8', 0.22, 2], [ink, 1, 0]].forEach(function (layer) {
@@ -800,7 +800,11 @@
     var lh = size * 1.08, top = block ? box.y - (looks.top + looks.bottom) / 2 * size : box.y - ((lines.length - 1) * lh) / 2 + size * 0.34;
     texts.forEach(function (t, i) { t.setAttribute('y', (top + i * lh).toFixed(1)); });
     hl.forEach(function (t, i) { t.setAttribute('y', (top + i * lh + 2).toFixed(1)); });
-    return { pct: pct, maxPct: maxPct, capped: capped, h: inkTall * size, h100: inkTall * std };
+    // The letters as engraved (for MarketCenter's order, in mm): as wide as the widest line, as tall as the letters
+    // look, centred where they are drawn.
+    var all = inkOf(font, lines), wide = widest * size / base;
+    var ink = { x: box.x, y: top + (all.top + all.bottom) / 2 * size, w: wide, h: inkTall * size, fs: size };
+    return { pct: pct, maxPct: maxPct, capped: capped, h: inkTall * size, h100: inkTall * std, ink: ink };
   }
   // a as a whole % of b, with a hair of slack so that a size capped at exactly the limit reads 100%, not 99%.
   function pctOf(a, b) { return Math.floor(100 * a / b + 1e-6); }
@@ -1712,7 +1716,7 @@
     var cx = cv.getContext('2d'), im = cx.createImageData(tw, th), o = im.data;
     for (y = 0; y < th; y++) for (x = 0; x < tw; x++) if (out[(y + y0) * w + x + x0]) o[(y * tw + x) * 4 + 3] = 255;
     cx.putImageData(im, 0, 0);
-    return { src: cv.toDataURL('image/png'), aspect: tw / th, ok: true };
+    return { src: cv.toDataURL('image/png'), aspect: tw / th, ok: true, crop: [x0 / w, y0 / h, (x1 + 1) / w, (y1 + 1) / h] };
   }
   function digitize(img) {
     var im = logoImage(img);
@@ -1762,7 +1766,7 @@
       var l = { name: f.name };
       try {
         var r = digitize(img);
-        l.src = r.src; l.aspect = r.aspect; l.ok = r.ok; l.bw = true;
+        l.src = r.src; l.aspect = r.aspect; l.ok = r.ok; l.bw = true; l.crop = r.crop;
         URL.revokeObjectURL(url);
       } catch (ex) {
         // The browser wouldn't let us read the picture: show it as it is, engraved by its dark parts.
@@ -2029,6 +2033,88 @@
     });
   }
 
+  /* ---------- MarketCenter: the order in millimetres ----------
+   * Juan Miguel's workshop (MarketCenter) engraves and cuts the aprons. When the shop's order Worker is set up
+   * (orderWorker in src/config.json, see worker/README.md), each design added to the cart is also sent there,
+   * filed under its ref, as MarketCenter's "pedido-web" apron: every spot's engraving as drawn, in mm on the
+   * standard 56 x 77 cm apron (1 drawing unit = 0.5 mm): w and h its box (a logo's ink, a text's letters), x its
+   * centre from the apron's middle (+ to the right), down from the top of the bib, and a text's letter size.
+   * When the order is paid, the Worker sends the saved designs to MarketCenter. Nothing here is needed to order. */
+  var MM = 0.5, BIB_TOP = 220;
+  function mm(v) { return Math.round(v * MM * 10) / 10; }
+  function mcApron(st, ref, urls) {
+    var spots = [];
+    positionsOf(st.style).forEach(function (p) {
+      var sl = st.slots[p], f = fit[p];
+      if (!slotShows(sl) || !f || !f.ink) return;
+      var k = f.ink, o = { spot: p, mode: sl.mode, size: Math.min(sl.size, f.maxPct || sl.size),
+        mm: { h: mm(k.h), w: mm(k.w), x: mm(k.x - W / 2), down: mm(k.y - BIB_TOP) } };
+      if (sl.mode === 'text') { o.text = sl.text; o.font = sl.font || 'montserrat'; o.mm.font = mm(k.fs); }
+      if (sl.mode === 'design') {
+        o.design = sl.design; o.fields = {};
+        Object.keys(sl.fields || {}).forEach(function (key) { if (sl.fields[key]) o.fields[key] = sl.fields[key]; });
+        if (sl.dfont) o.dfont = sl.dfont;
+      }
+      if (sl.mode === 'logo') {
+        var url = urls['ink-' + p] || (logos[p] && logos[p].url) || null;
+        o.logoUrl = url;
+        o.inkCropped = !!urls['ink-' + p];
+      }
+      spots.push(o);
+    });
+    var extras = { wings: null, opener: null, grease: !!st.grease };
+    if (st.wings) extras.wings = wingColor(st);
+    if (st.opener) extras.opener = openerColor(st);
+    return { ref: ref, qty: 1, style: st.style, main: st.main, acc: st.acc, extras: extras,
+      height: st.height || null, weight: st.weight || null, spots: spots,
+      description: describe(st, ref), designPicture: urls.picture || null };
+  }
+  // The customer's own logo file cut to the ink the preview found (the black and white preview is trimmed to it, with
+  // a 2 px border), at up to 2400 px on its long side, as a PNG: MarketCenter sizes the engraving by the whole file.
+  function inkedLogo(file, crop) {
+    return new Promise(function (resolve) {
+      if (!file || !crop) return resolve(null);
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        try {
+          var nw = img.naturalWidth || img.width, nh = img.naturalHeight || img.height;
+          var sx = crop[0] * nw, sy = crop[1] * nh, sw = (crop[2] - crop[0]) * nw, sh = (crop[3] - crop[1]) * nh;
+          var k = Math.min(2400 / Math.max(sw, sh), /svg/.test(file.type) ? 8 : 1);
+          if (/svg/.test(file.type)) k = Math.max(k, 1200 / Math.max(sw, sh));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(sw * k)); c.height = Math.max(1, Math.round(sh * k));
+          var ctx = c.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+          c.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b); }, 'image/png');
+        } catch (e) { URL.revokeObjectURL(url); resolve(null); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  // Each ref gets its own random key on this device, so only the device that saved a design can change it.
+  var KEYS_KEY = 'vl_design_keys';
+  function designKey(ref) {
+    var all = {};
+    try { all = JSON.parse(localStorage.getItem(KEYS_KEY) || '{}') || {}; } catch (e) { all = {}; }
+    if (!all[ref]) {
+      var a = new Uint8Array(16);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+      all[ref] = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      try { localStorage.setItem(KEYS_KEY, JSON.stringify(all)); } catch (e) { /* private mode: a new key each time */ }
+    }
+    return all[ref];
+  }
+  // Never holds up the cart: a design that doesn't reach the Worker is entered by hand, as before.
+  function sendToWorker(apron) {
+    if (!C.orderWorker || !window.fetch) return Promise.resolve();
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl && setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(C.orderWorker.replace(/\/+$/, '') + '/design', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ ref: apron.ref, key: designKey(apron.ref), apron: apron }), keepalive: true, signal: ctl ? ctl.signal : undefined })
+      .then(function () { clearTimeout(timer); }, function () { clearTimeout(timer); });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var st = read();
@@ -2068,6 +2154,10 @@
     // The logo files and a picture of the design go with the order (links in its description).
     var jobs = logoSpots.filter(function (p) { return logoFiles[p] && !logos[p].url; })
       .map(function (p) { return { key: p, name: logoFiles[p].name, blob: logoFiles[p] }; });
+    // For MarketCenter: each logo cut to its ink, as the preview measures it.
+    if (C.orderWorker) logoSpots.forEach(function (p) {
+      if (logoFiles[p] && logos[p].crop) jobs.push({ key: 'ink-' + p, name: ref + '-' + p + '-ink.png', blob: function () { return inkedLogo(logoFiles[p], logos[p].crop); } });
+    });
     var svgNow = stage.querySelector('svg');
     if (VL.svgToPicture) jobs.push({ key: 'picture', name: ref + '-design.jpg', blob: function () { return VL.svgToPicture(svgNow, 1000); } });
     setStatus(jobs.length > 1 ? 'Sending us your logo and design…' : 'Saving your design…');
@@ -2080,6 +2170,7 @@
       });
       if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
       if (VL.orderFiles) VL.orderFiles.add(ref, styleLabel(st), fileLines);
+      try { sendToWorker(mcApron(st, ref, urls)); } catch (ex) { /* never blocks the order */ }
       var options = {
         'Main Color': COLORS[st.main].ecwid,
         'Customer Height': st.height,

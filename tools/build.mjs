@@ -418,6 +418,7 @@ const pub = {
   ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
   cloudinaryCloud: site.cloudinaryCloud || '', cloudinaryPreset: site.cloudinaryPreset || '',
+  orderWorker: site.orderWorker || '',
   extraEngravingPrice: priceOf('engraving'),
   products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {},
     priceData.products?.[p.id]?.choices ? { choices: priceData.products[p.id].choices } : {})])),

@@ -317,6 +317,36 @@
     if (window.Ecwid && window.Ecwid.refreshConfig) window.Ecwid.refreshConfig();
   }
 
+  /* ---------- Placed orders to the workshop (MarketCenter) ---------- */
+  // When Ecwid says an order was placed, its designed aprons go to the shop's order Worker (orderWorker in
+  // src/config.json; see worker/README.md), which sends paid ones to Juan Miguel's MarketCenter portal with the
+  // designs the designer saved there. Each apron's ref goes with this device's key for it (vl_design_keys, made by
+  // the designer), so only the device that designed an apron can order it this way. Works on every Ecwid plan.
+  function optionsOf(it) {
+    var o = {}, list = it.selectedOptions || it.options;
+    if (Array.isArray(list)) list.forEach(function (x) { if (x && x.name) o[x.name] = x.value != null ? String(x.value) : ''; });
+    else if (list && typeof list === 'object') Object.keys(list).forEach(function (k) { o[k] = String(list[k]); });
+    return o;
+  }
+  function sendPlacedOrder(order, id) {
+    if (!C.orderWorker || !window.fetch || !id) return;
+    var keys = readJSON('vl_design_keys', {}) || {}, items = [];
+    (order.items || []).forEach(function (it) {
+      var o = optionsOf(it), desc = o[DESC] || '', m = /\bVL-[A-Z0-9]{4,8}\b/.exec(desc);
+      if (!m || !keys[m[0]]) return;
+      items.push({ ref: m[0], key: keys[m[0]], qty: it.quantity || 1, height: o['Customer Height'] || '',
+        weight: o['Customer Weight'] || '', description: desc });
+    });
+    if (!items.length) return;
+    var p = order.shippingPerson || order.billingPerson || {};
+    var body = { orderId: id, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
+      notes: order.orderComments || order.comments || '', items: items,
+      shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
+        postal: p.postalCode || '', country: p.countryCode || '', phone: p.phone || '' } };
+    fetch(C.orderWorker.replace(/\/+$/, '') + '/order', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body), keepalive: true }).catch(function () {});
+  }
+
   /* ---------- Ecwid loader ---------- */
   var ecwidPromise = null;
   VL.loadEcwid = function () {
@@ -449,6 +479,7 @@
         VL.saved.clear();
         VL.orderFiles.clear();
         var id = String(order.vendorOrderNumber || order.orderNumber || order.id || '');
+        try { sendPlacedOrder(order, id); } catch (e) { /* never in the customer's way */ }
         var seenKey = 'vl_order_' + id;
         try { if (sessionStorage.getItem(seenKey)) return; sessionStorage.setItem(seenKey, '1'); } catch (e) { /* ignore */ }
         var items = (order.items || []).map(function (it) {
