@@ -147,6 +147,7 @@ async function buildCalls(env, order, opts) {
     a.qty = item.qty;
     a.height = item.height || a.height;
     a.weight = item.weight || a.weight;
+    Object.assign(a, wearer(a.height, a.weight));
     a.description = item.description || a.description;
     if (!a.designPicture) delete a.designPicture;
     aprons.push(a);
@@ -254,4 +255,45 @@ function safeEqual(a, b) {
   return diff === 0 && a.length > 0;
 }
 
-export { cleanApron, buildCalls };
+// The wearer's height and weight in cm and kg, read the way the designer reads them (designer.js parseHeight,
+// parseWeight), so MarketCenter cuts the size the customer saw. A weight with no unit is pounds when the height
+// was in feet and inches: a US customer's "5'6", 170" is 77 kg, not 170. Text that can't be read goes as typed.
+function wearer(height, weight) {
+  const h = parseHeight(height), kg = parseWeight(weight, h ? h.imperial : false);
+  return { height: h ? Math.round(h.cm) + ' cm' : height, weight: kg != null ? Math.round(kg) + ' kg' : weight };
+}
+const num = (x) => parseFloat(String(x).replace(',', '.'));
+function parseHeight(text) {
+  const t = String(text || '').toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').trim();
+  let m;
+  if (!t) return null;
+  if ((m = /^(\d)\s*(?:'|ft|feet|foot)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:"|''|in|inch|inches)?)?$/.exec(t))) {
+    return { cm: (Number(m[1]) * 12 + (m[2] ? num(m[2]) : 0)) * 2.54, imperial: true };
+  }
+  if ((m = /^(\d{2,3}(?:[.,]\d+)?)\s*(?:"|''|in|inch|inches)$/.exec(t))) return { cm: num(m[1]) * 2.54, imperial: true };
+  if ((m = /^(\d(?:[.,]\d{1,2})?)\s*(?:m|mt|mts|meters?|metres?)?$/.exec(t))) {
+    const v = num(m[1]);
+    if (v >= 1.2 && v <= 2.5) return { cm: v * 100, imperial: false };
+    if (!/m/.test(t) && v >= 4 && v < 8) {
+      const parts = m[1].split(/[.,]/), inch = parts[1] ? Number(parts[1]) : 0;
+      if (inch < 12) return { cm: (Number(parts[0]) * 12 + inch) * 2.54, imperial: true };
+    }
+    return null;
+  }
+  if ((m = /^(\d{3}(?:[.,]\d+)?)\s*(?:cm|cms|centimet(?:er|re)s?)?$/.exec(t))) { const c = num(m[1]); return c >= 120 && c <= 250 ? { cm: c, imperial: false } : null; }
+  return null;
+}
+function parseWeight(text, imperial) {
+  const t = String(text || '').toLowerCase().trim();
+  let m;
+  if (!t) return null;
+  if ((m = /^(\d{1,2})\s*(?:st|stone)s?\s*(?:(\d{1,2})\s*(?:lb|lbs|pounds?)?)?$/.exec(t))) return (Number(m[1]) * 14 + (m[2] ? Number(m[2]) : 0)) * 0.45359237;
+  if ((m = /^(\d{2,3}(?:[.,]\d+)?)\s*(kg|kgs|kilos?|kilograms?|lb|lbs|pounds?)?$/.exec(t))) {
+    const v = num(m[1]), lb = m[2] ? /^(lb|pound)/.test(m[2]) : imperial;
+    const kg = lb ? v * 0.45359237 : v;
+    return kg >= 30 && kg <= 300 ? kg : null;
+  }
+  return null;
+}
+
+export { cleanApron, buildCalls, wearer };
