@@ -131,7 +131,8 @@ async function placedOrder(req, env, ctx) {
       country: s(t.country, 4), phone: s(t.phone, 40), email: s(b.email, 160) },
     notes: s(b.notes, 2000), items };
   await env.DESIGNS.put('order:' + orderId, JSON.stringify(order), { expirationTtl: 60 * DAY });
-  if (order.paymentStatus === 'PAID') ctx.waitUntil(sendOrder(env, orderId, {}));
+  // Ecwid's storefront says ACCEPTED for a paid order (PAID in its newer API); QUEUED is "awaiting payment".
+  if (order.paymentStatus === 'PAID' || order.paymentStatus === 'ACCEPTED') ctx.waitUntil(sendOrder(env, orderId, {}));
   else await log(env, 'held', { orderId, paymentStatus: order.paymentStatus || '(none)', aprons: items.map((i) => i.ref) });
   return json({ ok: true, aprons: items.length }, 200, h);
 }
@@ -234,7 +235,7 @@ async function admin(req, env, url) {
 /* ---------- Helpers ---------- */
 
 function json(o, status, headers) {
-  return new Response(JSON.stringify(o, null, 1), { status: status || 200, headers: Object.assign({ 'Content-Type': 'application/json' }, headers || {}) });
+  return new Response(JSON.stringify(o, null, 1), { status: status || 200, headers: Object.assign({ 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, headers || {}) });
 }
 // The owner's log, without addresses, emails or phone numbers (only order ids, refs and MarketCenter's replies).
 async function log(env, kind, data) {

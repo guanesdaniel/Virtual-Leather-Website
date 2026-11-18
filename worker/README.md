@@ -14,7 +14,7 @@ How it works:
    Ecwid plan, Starter included: no Ecwid API or app needed). The page (`site/assets/js/main.js`, `sendPlacedOrder`)
    sends `POST /order`: the order number, payment status, shipping address, and for each designed apron its ref,
    this device's key for that ref, quantity, height and weight. Only aprons designed on the same device are kept.
-   A **PAID** order goes to MarketCenter at once (4 aprons per call; a 5th goes as `<order>-2`); any other is kept
+   A paid order (Ecwid says **ACCEPTED** or **PAID**) goes to MarketCenter at once (4 aprons per call; a 5th goes as `<order>-2`); any other is kept
    and shows as "held" on the owner's page, to send from there. Other products (backpack, knife roll, duffle, wax)
    aren't sent: enter them in the portal by hand. If the customer closes the page before Ecwid's thank-you step,
    the order doesn't arrive: enter it by hand too.
