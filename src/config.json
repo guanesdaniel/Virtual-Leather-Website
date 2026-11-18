@@ -25,7 +25,7 @@
   "cloudinaryCloud": "ndixlyhg",
   "cloudinaryPreset": "vl_orders",
   "_orderWorker": "The order Worker's address (worker/README.md), e.g. https://vl-orders.NAME.workers.dev. Empty: designs aren't sent to MarketCenter.",
-  "orderWorker": "",
+  "orderWorker": "https://vl-orders.virtualleather.workers.dev",
   "metaPixelId": "298202042517671",
   "_shortLinks": "Short links that send visitors to the home page tagged with where they came from, so Google Analytics can tell them apart (virtualleather.net/bio and so on). Add one here, then run the build.",
   "shortLinks": {
