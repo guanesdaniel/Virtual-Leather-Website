@@ -18,4 +18,4 @@ MC_URL = "https://marketcenterco.com/api/distribuidor/pedido-web"
 ALLOWED_ORIGINS = "https://virtualleather.net,https://www.virtualleather.net"
 CLOUDINARY_PREFIX = "https://res.cloudinary.com/ndixlyhg/"
 # "1": MarketCenter only checks each order (dryRun) and nothing is created there. Set to "0" to go live.
-DRY_RUN = "1"
+DRY_RUN = "0"
