@@ -1,0 +1,21 @@
+# Virtual Leather order Worker. Deployed by .github/workflows/worker.yml (see worker/README.md).
+name = "vl-orders"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# Where the designs, the send log and the retry list are kept. The id is the KV namespace "vl-orders"
+# created in Cloudflare (Workers & Pages > KV); it isn't secret.
+[[kv_namespaces]]
+binding = "DESIGNS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+MC_URL = "https://marketcenterco.com/api/distribuidor/pedido-web"
+ALLOWED_ORIGINS = "https://virtualleather.net,https://www.virtualleather.net"
+CLOUDINARY_PREFIX = "https://res.cloudinary.com/ndixlyhg/"
+# "1": MarketCenter only checks each order (dryRun) and nothing is created there. Set to "0" to go live.
+DRY_RUN = "1"
