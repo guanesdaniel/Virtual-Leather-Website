@@ -1,0 +1,18 @@
+# Temporary: lists the order Worker's stored key NAMES (no values) to debug a test order. Delete after use.
+name: KV check
+on:
+  push:
+    branches: [claude/kv-check]
+permissions:
+  contents: read
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          curl -sS -H "Authorization: Bearer $TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/storage/kv/namespaces/a764c8eac0fa48e6b2f5ccf6adcb143f/keys?limit=1000" \
+            | jq -r '"success: \(.success)", (.errors[]?|tostring), (.result[]?.name)'
