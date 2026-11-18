@@ -8,7 +8,7 @@ workers_dev = true
 # created in Cloudflare (Workers & Pages > KV); it isn't secret.
 [[kv_namespaces]]
 binding = "DESIGNS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "a764c8eac0fa48e6b2f5ccf6adcb143f"
 
 [triggers]
 crons = ["*/15 * * * *"]
