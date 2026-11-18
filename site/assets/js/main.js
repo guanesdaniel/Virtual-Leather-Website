@@ -338,8 +338,11 @@
         weight: o['Customer Weight'] || '', description: desc });
     });
     if (!items.length) return;
+    // MarketCenter gets the order number the shop owner sees in Ecwid (like WCREF), not Ecwid's internal number.
+    var shortId = [order.id, order.vendorOrderNumber, order.orderNumber].map(function (v) { return v == null ? '' : String(v); })
+      .filter(function (v) { return /^[A-Za-z0-9-]{4,20}$/.test(v) && /[A-Za-z]/.test(v); })[0] || id;
     var p = order.shippingPerson || order.billingPerson || {};
-    var body = { orderId: id, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
+    var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
       notes: order.orderComments || order.comments || '', items: items,
       shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
         postal: p.postalCode || '', country: p.countryCode || '', phone: p.phone || '' } };
