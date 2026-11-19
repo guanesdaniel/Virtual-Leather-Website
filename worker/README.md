@@ -18,6 +18,8 @@ How it works:
    and shows as "held" on the owner's page, to send from there. Other products (backpack, knife roll, duffle, wax)
    aren't sent: enter them in the portal by hand. If the customer closes the page before Ecwid's thank-you step,
    the order doesn't arrive: enter it by hand too.
+   Orders go in with `clientApproved: false`: they wait in the portal until the owner ticks the client's "yes",
+   after the customer has approved the design proof.
 3. If MarketCenter is busy or rate-limited, the order is retried every 15 minutes (up to 20 times). It never enters
    twice: MarketCenter files each apron by shop + order + place, and the Worker remembers what it sent.
 

@@ -152,7 +152,9 @@ async function buildCalls(env, order, opts) {
     if (!a.designPicture) delete a.designPicture;
     aprons.push(a);
   }
-  const base = { v: 1, shop: 'ecwid', paidAt: order.receivedAt, shipTo: order.shipTo, notes: order.notes };
+  // clientApproved: false: the order goes in, but waits for the owner to tick the client's "yes" in the portal once
+  // the customer has approved the design proof the website promises them.
+  const base = { v: 1, shop: 'ecwid', paidAt: order.receivedAt, clientApproved: false, shipTo: order.shipTo, notes: order.notes };
   if (opts.dryRun) base.dryRun = true;
   const calls = [];
   for (let i = 0; i < aprons.length; i += PER_CALL) {
