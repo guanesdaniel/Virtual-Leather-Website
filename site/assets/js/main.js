@@ -374,11 +374,14 @@
     // MarketCenter gets the order number the shop owner sees in Ecwid (like WCREF), not Ecwid's internal number.
     var shortId = [order.id, order.vendorOrderNumber, order.orderNumber].map(function (v) { return v == null ? '' : String(v); })
       .filter(function (v) { return /^[A-Za-z0-9-]{4,20}$/.test(v) && /[A-Za-z]/.test(v); })[0] || id;
-    var p = order.shippingPerson || order.billingPerson || {};
+    // The shipping address, each part from the billing address when the shipping one hasn't got it (an order that
+    // Ecwid didn't ask a shipping address for).
+    var sp = order.shippingPerson || {}, bp = order.billingPerson || {};
+    function part(k) { return sp[k] || bp[k] || ''; }
     var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
       notes: order.orderComments || order.comments || '', items: items, extras: extras,
-      shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
-        postal: p.postalCode || '', country: p.countryCode || '', phone: p.phone || '' } };
+      shipTo: { name: part('name'), street: part('street'), city: part('city'), state: part('stateOrProvinceCode') || part('stateOrProvinceName'),
+        postal: part('postalCode'), country: part('countryCode'), phone: part('phone') } };
     fetch(C.orderWorker.replace(/\/+$/, '') + '/order', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body), keepalive: true }).catch(function () {});
   }
