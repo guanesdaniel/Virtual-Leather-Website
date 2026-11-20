@@ -359,7 +359,11 @@
     if (!C.orderWorker || !window.fetch || !id) return;
     var keys = readJSON('vl_design_keys', {}) || {}, items = [], extras = [];
     (order.items || []).forEach(function (it) {
-      var o = optionsOf(it), desc = o[DESC] || '', m = /\bVL-[A-Z0-9]{4,8}\b/.exec(desc);
+      // The design ref is in the order description, or for a product with its own store fields (the knife roll's
+      // "Interior Personalization Description") in whichever field the designer put the description.
+      var o = optionsOf(it), REF = /\bVL-[A-Z0-9]{4,8}\b/;
+      var desc = REF.test(o[DESC] || '') ? o[DESC] : Object.keys(o).map(function (k) { return o[k]; }).filter(function (v) { return REF.test(v); })[0] || '';
+      var m = REF.exec(desc);
       var pid = Number((it.product || it).id || it.productId);
       if (EXTRA_IDS.indexOf(pid) !== -1) {
         var color = Object.keys(o).filter(function (k) { return /colou?r/i.test(k); }).map(function (k) { return o[k]; })[0] || '';
