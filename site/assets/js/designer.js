@@ -150,6 +150,9 @@
     },
     split: {
       1: { y: 380, fs: 80, stdW: 356, maxW: 356, maxH: 200, logoH: 170, stdH: 170 },
+      // Spots 1 and 2 together no taller than 115 mm (230), Juan Miguel's limit (20 Nov 2026), so the chest logo and the
+      // text under it never touch.
+      chestShare: 230,
       chestBig: { y: 425, stdW: 342, maxW: 342, maxH: 257, logoH: 240, stdH: 240 },
       2: { y: 515, h: 60, fs: 50, stdW: 357, maxW: 360, maxH: 70, logoH: 60 },
       // Spot 3 and the right leg pocket are level, both centred on that pocket (1335-1717: 1526), the owner's choice.
@@ -174,6 +177,7 @@
     },
     wood: {
       1: { y: 330, w: 300, h: 85, fs: 74, stdW: 340, maxW: 360, maxH: 170, logoH: 150, stdH: 150 },
+      chestShare: 210,   // spots 1 and 2 together no taller than 105 mm, Juan Miguel's limit (20 Nov 2026)
       chestBig: { y: 375, maxH: 250, logoH: 220, stdH: 220 },
       2: { y: 455, w: 300, h: 60, fs: 48, stdW: 340, maxW: 360, maxH: 60, logoH: 54 },
       pocket: { x: 690, y: 645, w: 170, h: 150, fs: 44, stdW: 160, maxW: 190, maxH: 200, logoH: 130 }
@@ -761,11 +765,13 @@
 
   // Spots 1 and 2 share one chest area no taller than 160 mm (320), Juan Miguel's limit: with something in spot 2, the
   // two heights together can't pass 2 x (320 - the distance between their centres) (145 mm on the BBQ, barber and
-  // simple aprons). The spot being edited stops growing there (its "+" turns off), but never below 100%; if that
-  // isn't enough (spot 1 was large before spot 2 was filled in), the other spot gives way (clampSizes redraws).
+  // simple aprons), or the style's own chestShare (115 mm split-leg, 105 mm woodworking). The spot being edited stops
+  // growing there (its "+" turns off), but never below 100%; if that isn't enough (spot 1 was large before spot 2 was
+  // filled in), the other spot gives way (clampSizes redraws).
   function chestShare(st) {
     if (!fit['1'] || !fit['2'] || !fit['1'].h100 || !fit['2'].h100) return;
-    var limit = 2 * (320 - Math.abs(boxFor(st, '2').y - boxFor(st, '1').y));
+    var limit = 2 * (320 - Math.abs(boxFor(st, '2').y - boxFor(st, '1').y)), own = (POS_OVERRIDES[st.style] || {}).chestShare;
+    if (own) limit = Math.min(limit, own);
     var g = fit[active === '2' ? '2' : '1'], k = fit[active === '2' ? '1' : '2'];
     g.maxPct = Math.min(g.maxPct, Math.max(50, pctOf(limit - k.h, g.h100), Math.min(g.pct, 100)));
     var hg = g.h100 * Math.min(g.pct, g.maxPct) / 100;
