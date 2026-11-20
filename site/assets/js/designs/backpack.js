@@ -4,6 +4,7 @@ window.VL_PRODUCT_DESIGN = {
   id: 619488531,
   name: 'personalised minimalist leather backpack',
   label: 'Backpack',
+  mc: 'maletin-14',   // MarketCenter's name for it (the order Worker sends it to Juan Miguel's workshop)
   price: 180,
   viewBox: '0 0 600 720',
   desc: 'Front of the minimalist backpack',

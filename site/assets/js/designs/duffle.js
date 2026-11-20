@@ -5,6 +5,7 @@ window.VL_PRODUCT_DESIGN = {
   id: 619501024,
   name: 'personalised leather duffle bag',
   label: 'Duffle bag',
+  mc: 'maleta-mediana',   // MarketCenter's name for it (the order Worker sends it to Juan Miguel's workshop)
   price: 180,
   viewBox: '0 0 1000 560',
   desc: 'Side view of the duffle bag, and its round end',

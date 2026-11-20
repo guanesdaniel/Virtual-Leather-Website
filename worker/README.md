@@ -1,8 +1,9 @@
 # Order Worker: website orders to MarketCenter
 
-Sends paid apron orders from the Ecwid store to Juan Miguel's MarketCenter portal
+Sends paid orders from the Ecwid store to Juan Miguel's MarketCenter portal
 (`POST https://marketcenterco.com/api/distribuidor/pedido-web`), as his brief "para el Claude de Guanes" (v2,
-17 Nov 2026, part 2) describes. Free Cloudflare Workers plan. Code: `src/index.js`.
+17 Nov 2026, part 2) describes, and since his "pedido-web v2" (19 Nov 2026) knife rolls, backpacks, duffle bags and
+loose extras too. Free Cloudflare Workers plan. Code: `src/index.js`.
 
 How it works:
 1. When a customer adds a designed apron to the cart, the designer (`site/assets/js/designer.js`, `mcApron`) sends the
@@ -10,13 +11,21 @@ How it works:
    line, `down` from the top of the bib, `font` for text), the extras, colours, height and weight, the order
    description, the design picture, and each logo cut to its ink (uploaded to Cloudinary). It's kept 30 days under
    the design ref (VL-XXXX).
+   The knife roll, backpack and duffle designer (`site/assets/js/product-designer.js`, `mcItem`) does the same for its
+   product (`mc` in `designs/*.js`: `estuche`, `maletin-14`, `maleta-mediana`): leathers, the knife roll's size, and
+   each engraving's box in mm (`h`, `w`, `font` for text), centred on its place. The Worker turns the places into
+   MarketCenter's spots (`ITEM_SPOTS`: knife roll `outside` / `inside`; the bags' pieces `1` and `2`). A design idea
+   (Best Dad Ever...) goes as a logo: a black PNG of it, uploaded to Cloudinary.
 2. When a customer finishes checkout, Ecwid tells the shop page the order was placed (`Ecwid.OnOrderPlaced`, on every
    Ecwid plan, Starter included: no Ecwid API or app needed). The page (`site/assets/js/main.js`, `sendPlacedOrder`)
    sends `POST /order`: the order number, payment status, shipping address, and for each designed apron its ref,
-   this device's key for that ref, quantity, height and weight. Only aprons designed on the same device are kept.
+   this device's key for that ref, quantity, height and weight, plus the apron extras in the cart (bottle opener,
+   wings, grease: Ecwid ids in `EXTRA_IDS`) with colour and quantity. Only designs made on the same device are kept.
+   Extras that came with a designed apron are already in that apron; the rest go as loose `extras`.
    A paid order (Ecwid says **ACCEPTED** or **PAID**) goes to MarketCenter at once (4 aprons per call; a 5th goes as `<order>-2`); any other is kept
-   and shows as "held" on the owner's page, to send from there. Other products (backpack, knife roll, duffle, wax)
-   aren't sent: enter them in the portal by hand. If the customer closes the page before Ecwid's thank-you step,
+   and shows as "held" on the owner's page, to send from there. Knife rolls, bags and loose extras go too (format v2,
+   one order with the aprons) once `V2_LIVE = "1"`; until then they're entered by hand, and each paid order that has
+   them is also checked as v2 (a dry run, "v2-check" on the owner's page). If the customer closes the page before Ecwid's thank-you step,
    the order doesn't arrive: enter it by hand too.
    Orders go in with `clientApproved: false`: they wait in the portal until the owner ticks the client's "yes",
    after the customer has approved the design proof.
@@ -29,8 +38,9 @@ While `DRY_RUN = "1"` (in `wrangler.toml`), MarketCenter only checks each order 
 
 `https://vl-orders.<your-subdomain>.workers.dev/admin?key=<ADMIN_KEY>`
 - no other parameter: the latest 20 events (sent, dry runs, errors) and the orders waiting to be retried;
-- `&send=<Ecwid order number>`: tests that order now (dry run) and shows MarketCenter's reply; add `&live=1` to really
-  send it (for a "held" order too, once you've checked it was paid);
+- `&send=<Ecwid order number>`: tests that order now (dry run, knife rolls, bags and loose extras included) and shows
+  MarketCenter's reply; add `&live=1` to really send it (for a "held" order too, once you've checked it was paid). An
+  order already sent isn't sent again unless you add `&again=1`; `&v=1` leaves out everything but the aprons;
 - `&ref=VL-XXXX`: the design saved for that ref.
 
 ## Setup (once)
