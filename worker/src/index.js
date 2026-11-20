@@ -227,11 +227,14 @@ async function buildCalls(env, order, opts) {
   // clientApproved: false: the order goes in, but waits for the owner to tick the client's "yes" in the portal once
   // the customer has approved the design proof the website promises them.
   const extras = looseExtras(order.extras || [], aprons);
-  const v2 = !!opts.v2 && (items.length + extras.length > 0);
+  // Extras on their own are an add-on to an apron the customer ordered before (the owner sells them only with an
+  // apron), so they aren't sent: the owner asks Juan Miguel to add them to that apron's order.
+  const extrasOnly = !aprons.length && !items.length && extras.length > 0;
+  const v2 = !!opts.v2 && !extrasOnly && (items.length + extras.length > 0);
   const base = { v: v2 ? 2 : 1, shop: 'ecwid', paidAt: order.receivedAt, clientApproved: false, shipTo: order.shipTo, notes: order.notes };
   if (opts.dryRun) base.dryRun = true;
   const calls = [];
-  for (let i = 0; i < aprons.length || (v2 && i === 0); i += PER_CALL) {
+  for (let i = 0; !extrasOnly && (i < aprons.length || (v2 && i === 0)); i += PER_CALL) {
     // More than 4 aprons: the next ones go as "<order>-2", "<order>-3"… (each call is its own order there).
     const id = order.orderId + (i ? '-' + (i / PER_CALL + 1) : '');
     const body = Object.assign({}, base, { orderId: id });
@@ -239,7 +242,7 @@ async function buildCalls(env, order, opts) {
     if (v2 && i === 0) { if (items.length) body.items = items; if (extras.length) body.extras = extras; }
     calls.push({ orderId: id, body });
   }
-  return { calls, aprons: aprons.length, items: v2 ? items.length : 0, extras: v2 ? extras.length : 0, v2, missing };
+  return { calls, aprons: aprons.length, items: v2 ? items.length : 0, extras: v2 ? extras.length : 0, v2, extrasOnly, missing };
 }
 
 // The extras in the cart that didn't come with a designed apron (the apron designer adds one of each the customer
@@ -290,7 +293,8 @@ async function sendOrder(env, orderId, opts) {
   if (!order) return { orderId, error: 'no such order here' };
   const plan = await buildCalls(env, order, { dryRun, v2 });
   const out = { orderId, dryRun, v: plan.v2 ? 2 : 1, aprons: plan.aprons, items: plan.items, extras: plan.extras, missing: plan.missing, results: [] };
-  if (!plan.calls.length) { await log(env, 'nothing-to-send', out); return out; }
+  if (plan.extrasOnly) out.extrasOnly = 'Only extras: an add-on to an earlier apron order. Ask Juan Miguel to add them to it.';
+  if (!plan.calls.length) { await log(env, plan.extrasOnly ? 'extras-only' : 'nothing-to-send', out); return out; }
   let retry = false;
   for (const c of plan.calls) {
     let res;
