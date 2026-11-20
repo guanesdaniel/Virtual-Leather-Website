@@ -1,18 +1,25 @@
 // Virtual Leather order Worker (Cloudflare Workers, free plan). See worker/README.md.
 //
-// 1. POST /design   The apron designer on virtualleather.net files each design here when it goes in the cart: the
-//                   apron as MarketCenter's "pedido-web" wants it (every engraving in mm), under its ref (VL-XXXX),
-//                   for 30 days. Only the device that first saved a ref (its random key) can change it.
+// 1. POST /design   The designers on virtualleather.net file each design here when it goes in the cart, as
+//                   MarketCenter's "pedido-web" wants it (every engraving in mm), under its ref (VL-XXXX), for 30 days:
+//                   an apron (designer.js), or a knife roll, backpack or duffle bag (product-designer.js, an "item").
+//                   Only the device that first saved a ref (its random key) can change it.
 // 2. POST /order    The shop page sends the order when Ecwid says it was placed (works on the Starter plan; no Ecwid
-//                   API needed): order number, payment status, shipping address, and per designed apron its ref, the
-//                   device's key for it, quantity, height and weight. A PAID order goes to MarketCenter with the saved
-//                   designs; any other is kept and logged ("held") for the owner to send from /admin.
+//                   API needed): order number, payment status, shipping address, per designed product its ref, the
+//                   device's key for it, quantity (and an apron's height and weight), and the apron extras in the
+//                   cart (bottle opener, wings, grease). A PAID order goes to MarketCenter with the saved designs; any
+//                   other is kept and logged ("held") for the owner to send from /admin.
 // 3. Every 15 min   Orders MarketCenter couldn't take yet (busy, rate limit) are sent again.
 // 4. GET /admin     For the shop owner (?key=ADMIN_KEY): the latest events, and ?send=<order id> to send (or with
 //                   DRY_RUN on, test) one order now and see MarketCenter's reply.
 //
 // Secrets (set in Cloudflare, never in this file): MC_STORE_KEY, ADMIN_KEY.
-// Settings (wrangler.toml [vars]): MC_URL, ALLOWED_ORIGINS, CLOUDINARY_PREFIX, DRY_RUN.
+// Settings (wrangler.toml [vars]): MC_URL, ALLOWED_ORIGINS, CLOUDINARY_PREFIX, DRY_RUN, V2_LIVE.
+//
+// Two formats (MarketCenter "pedido-web"): v1 has aprons only; v2 (MarketCenter, 19 Nov 2026) adds "items" (knife
+// roll, backpack, duffle bag) and loose "extras", all in one order. Until V2_LIVE is "1", orders still go as v1
+// (aprons only, the rest entered by hand), and an order with items or loose extras is also checked as v2 (a dry run,
+// logged as "v2-check") so the owner can see what MarketCenter would make of it.
 // Storage: the DESIGNS KV namespace.
 
 const DAY = 86400;
@@ -22,6 +29,16 @@ const SPOTS = ['1', '2', '3', '4', '5', '6', 'pocket', 'pocket2'];
 const MODES = ['text', 'logo', 'design'];
 const COLORS = ['tan', 'brown', 'black'];
 const PER_CALL = 4;          // MarketCenter takes up to 4 aprons per call
+// The products product-designer.js designs, by MarketCenter's name, and where each one's engraving places
+// (designs/*.js "places") are in MarketCenter: the knife roll by name, the bags by piece number.
+const ITEM_SPOTS = {
+  'estuche': { outside: 'outside', inside: 'inside' },
+  'maletin-14': { front: '1', pocket: '2' },
+  'maleta-mediana': { body: '1', lid: '2' }
+};
+const SIZES = ['small', 'medium', 'large'];
+// The apron extras sold in the shop (Ecwid product ids), as MarketCenter names them.
+const EXTRA_IDS = { 619483308: 'opener', 688211109: 'wings', 619498559: 'grease' };
 const MAX_TRIES = 20;
 
 export default {
@@ -61,22 +78,24 @@ async function saveDesign(req, env) {
   try { body = JSON.parse(text); } catch (e) { return json({ error: 'json' }, 400, h); }
   const ref = String(body.ref || '');
   if (!/^VL-[A-Z0-9]{4,8}$/.test(ref) || !/^[0-9a-f]{32}$/.test(String(body.key || ''))) return json({ error: 'ref' }, 400, h);
-  const apron = cleanApron(body.apron, env);
-  if (!apron) return json({ error: 'apron' }, 400, h);
+  const apron = body.apron ? cleanApron(body.apron, env) : null, item = body.item ? cleanItem(body.item, env) : null;
+  if (!apron && !item) return json({ error: body.item ? 'item' : 'apron' }, 400, h);
   const keyHash = await sha256(body.key);
   const old = await env.DESIGNS.get('design:' + ref, 'json');
   if (old && old.keyHash !== keyHash) return json({ error: 'taken' }, 409, h);
-  await env.DESIGNS.put('design:' + ref, JSON.stringify({ keyHash, savedAt: new Date().toISOString(), apron }), { expirationTtl: 30 * DAY });
+  const saved = apron ? { keyHash, savedAt: new Date().toISOString(), apron } : { keyHash, savedAt: new Date().toISOString(), item };
+  await env.DESIGNS.put('design:' + ref, JSON.stringify(saved), { expirationTtl: 30 * DAY });
   return json({ ok: true }, 200, h);
 }
 
 // Only the fields MarketCenter takes, of the expected kinds and lengths (the page is public, so anything could arrive).
+const str = (v, n) => (v == null || v === '' ? null : String(v).slice(0, n));
+const dec = (v) => (typeof v === 'number' && isFinite(v) ? Math.round(v * 10) / 10 : null);
+const tone = (v) => (COLORS.includes(v) ? v : null);
+const cloudOf = (env) => (v) => (typeof v === 'string' && v.startsWith(env.CLOUDINARY_PREFIX || 'https://res.cloudinary.com/') && v.length < 400 ? v : null);
 function cleanApron(a, env) {
   if (!a || typeof a !== 'object' || !STYLES.includes(a.style)) return null;
-  const s = (v, n) => (v == null || v === '' ? null : String(v).slice(0, n));
-  const num = (v) => (typeof v === 'number' && isFinite(v) ? Math.round(v * 10) / 10 : null);
-  const color = (v) => (COLORS.includes(v) ? v : null);
-  const cloud = (v) => (typeof v === 'string' && v.startsWith(env.CLOUDINARY_PREFIX || 'https://res.cloudinary.com/') && v.length < 400 ? v : null);
+  const s = str, num = dec, color = tone, cloud = cloudOf(env);
   const spots = (Array.isArray(a.spots) ? a.spots : []).slice(0, 7).map((p) => {
     if (!p || !SPOTS.includes(p.spot) || !MODES.includes(p.mode) || !p.mm) return null;
     const o = { spot: p.spot, mode: p.mode, size: num(p.size),
@@ -95,6 +114,28 @@ function cleanApron(a, env) {
     extras: { wings: color(x.wings), opener: color(x.opener), grease: !!x.grease },
     height: s(a.height, 40), weight: s(a.weight, 40), spots,
     description: s(a.description, 4000) || '', designPicture: cloud(a.designPicture) };
+}
+// A knife roll, backpack or duffle bag from product-designer.js: MarketCenter's product, size (knife roll only),
+// leathers, and each engraving centred on its place at its size in mm. A design idea (Best Dad Ever...) comes as a logo.
+function cleanItem(a, env) {
+  if (!a || typeof a !== 'object' || !ITEM_SPOTS[a.product]) return null;
+  const places = ITEM_SPOTS[a.product], cloud = cloudOf(env);
+  const spots = (Array.isArray(a.spots) ? a.spots : []).slice(0, 8).map((p) => {
+    if (!p || !Object.prototype.hasOwnProperty.call(places, p.place) || (p.mode !== 'text' && p.mode !== 'logo') || !p.mm) return null;
+    const o = { spot: places[p.place], mode: p.mode, mm: { h: dec(p.mm.h), w: dec(p.mm.w) } };
+    if (p.mode === 'text') { o.text = str(p.text, 200) || ''; o.font = str(p.font, 30); o.mm.font = dec(p.mm.font); }
+    else { o.logoUrl = cloud(p.logoUrl); o.inkCropped = !!(o.logoUrl && p.inkCropped); }
+    return o;
+  }).filter(Boolean);
+  const o = { product: a.product, main: tone(a.main), spots, description: str(a.description, 4000) || '', designPicture: cloud(a.designPicture) };
+  if (a.product === 'estuche' && SIZES.includes(a.size)) o.size = a.size;
+  if (tone(a.acc)) o.acc = tone(a.acc);
+  return o;
+}
+// Ecwid's colour names for the extras ("Tanned or Light Brown", "Dark Brown", "Black") as tan, brown or black.
+function colorWord(v) {
+  const t = String(v || '').toLowerCase();
+  return /black|negro/.test(t) ? 'black' : /tan|light|claro/.test(t) ? 'tan' : /brown|marr|caf/.test(t) ? 'brown' : null;
 }
 
 /* ---------- 2. Orders placed on the website ---------- */
@@ -124,25 +165,56 @@ async function placedOrder(req, env, ctx) {
     if (!saved || saved.keyHash !== await sha256(it.key)) continue;
     items.push({ ref, qty: Math.max(1, Math.min(12, Number(it.qty) || 1)), height: s(it.height, 40), weight: s(it.weight, 40), description: s(it.description, 4000) });
   }
-  if (!items.length) return json({ ok: true, aprons: 0 }, 200, h);
+  // The apron extras in the cart: those that came with a designed apron are left out when the order is built.
+  const extras = [];
+  for (const x of (Array.isArray(b.extras) ? b.extras : []).slice(0, 20)) {
+    const kind = x && EXTRA_IDS[Number(x.id)];
+    if (!kind) continue;
+    extras.push({ kind, color: kind === 'grease' ? null : colorWord(x.color), qty: Math.max(1, Math.min(12, Number(x.qty) || 1)) });
+  }
+  if (!items.length && !extras.length) return json({ ok: true, designs: 0 }, 200, h);
   const t = b.shipTo || {};
   const order = { orderId, paymentStatus: s(b.paymentStatus, 30).toUpperCase(), receivedAt: new Date().toISOString(),
     shipTo: { name: s(t.name, 120), street: s(t.street, 240), city: s(t.city, 120), state: s(t.state, 80), postal: s(t.postal, 30),
       country: s(t.country, 4), phone: s(t.phone, 40), email: s(b.email, 160) },
-    notes: s(b.notes, 2000), items };
+    notes: s(b.notes, 2000), items, extras };
   await env.DESIGNS.put('order:' + orderId, JSON.stringify(order), { expirationTtl: 60 * DAY });
   // Ecwid's storefront says ACCEPTED for a paid order (PAID in its newer API); QUEUED is "awaiting payment".
-  if (order.paymentStatus === 'PAID' || order.paymentStatus === 'ACCEPTED') ctx.waitUntil(sendOrder(env, orderId, {}));
-  else await log(env, 'held', { orderId, paymentStatus: order.paymentStatus || '(none)', aprons: items.map((i) => i.ref) });
-  return json({ ok: true, aprons: items.length }, 200, h);
+  if (order.paymentStatus === 'PAID' || order.paymentStatus === 'ACCEPTED') ctx.waitUntil(sendPaid(env, orderId));
+  else await log(env, 'held', { orderId, paymentStatus: order.paymentStatus || '(none)', designs: items.map((i) => i.ref), extras: extras.map((x) => x.kind) });
+  return json({ ok: true, designs: items.length, extras: extras.length }, 200, h);
 }
 
-// MarketCenter's calls for one order: { calls: [{ orderId, body }], aprons, missing: [refs whose design expired] }.
+// A paid order. While V2_LIVE is off, an order with a knife roll, bag or loose extra is first checked as v2 (a dry
+// run MarketCenter answers without creating anything, logged as "v2-check"), then its aprons, if any, go as today.
+async function sendPaid(env, orderId) {
+  if (env.V2_LIVE !== '1') {
+    const order = await env.DESIGNS.get('order:' + orderId, 'json');
+    if (order && (order.extras || []).length + order.items.length) {
+      const plan = await buildCalls(env, order, { dryRun: true, v2: true });
+      if (plan.v2) await sendOrder(env, orderId, { dryRun: true, v2: true, kind: 'v2-check' });
+    }
+  }
+  return sendOrder(env, orderId, {});
+}
+
+// MarketCenter's calls for one order: { calls: [{ orderId, body }], aprons, items, extras, v2, missing: [refs whose
+// design expired] }. With opts.v2, knife rolls, bags and loose extras go too (format v2), with the first aprons, in one
+// order; otherwise only the aprons (v1).
 async function buildCalls(env, order, opts) {
-  const aprons = [], missing = [];
+  const aprons = [], items = [], missing = [];
   for (const item of order.items) {
     const saved = await env.DESIGNS.get('design:' + item.ref, 'json');
     if (!saved) { missing.push(item.ref); continue; }
+    if (saved.item) {
+      const it = Object.assign({ ref: item.ref }, saved.item);
+      it.qty = item.qty;
+      it.description = item.description || it.description;
+      if (it.designPicture) it.description += '\nDesign picture: ' + it.designPicture;
+      delete it.designPicture;
+      items.push(it);
+      continue;
+    }
     const a = Object.assign({ ref: item.ref }, saved.apron);
     a.qty = item.qty;
     a.height = item.height || a.height;
@@ -154,15 +226,50 @@ async function buildCalls(env, order, opts) {
   }
   // clientApproved: false: the order goes in, but waits for the owner to tick the client's "yes" in the portal once
   // the customer has approved the design proof the website promises them.
-  const base = { v: 1, shop: 'ecwid', paidAt: order.receivedAt, clientApproved: false, shipTo: order.shipTo, notes: order.notes };
+  const extras = looseExtras(order.extras || [], aprons);
+  const v2 = !!opts.v2 && (items.length + extras.length > 0);
+  const base = { v: v2 ? 2 : 1, shop: 'ecwid', paidAt: order.receivedAt, clientApproved: false, shipTo: order.shipTo, notes: order.notes };
   if (opts.dryRun) base.dryRun = true;
   const calls = [];
-  for (let i = 0; i < aprons.length; i += PER_CALL) {
+  for (let i = 0; i < aprons.length || (v2 && i === 0); i += PER_CALL) {
     // More than 4 aprons: the next ones go as "<order>-2", "<order>-3"… (each call is its own order there).
     const id = order.orderId + (i ? '-' + (i / PER_CALL + 1) : '');
-    calls.push({ orderId: id, body: Object.assign({}, base, { orderId: id, aprons: aprons.slice(i, i + PER_CALL) }) });
+    const body = Object.assign({}, base, { orderId: id });
+    if (aprons.length) body.aprons = aprons.slice(i, i + PER_CALL);
+    if (v2 && i === 0) { if (items.length) body.items = items; if (extras.length) body.extras = extras; }
+    calls.push({ orderId: id, body });
   }
-  return { calls, aprons: aprons.length, missing };
+  return { calls, aprons: aprons.length, items: v2 ? items.length : 0, extras: v2 ? extras.length : 0, v2, missing };
+}
+
+// The extras in the cart that didn't come with a designed apron (the apron designer adds one of each the customer
+// ticks, and MarketCenter has those in the apron), as MarketCenter's loose extras: [{ kind, color, qty }].
+function looseExtras(lines, aprons) {
+  const claimed = [];
+  aprons.forEach((a) => {
+    const x = a.extras || {};
+    if (x.opener) claimed.push({ kind: 'opener', color: x.opener });
+    if (x.wings) claimed.push({ kind: 'wings', color: x.wings });
+    if (x.grease) claimed.push({ kind: 'grease', color: null });
+  });
+  const out = [];
+  lines.forEach((l) => {
+    let qty = l.qty;
+    while (qty > 0) {
+      const i = claimed.findIndex((c) => c.kind === l.kind && (l.kind === 'grease' || !l.color || c.color === l.color));
+      if (i === -1) break;
+      claimed.splice(i, 1);
+      qty--;
+    }
+    if (!qty) return;
+    const same = out.find((o) => o.kind === l.kind && (o.color || null) === (l.color || null));
+    if (same) { same.qty += qty; return; }
+    const o = { kind: l.kind };
+    if (l.color) o.color = l.color;
+    o.qty = qty;
+    out.push(o);
+  });
+  return out;
 }
 
 async function postMC(env, body) {
@@ -174,14 +281,16 @@ async function postMC(env, body) {
 }
 
 // Sends one order. live = a real send (DRY_RUN off, or from /admin with live=1); otherwise MarketCenter only checks it.
+// opts.v2: knife rolls, bags and loose extras go too (V2_LIVE on, or the owner's /admin); otherwise aprons only.
 async function sendOrder(env, orderId, opts) {
   const dryRun = opts.live ? false : opts.dryRun != null ? opts.dryRun : env.DRY_RUN === '1';
+  const v2 = opts.v2 != null ? opts.v2 : env.V2_LIVE === '1';
   if (!dryRun && !opts.again && await env.DESIGNS.get('sent:' + orderId)) return { orderId, already: true };
   const order = await env.DESIGNS.get('order:' + orderId, 'json');
   if (!order) return { orderId, error: 'no such order here' };
-  const plan = await buildCalls(env, order, { dryRun });
-  const out = { orderId, dryRun, aprons: plan.aprons, missing: plan.missing, results: [] };
-  if (!plan.calls.length) { await log(env, 'no-aprons', out); return out; }
+  const plan = await buildCalls(env, order, { dryRun, v2 });
+  const out = { orderId, dryRun, v: plan.v2 ? 2 : 1, aprons: plan.aprons, items: plan.items, extras: plan.extras, missing: plan.missing, results: [] };
+  if (!plan.calls.length) { await log(env, 'nothing-to-send', out); return out; }
   let retry = false;
   for (const c of plan.calls) {
     let res;
@@ -202,7 +311,7 @@ async function sendOrder(env, orderId, opts) {
       out.willRetry = p.tries < MAX_TRIES;
     }
   }
-  await log(env, dryRun ? 'dry-run' : ok ? 'sent' : 'not-sent', out);
+  await log(env, opts.kind || (dryRun ? 'dry-run' : ok ? 'sent' : 'not-sent'), out);
   return out;
 }
 
@@ -223,8 +332,10 @@ async function admin(req, env, url) {
   if (!env.ADMIN_KEY || !safeEqual(key, env.ADMIN_KEY)) return json({ error: 'key' }, 401);
   const send = url.searchParams.get('send');
   if (send) {
+    // The owner's send includes knife rolls, bags and loose extras (v2) even before V2_LIVE, unless &v=1. An order
+    // already sent isn't sent again unless &again=1 (its aprons would be made twice).
     const live = url.searchParams.get('live') === '1';
-    return json(await sendOrder(env, send, { live, dryRun: !live, again: true }));
+    return json(await sendOrder(env, send, { live, dryRun: !live, again: url.searchParams.get('again') === '1', v2: url.searchParams.get('v') !== '1' }));
   }
   const ref = url.searchParams.get('ref');
   if (ref) return json(await env.DESIGNS.get('design:' + ref, 'json') || { error: 'no design saved for ' + ref });
@@ -232,7 +343,7 @@ async function admin(req, env, url) {
   const latest = logs.keys.map((k) => k.name).sort().reverse().slice(0, 20);
   const events = await Promise.all(latest.map((k) => env.DESIGNS.get(k, 'json')));
   const pending = (await env.DESIGNS.list({ prefix: 'pending:' })).keys.map((k) => k.name.slice(8));
-  return json({ dryRun: env.DRY_RUN === '1', pending, events });
+  return json({ dryRun: env.DRY_RUN === '1', v2Live: env.V2_LIVE === '1', pending, events });
 }
 
 /* ---------- Helpers ---------- */
@@ -298,4 +409,4 @@ function parseWeight(text, imperial) {
   return null;
 }
 
-export { cleanApron, buildCalls, wearer };
+export { cleanApron, cleanItem, buildCalls, looseExtras, wearer };

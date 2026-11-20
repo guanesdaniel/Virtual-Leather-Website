@@ -208,6 +208,31 @@
     }).catch(function () { return null; });
   };
 
+  /* ---------- Designs for the workshop (MarketCenter) ---------- */
+  // A design added to the cart is filed with the shop's order Worker under its ref (see worker/README.md), with this
+  // device's random key for that ref (vl_design_keys, the same keys the apron designer keeps), so only this device can
+  // order it. data is { item: ... } (product-designer.js). Never holds up the cart: a design that doesn't reach the
+  // Worker is entered by hand, as before.
+  VL.designKey = function (ref) {
+    var all = readJSON('vl_design_keys', {}) || {};
+    if (!all[ref]) {
+      var a = new Uint8Array(16);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+      all[ref] = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      try { localStorage.setItem('vl_design_keys', JSON.stringify(all)); } catch (e) { /* private mode: a new key each time */ }
+    }
+    return all[ref];
+  };
+  VL.sendDesign = function (ref, data) {
+    if (!C.orderWorker || !window.fetch) return Promise.resolve();
+    var body = { ref: ref, key: VL.designKey(ref) };
+    Object.keys(data).forEach(function (k) { body[k] = data[k]; });
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl && setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(C.orderWorker.replace(/\/+$/, '') + '/design', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body), keepalive: true, signal: ctl ? ctl.signal : undefined })
+      .then(function () { clearTimeout(timer); }, function () { clearTimeout(timer); });
+  };
+
   /* ---------- Saved apron designs (kept on this device only) ---------- */
   // The designer keeps the design in progress and each apron design added to the cart, so customers can
   // come back and change it without starting again. A design is dropped once its apron leaves the cart,
@@ -318,10 +343,12 @@
   }
 
   /* ---------- Placed orders to the workshop (MarketCenter) ---------- */
-  // When Ecwid says an order was placed, its designed aprons go to the shop's order Worker (orderWorker in
-  // src/config.json; see worker/README.md), which sends paid ones to Juan Miguel's MarketCenter portal with the
-  // designs the designer saved there. Each apron's ref goes with this device's key for it (vl_design_keys, made by
-  // the designer), so only the device that designed an apron can order it this way. Works on every Ecwid plan.
+  // When Ecwid says an order was placed, its designed products (aprons, knife rolls, bags) and apron extras go to the
+  // shop's order Worker (orderWorker in src/config.json; see worker/README.md), which sends paid ones to Juan Miguel's
+  // MarketCenter portal with the designs the designers saved there. Each design's ref goes with this device's key for
+  // it (vl_design_keys, made by the designers), so only the device that made a design can order it this way. Works on
+  // every Ecwid plan.
+  var EXTRA_IDS = [619483308, 688211109, 619498559];   // bottle opener, leather wings, grease
   function optionsOf(it) {
     var o = {}, list = it.selectedOptions || it.options;
     if (Array.isArray(list)) list.forEach(function (x) { if (x && x.name) o[x.name] = x.value != null ? String(x.value) : ''; });
@@ -330,20 +357,26 @@
   }
   function sendPlacedOrder(order, id) {
     if (!C.orderWorker || !window.fetch || !id) return;
-    var keys = readJSON('vl_design_keys', {}) || {}, items = [];
+    var keys = readJSON('vl_design_keys', {}) || {}, items = [], extras = [];
     (order.items || []).forEach(function (it) {
       var o = optionsOf(it), desc = o[DESC] || '', m = /\bVL-[A-Z0-9]{4,8}\b/.exec(desc);
+      var pid = Number((it.product || it).id || it.productId);
+      if (EXTRA_IDS.indexOf(pid) !== -1) {
+        var color = Object.keys(o).filter(function (k) { return /colou?r/i.test(k); }).map(function (k) { return o[k]; })[0] || '';
+        extras.push({ id: pid, color: color, qty: it.quantity || 1 });
+        return;
+      }
       if (!m || !keys[m[0]]) return;
       items.push({ ref: m[0], key: keys[m[0]], qty: it.quantity || 1, height: o['Customer Height'] || '',
         weight: o['Customer Weight'] || '', description: desc });
     });
-    if (!items.length) return;
+    if (!items.length && !extras.length) return;
     // MarketCenter gets the order number the shop owner sees in Ecwid (like WCREF), not Ecwid's internal number.
     var shortId = [order.id, order.vendorOrderNumber, order.orderNumber].map(function (v) { return v == null ? '' : String(v); })
       .filter(function (v) { return /^[A-Za-z0-9-]{4,20}$/.test(v) && /[A-Za-z]/.test(v); })[0] || id;
     var p = order.shippingPerson || order.billingPerson || {};
     var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
-      notes: order.orderComments || order.comments || '', items: items,
+      notes: order.orderComments || order.comments || '', items: items, extras: extras,
       shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
         postal: p.postalCode || '', country: p.countryCode || '', phone: p.phone || '' } };
     fetch(C.orderWorker.replace(/\/+$/, '') + '/order', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
