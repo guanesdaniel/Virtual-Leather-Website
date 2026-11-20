@@ -21,7 +21,9 @@ How it works:
    sends `POST /order`: the order number, payment status, shipping address, and for each designed apron its ref,
    this device's key for that ref, quantity, height and weight, plus the apron extras in the cart (bottle opener,
    wings, grease: Ecwid ids in `EXTRA_IDS`) with colour and quantity. Only designs made on the same device are kept.
-   Extras that came with a designed apron are already in that apron; the rest go as loose `extras`.
+   Extras that came with a designed apron are already in that apron; the rest go as loose `extras`. An order of
+   extras only isn't sent ("extras-only" on the owner's page): they're only sold with an apron, so it's an add-on to
+   an earlier apron order, and the owner asks Juan Miguel to add them to it.
    A paid order (Ecwid says **ACCEPTED** or **PAID**) goes to MarketCenter at once (4 aprons per call; a 5th goes as `<order>-2`); any other is kept
    and shows as "held" on the owner's page, to send from there. Knife rolls, bags and loose extras go too (format v2,
    one order with the aprons) once `V2_LIVE = "1"`; until then they're entered by hand, and each paid order that has
