@@ -210,7 +210,8 @@ async function buildCalls(env, order, opts) {
       const it = Object.assign({ ref: item.ref }, saved.item);
       it.qty = item.qty;
       it.description = item.description || it.description;
-      if (it.designPicture) it.description += '\nDesign picture: ' + it.designPicture;
+      // The picture's link goes first: MarketCenter shortens a long note at its end.
+      if (it.designPicture) it.description = 'Design picture: ' + it.designPicture + '\n' + it.description;
       delete it.designPicture;
       items.push(it);
       continue;
