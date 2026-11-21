@@ -10,6 +10,7 @@ window.VL_CONFIG = {
   "metaPixelId": "298202042517671",
   "cloudinaryCloud": "ndixlyhg",
   "cloudinaryPreset": "vl_orders",
+  "orderWorker": "https://vl-orders.virtualleather.workers.dev",
   "extraEngravingPrice": 5,
   "products": {
     "619483308": {

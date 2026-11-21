@@ -24,6 +24,8 @@
   "_cloudinary": "Customer logo files and design pictures are uploaded here with each order (unsigned upload preset; see README).",
   "cloudinaryCloud": "ndixlyhg",
   "cloudinaryPreset": "vl_orders",
+  "_orderWorker": "The order Worker's address (worker/README.md), e.g. https://vl-orders.NAME.workers.dev. Empty: designs aren't sent to MarketCenter.",
+  "orderWorker": "https://vl-orders.virtualleather.workers.dev",
   "metaPixelId": "298202042517671",
   "_shortLinks": "Short links that send visitors to the home page tagged with where they came from, so Google Analytics can tell them apart (virtualleather.net/bio and so on). Add one here, then run the build.",
   "shortLinks": {
@@ -64,5 +66,6 @@
   "instagramHandle": "@virtualleatherintl",
   "etsyUrl": "https://virtualleathershop.etsy.com/",
   "etsyReviewsUrl": "https://www.etsy.com/shop/virtualleathershop/reviews",
+  "hiddenReviews": ["item felt very cheap, it was too short"],
   "policiesUpdated": "16 November 2026"
 }

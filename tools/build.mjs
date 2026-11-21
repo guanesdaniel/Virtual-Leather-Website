@@ -173,8 +173,13 @@ function reviewList(list, withPhotos = true) {
 <ul class="reviews" role="list">${more.map(card).join('')}
 </ul></details>` : '');
 }
-const allReviews = reviewData.reviews || [];
-// Home page: the 12 most recent reviews with words, whatever their rating, each with its photo beside it.
+// Reviews Daniel chose not to show here ("hiddenReviews" in src/config.json: the start of each review's words).
+// They stay on Etsy and still count in the Etsy average and total shown with the reviews; the pages call
+// what's shown a selection and link to all the reviews on Etsy.
+const hiddenReviews = (site.hiddenReviews || []).map((t) => String(t).toLowerCase().replace(/\s+/g, ' ').trim()).filter(Boolean);
+const isHidden = (r) => hiddenReviews.some((h) => String(r.text || '').toLowerCase().replace(/\s+/g, ' ').trim().startsWith(h));
+const allReviews = (reviewData.reviews || []).filter((r) => !isHidden(r));
+// Home page: the 12 most recent reviews with words, each with its photo beside it.
 const homeReviews = allReviews.filter((r) => r.text).slice(0, 12);
 const reviews = () => reviewList(homeReviews);
 
@@ -212,9 +217,10 @@ function productReviewsSummary(id) {
   const n = (reviewsById[id] || []).filter((r) => r.text).length;
   const p = products.find((x) => x.id === id);
   const shop = rating ? `Our Etsy shop is rated <strong>${esc(rating.score)} out of 5</strong> from ${esc(rating.count)} reviews.` : '';
-  if (!n) return `${shop} Here are some recent ones, in the customers' own words.`;
+  const all = `<a href="${esc(site.etsyReviewsUrl)}" target="_blank" rel="noopener">Read all our reviews on Etsy</a>.`;
+  if (!n) return `${shop} Here's a selection of recent ones, in the customers' own words. ${all}`;
   const name = esc(p ? p.name.replace(/\s*\(.*\)$/, '') : 'product');
-  return `${shop} Here's what customers said about the ${name}${n < 6 ? ', then recent reviews of our other pieces' : ''}, in their own words.`;
+  return `${shop} Here's a selection of what customers said about the ${name}${n < 6 ? ', then recent reviews of our other pieces' : ''}, in their own words. ${all}`;
 }
 // More photos customers added to their reviews (a row of small photos on the home page): up to 8, newest
 // first, leaving out the ones already beside a home page review.
@@ -418,6 +424,7 @@ const pub = {
   ecwidStoreId: site.ecwidStoreId, currency: site.currency, extraEngravingId: site.extraEngravingProductId || '',
   ga4MeasurementId: site.ga4MeasurementId, metaPixelId: site.metaPixelId,
   cloudinaryCloud: site.cloudinaryCloud || '', cloudinaryPreset: site.cloudinaryPreset || '',
+  orderWorker: site.orderWorker || '',
   extraEngravingPrice: priceOf('engraving'),
   products: Object.fromEntries(products.map((p) => [p.id, Object.assign({ name: p.name, price: p.price, group: p.group }, p.designer ? { designer: p.designer } : {}, p.page ? { page: p.page } : {},
     priceData.products?.[p.id]?.choices ? { choices: priceData.products[p.id].choices } : {})])),

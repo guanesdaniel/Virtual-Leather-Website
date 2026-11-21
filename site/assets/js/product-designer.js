@@ -216,6 +216,7 @@
         w = bx[0] * fit; h = bx[1] * fit;
       }
       it.fit = fit;
+      it.drawn = { w: w, h: h, fs: it.kind === 'text' ? Number(node.getAttribute('font-size')) : 0 };
       clamp(it, w, h);
       if (it.kind === 'text') { node.setAttribute('x', it.x); node.setAttribute('y', it.y); }
       else if (ideaOf(it)) {
@@ -627,6 +628,39 @@
     return attempt(0);
   }
 
+  /* ---------- MarketCenter: the order in millimetres ----------
+   * Juan Miguel's workshop (MarketCenter) makes these products too. When the shop's order Worker is set up
+   * (orderWorker in src/config.json, see worker/README.md), each design added to the cart is filed there under its
+   * ref as MarketCenter's "pedido-web" item (P.mc names the product): its leathers, the knife roll's size, and each
+   * engraving as drawn, in mm (w and h its box, a text's letter size), centred on its place. A design idea goes as a
+   * logo, a black picture of it uploaded with the order. The Worker sends it when the order is paid. */
+  function mmOf(units, place) { return Math.round(units / perMm(place) * 10) / 10; }
+  function mcItem(ref, urls) {
+    var spots = engraved().filter(function (it) { return it.drawn; }).map(function (it) {
+      var o = { place: it.place, mode: it.kind, mm: { h: mmOf(it.drawn.h, it.place), w: mmOf(it.drawn.w, it.place) } };
+      if (it.kind === 'text') { o.text = it.text.trim(); o.font = it.font || 'montserrat'; o.mm.font = mmOf(it.drawn.fs, it.place); }
+      else { o.logoUrl = urls['idea-' + it.key] || (it.src === 'own' && it.url) || null; o.inkCropped = !!urls['idea-' + it.key]; }
+      return o;
+    });
+    var z = curSize(), o = { product: P.mc, main: val('main'), spots: spots, description: describe(ref), designPicture: urls.picture || null };
+    if (z) o.size = z.key;
+    if (hasStraps) o.acc = straps();
+    return o;
+  }
+  // A design idea's drawing in black on a clear background, 2000 px on its long side, as a PNG.
+  function artPicture(art) {
+    return new Promise(function (resolve) {
+      try {
+        var k = 2000 / Math.max(art.w, art.h), c = document.createElement('canvas');
+        c.width = Math.round(art.w * k); c.height = Math.round(art.h * k);
+        var g = c.getContext('2d');
+        g.scale(k, k); g.fillStyle = '#000';
+        g.fill(new Path2D(art.d), 'evenodd');
+        c.toBlob(function (b) { resolve(b); }, 'image/png');
+      } catch (e) { resolve(null); }
+    });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!isPlain() && !engraved().length) {
@@ -641,6 +675,10 @@
     submit.disabled = true;
     // The image files and a picture of the design go with the order (links in its description).
     var jobs = own.filter(function (it) { return it.file && !it.url; }).map(function (it) { return { key: it.key, name: it.file.name, blob: it.file }; });
+    if (C.orderWorker && P.mc) engraved().forEach(function (it) {
+      var art = artOf(ideaOf(it));
+      if (art) jobs.push({ key: 'idea-' + it.key, name: ref + '-' + it.idea + '.png', blob: function () { return artPicture(art); } });
+    });
     var svgNow = document.getElementById('pd-svg');
     if (VL.svgToPicture) jobs.push({ key: 'picture', name: ref + '-design.jpg', blob: function () { return VL.svgToPicture(svgNow, 1000); } });
     setStatus(jobs.length > 1 ? 'Sending us your image and design…' : 'Saving your design…');
@@ -653,6 +691,7 @@
       });
       if (urls.picture) fileLines.push('Design picture: ' + urls.picture);
       if (VL.orderFiles) VL.orderFiles.add(ref, P.label, fileLines);
+      try { if (P.mc && VL.sendDesign) VL.sendDesign(ref, { item: mcItem(ref, urls) }); } catch (ex) { /* never blocks the order */ }
       options = {
         'Description For Personalization': describe(ref),
         'Email for design confirmation': form.elements.email.value.trim(),
