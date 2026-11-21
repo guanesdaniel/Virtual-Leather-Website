@@ -1,0 +1,115 @@
+{
+  "_comment": "Written by tools/ecwid-prices.mjs from the Ecwid store. Edit prices in Ecwid, not here.",
+  "fetched": "2026-11-21T16:29:56.356Z",
+  "products": {
+    "619483308": {
+      "name": "Leather Bottle Opener (Optional Extra)",
+      "price": 15,
+      "choices": {
+        "Tanned or Light Brown": 15,
+        "Black": 15,
+        "Dark Brown": 15
+      }
+    },
+    "619488531": {
+      "name": "Minimalist Leather Backpack Personalized Front Engraving",
+      "price": 180,
+      "choices": {
+        "Black": 180,
+        "Tanned (Light Brown)": 180,
+        "Dark Brown": 180
+      }
+    },
+    "619492030": {
+      "name": "Extra Engraving (Logo or text)",
+      "price": 5
+    },
+    "619492031": {
+      "name": "Personalized Leather Knife Case for Chefs and Butchers",
+      "price": 170,
+      "choices": {
+        "Small: 45cm x 36 cm": 170,
+        "Large: 76cm x 52 cm": 190,
+        "Black": 170,
+        "Tanned (Light Brown)": 170,
+        "Dark Brown": 170
+      }
+    },
+    "619492033": {
+      "name": "Personalized Barber Leather Apron",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    },
+    "619498559": {
+      "name": "50ml Neutral Grease Leather Dublin , Protects, Nourishes & Softens Your Leather Products",
+      "price": 15
+    },
+    "619498560": {
+      "name": "Wood Working DIY Leather Apron - Professional Craftsman",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    },
+    "619498562": {
+      "name": "Personalized BBQ Leather Apron, Adjustable Beer Holder",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    },
+    "619501024": {
+      "name": "Personalizad Leather Duffle Bag - Gym Bag.",
+      "price": 180,
+      "choices": {
+        "Black": 180,
+        "Tanned (Light Brown)": 180,
+        "Dark Brown": 180
+      }
+    },
+    "619501025": {
+      "name": "Personalized Split Leg Forging - Tattoo Leather Apron",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    },
+    "619505538": {
+      "name": "Personalized Simple Leather Apron",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    },
+    "688211109": {
+      "name": "Leather Wings (Optional Extras)",
+      "price": 15,
+      "choices": {
+        "Tanned or Light Brown": 15,
+        "Black": 15,
+        "Dark Brown": 15
+      }
+    },
+    "738486114": {
+      "name": "Pattern Personalized BBQ Leather Apron, Adjustable Beer Drink Holder",
+      "price": 185,
+      "choices": {
+        "Black": 185,
+        "Tanned (Light Brown)": 185,
+        "Dark Brown": 185
+      }
+    }
+  }
+}
