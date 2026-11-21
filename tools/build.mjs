@@ -530,6 +530,37 @@ ${feedItems.join('\n')}
 `);
 console.log(`built feed/google.xml (${feedItems.length} products)`);
 
+// ChatGPT shopping product feed (OpenAI product feed spec, JSONL, discovery only: no checkout in ChatGPT).
+// Daniel adds https://virtualleather.net/feed/chatgpt.jsonl as a hosted feed URL in OpenAI's merchant portal,
+// so ChatGPT shows our own photos, prices and links. Same products as the Google feed.
+const chatgptItems = await Promise.all(products.filter((p) => FEED_TYPE[p.group]).map(async (p) => {
+  const photos = productPhotos(p).map(([n]) => imgUrl(n));
+  const mainJpeg = (await ogImage(productPhotos(p)[0][0])).url; // JPEG: the most widely accepted feed image format
+  const about = (galleryData[p.gallery] || {}).about || p.description || p.summary;
+  return JSON.stringify({
+    item_id: p.id,
+    title: p.title || p.name,
+    description: `${prices(about)} Personalized: engraved with your name, phrase or logo. Full-grain Colombian leather, 1.6 mm thick, handmade to order; you approve a design proof before we make it. Made in 1 to 3 days, then 3 to 5 days to the US with free tracked shipping and US import duties paid.`,
+    url: `${site.siteUrl}${productUrl(p)}?utm_source=chatgpt.com&utm_medium=shopping&utm_campaign=chatgpt_feed`,
+    brand: site.siteName,
+    seller_name: site.siteName,
+    image_url: mainJpeg,
+    additional_image_urls: photos.slice(1, 11),
+    availability: 'in_stock',
+    price: `${Number(p.price).toFixed(2)} ${site.currency}`,
+    shipping_price: `0.00 ${site.currency}`,
+    condition: 'new',
+    product_category: `${FEED_TYPE[p.group]} > ${p.name}`,
+    material: 'Full-grain leather',
+    target_countries: ['US'],
+    store_country: 'CO',
+    is_eligible_search: true,
+    is_eligible_checkout: false,
+  });
+}));
+await fs.writeFile(path.join(outDir, 'feed/chatgpt.jsonl'), chatgptItems.join('\n') + '\n');
+console.log(`built feed/chatgpt.jsonl (${chatgptItems.length} products)`);
+
 const today = new Date().toISOString().slice(0, 10);
 await fs.writeFile(path.join(outDir, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap
