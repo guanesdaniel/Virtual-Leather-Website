@@ -2,7 +2,7 @@
   "_comment": "Real photos shown in the designer for each apron style, taken from that apron's Ecwid listing (photo number = its position in the listing, from 0). After editing, run `npm run images` then `npm run build`.",
   "bbq": {
     "id": "619498562",
-    "about": "An adjustable leather beer holder keeps your drink to hand while you cook, with tool loops, a pocket and adjustable straps for a secure fit. Made to measure, with full personalisation.",
+    "about": "An adjustable leather beer holder keeps your drink to hand while you cook, with tool loops, a pocket and adjustable straps for a secure fit. Made to measure, with full personalization.",
     "photos": [
       [0, "Man wearing a tan BBQ apron engraved PAUL SMITH, with a bottle in the beer holder"],
       [1, "Tan BBQ apron engraved with the Grill Master design and the 'If you can read this, get me a beer' circle"],

@@ -244,7 +244,7 @@
     },
     barber: { 2: underChest(false), 3: spotPlan('Above the scissor loops'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the pocket') },
     bbqpattern: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), pocket: spotPlan('On the pocket') },
-    simple: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), 3: spotPlan('Above the pocket'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the centre pocket') },
+    simple: { 1: CHEST_WITH_DESIGNS, 2: underChest(true), 3: spotPlan('Above the pocket'), 4: spotPlan('Above the pocket'), pocket: spotPlan('On the center pocket') },
     split: { 2: underChest(false), 3: spotPlan('Bottom of the left leg'), pocket: spotPlan('On the chest pocket'), pocket2: spotPlan('On the right leg pocket') },
     wood: { 2: underChest(false), pocket: spotPlan('On the chest pocket') }
   };
