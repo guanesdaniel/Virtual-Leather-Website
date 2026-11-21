@@ -327,9 +327,9 @@ const engravingLine = FLAGS.extraEngraving ? 'Two engravings included (name, phr
 
 function productFacts(p) {
   if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Real leather, handmade in Colombia', engravingLine,
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included worldwide, US import duties included'];
+    'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Shipping included worldwide, US import duties included'];
   if (p.group === 'more') return ['Real leather, handmade in Colombia', 'Personalised with your name, phrase or logo',
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included worldwide, US import duties included'];
+    'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Shipping included worldwide, US import duties included'];
   return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
 }
 
@@ -505,12 +505,12 @@ const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
     ['g:gender', 'unisex'],
     ['g:size', 'One Size'],
     ['g:is_bundle', 'no'],
-    ['g:min_handling_time', '3'],
-    ['g:max_handling_time', '5'],
+    ['g:min_handling_time', '1'],
+    ['g:max_handling_time', '3'],
     ['g:custom_label_0', p.group],
   ];
   return `    <item>\n${tags.map(([k, v]) => `      <${k}>${esc(v)}</${k}>`).join('\n')}
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 ${site.currency}</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 ${site.currency}</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>`;
 });
 await fs.mkdir(path.join(outDir, 'feed'), { recursive: true });
@@ -562,7 +562,9 @@ Key facts:
 - Seller: ${site.legalName} (${site.siteName}), ${site.legalForm}; founder ${site.ownerName}. Products are handmade in ${site.madeIn}.
 - Personalisation: names, short phrases, dates, monograms and logos, laser engraved. A free online designer on the website shows a live preview; a design proof is sent by email or WhatsApp before production.
 - Fit: aprons are made to measure from the wearer's height and weight.
-- Timing: made in about 3 days after the design proof is approved, then shipped from ${site.madeIn} with a tracking number.
+- Leather: genuine grain leather of the highest quality from ${site.madeIn}, 1.6 mm thick.
+- Timing: made in 1 to 3 days after the design proof is approved, then shipped from ${site.madeIn} by FedEx with tracking. Delivery usually takes 3 to 5 days to the US and 5 to 7 business days to Europe. US import duties are included.
+- Care: leave the leather untreated for a vintage look that develops quickly, or treat it every few months with the leather care grease to keep it moisturised and looking new.
 - Business and team orders: aprons with a company logo for restaurants, cafés, barbershops, breweries and teams; prices for several aprons are agreed directly (WhatsApp or email).
 - Gifts: popular for Father's Day, birthdays, Christmas, BBQ lovers, chefs, barbers, woodworkers and tattoo artists.${rating ? `\n- Reviews: ${rating} (${site.etsyUrl}).` : ''}
 - Contact: WhatsApp ${site.whatsappDisplay}, email ${site.email}, Instagram ${site.instagramHandle} (${site.instagramUrl}).

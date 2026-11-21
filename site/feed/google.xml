@@ -30,10 +30,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>738486114</g:id>
@@ -56,10 +56,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619492033</g:id>
@@ -87,10 +87,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619505538</g:id>
@@ -118,10 +118,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619501025</g:id>
@@ -148,10 +148,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619498560</g:id>
@@ -178,10 +178,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619492031</g:id>
@@ -201,10 +201,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619488531</g:id>
@@ -224,10 +224,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619501024</g:id>
@@ -247,10 +247,10 @@
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
   </channel>
 </rss>
