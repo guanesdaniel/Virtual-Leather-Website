@@ -4,7 +4,7 @@
    The large case (76 cm) is drawn the same, at its own scale. */
 window.VL_PRODUCT_DESIGN = {
   id: 619492031,
-  name: 'personalised leather knife roll',
+  name: 'personalized leather knife roll',
   label: 'Knife roll',
   mc: 'estuche',   // MarketCenter's name for it (the order Worker sends it to Juan Miguel's workshop)
   price: 170,

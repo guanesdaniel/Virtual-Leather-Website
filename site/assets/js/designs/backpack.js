@@ -2,7 +2,7 @@
    Drawing units: the front is 400 units for the backpack's 28 cm width (38 cm tall). */
 window.VL_PRODUCT_DESIGN = {
   id: 619488531,
-  name: 'personalised minimalist leather backpack',
+  name: 'personalized minimalist leather backpack',
   label: 'Backpack',
   mc: 'maletin-14',   // MarketCenter's name for it (the order Worker sends it to Juan Miguel's workshop)
   price: 180,
