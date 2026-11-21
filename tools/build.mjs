@@ -326,9 +326,9 @@ const GROUP_LABEL = { aprons: 'Leather aprons', more: 'Leather bags & cases', ex
 const engravingLine = FLAGS.extraEngraving ? 'Two engravings included (name, phrase or logo), extra spots $5 each' : 'Name, phrase or logo engraving included';
 
 function productFacts(p) {
-  if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Genuine Colombian leather, 1.6 mm thick, handmade', engravingLine,
+  if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Full-grain Colombian leather, 1.6 mm thick, handmade', engravingLine,
     'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Free shipping worldwide, US import duties paid (nothing to pay on delivery)'];
-  if (p.group === 'more') return ['Genuine Colombian leather, 1.6 mm thick, handmade', 'Personalized with your name, phrase or logo',
+  if (p.group === 'more') return ['Full-grain Colombian leather, 1.6 mm thick, handmade', 'Personalized with your name, phrase or logo',
     'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Free shipping worldwide, US import duties paid (nothing to pay on delivery)'];
   return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
 }
@@ -399,7 +399,7 @@ function productJsonld(p, url) {
   return { '@context': 'https://schema.org', '@graph': [
     { '@type': 'Product', '@id': `${url}#product`, name: p.name, description: (galleryData[p.gallery] || {}).about || p.summary,
       image: productPhotos(p).slice(0, 4).map(([n]) => imgUrl(n)), sku: p.id, productID: p.id,
-      brand: { '@type': 'Brand', name: site.siteName }, material: 'Genuine leather', countryOfOrigin: { '@type': 'Country', name: site.madeIn }, offers: offer },
+      brand: { '@type': 'Brand', name: site.siteName }, material: 'Full-grain leather', countryOfOrigin: { '@type': 'Country', name: site.madeIn }, offers: offer },
     { '@type': 'BreadcrumbList', itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${site.siteUrl}/` },
       { '@type': 'ListItem', position: 2, name: 'Shop', item: `${site.siteUrl}/shop/` },
@@ -503,7 +503,7 @@ const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
     ['g:brand', site.siteName],
     ['g:identifier_exists', 'no'],
     ['g:product_type', `${FEED_TYPE[p.group]} > ${p.name}`],
-    ['g:material', 'Leather'],
+    ['g:material', 'Full-grain leather'],
     ['g:color', 'Brown'],
     ['g:age_group', 'adult'],
     ['g:gender', 'unisex'],
@@ -566,7 +566,7 @@ Key facts:
 - Seller: ${site.legalName} (${site.siteName}), ${site.legalForm}; founder ${site.ownerName}. Products are handmade in ${site.madeIn}.
 - Personalization: names, short phrases, dates, monograms and logos, laser engraved. A free online designer on the website shows a live preview; a design proof is sent by email or WhatsApp before production.
 - Fit: aprons are made to measure from the wearer's height and weight.
-- Leather: genuine grain leather of the highest quality from ${site.madeIn}, 1.6 mm thick.
+- Leather: full-grain leather of the highest quality (natural marks and wrinkles kept) from ${site.madeIn}, 1.6 mm thick.
 - Timing: made in 1 to 3 days after the design proof is approved, then shipped from ${site.madeIn} by FedEx with tracking. Delivery usually takes 3 to 5 days to the US and 5 to 7 business days to Europe. Shipping is free, and US import duties are paid by us, so US buyers pay nothing on delivery.
 - Care: leave the leather untreated for a vintage look that develops quickly, or treat it every few months with the leather care grease to keep it moisturized and looking new.
 - Business and team orders: aprons with a company logo for restaurants, cafés, barbershops, breweries and teams; prices for several aprons are agreed directly (WhatsApp or email).
