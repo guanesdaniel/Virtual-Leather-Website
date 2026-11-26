@@ -378,11 +378,22 @@
     // MarketCenter gets the order number the shop owner sees in Ecwid (like WCREF), not Ecwid's internal number.
     var shortId = [order.id, order.vendorOrderNumber, order.orderNumber].map(function (v) { return v == null ? '' : String(v); })
       .filter(function (v) { return /^[A-Za-z0-9-]{4,20}$/.test(v) && /[A-Za-z]/.test(v); })[0] || id;
-    var p = order.shippingPerson || order.billingPerson || {};
-    var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || '',
+    var p = order.shippingPerson || order.billingPerson || {}, bill = order.billingPerson || {};
+    // Ecwid's checkout may not ask for a phone (or the customer skips it): then the phone (and email) the customer gave
+    // in the designer, which goes with each designed product as an option, is used.
+    var given = function (re) {
+      var v = '';
+      (order.items || []).forEach(function (it) {
+        var o = optionsOf(it);
+        Object.keys(o).forEach(function (k) { if (!v && re.test(k) && o[k].trim()) v = o[k].trim(); });
+      });
+      return v;
+    };
+    var phone = p.phone || bill.phone || (order.customer && order.customer.phone) || given(/phone/i);
+    var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || given(/e-?mail/i),
       notes: order.orderComments || order.comments || '', items: items, extras: extras,
       shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
-        postal: p.postalCode || '', country: p.countryCode || '', phone: p.phone || '' } };
+        postal: p.postalCode || '', country: p.countryCode || '', phone: phone } };
     fetch(C.orderWorker.replace(/\/+$/, '') + '/order', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body), keepalive: true }).catch(function () {});
   }
