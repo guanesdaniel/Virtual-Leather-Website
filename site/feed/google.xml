@@ -24,16 +24,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; BBQ Leather Apron with Beer Holder</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>738486114</g:id>
@@ -50,16 +50,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; Patterned BBQ Leather Apron with Drink Holder</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619492033</g:id>
@@ -81,16 +81,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; Barber Leather Apron</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619505538</g:id>
@@ -112,16 +112,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; Simple Leather Apron</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619501025</g:id>
@@ -142,16 +142,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; Split-Leg Forging &amp; Tattoo Apron</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619498560</g:id>
@@ -172,16 +172,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather aprons &gt; Woodworking Leather Apron</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>aprons</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619492031</g:id>
@@ -195,16 +195,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather bags &amp; cases &gt; Leather Knife Roll for Chefs &amp; Butchers</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619488531</g:id>
@@ -218,16 +218,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather bags &amp; cases &gt; Minimalist Leather Backpack</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
     <item>
       <g:id>619501024</g:id>
@@ -241,16 +241,16 @@
       <g:brand>Virtual Leather</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:product_type>Leather bags &amp; cases &gt; Leather Duffle / Gym Bag</g:product_type>
-      <g:material>Leather</g:material>
+      <g:material>Full-grain leather</g:material>
       <g:color>Brown</g:color>
       <g:age_group>adult</g:age_group>
       <g:gender>unisex</g:gender>
       <g:size>One Size</g:size>
       <g:is_bundle>no</g:is_bundle>
-      <g:min_handling_time>3</g:min_handling_time>
-      <g:max_handling_time>5</g:max_handling_time>
+      <g:min_handling_time>1</g:min_handling_time>
+      <g:max_handling_time>3</g:max_handling_time>
       <g:custom_label_0>more</g:custom_label_0>
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 USD</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>
   </channel>
 </rss>

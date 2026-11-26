@@ -92,6 +92,29 @@ function img(name, alt = '', sizes = '100vw', eager = '') {
 // /products/<slug>/ built below.
 const productUrl = (p) => p.page || `/products/${p.slug}/`;
 
+// Shipping rules for Google's Merchant listings structured data (Offer.shippingDetails), matching
+// /shipping-returns/: free to the US (import duties paid) and outside Europe, $15 per order to Europe
+// including the UK, Norway and Switzerland. Made in 1 to 3 days; transit 3 to 5 days to the US and
+// 5 to 7 business days to Europe. Google needs named countries, so "everywhere else" lists our main
+// non-European markets.
+const EUROPE = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU',
+  'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB', 'NO', 'CH'];
+const OTHER_FREE = ['CA', 'MX', 'AU', 'NZ', 'CO'];
+const days = (min, max) => ({ '@type': 'QuantitativeValue', minValue: min, maxValue: max, unitCode: 'DAY' });
+const shippingRule = (countries, value, transit) => ({ '@type': 'OfferShippingDetails',
+  shippingRate: { '@type': 'MonetaryAmount', value, currency: site.currency },
+  shippingDestination: { '@type': 'DefinedRegion', addressCountry: countries.length === 1 ? countries[0] : countries },
+  deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: days(1, 3), ...(transit ? { transitTime: days(...transit) } : {}) } });
+const SHIPPING_DETAILS = [shippingRule(['US'], '0', [3, 5]), shippingRule(EUROPE, '15', [5, 7]), shippingRule(OTHER_FREE, '0')];
+// Pages with hand-written Product JSON-LD (knife roll, backpack, duffle) get the same rules.
+function addShipping(node) {
+  if (Array.isArray(node)) return node.forEach(addShipping);
+  if (!node || typeof node !== 'object') return;
+  if (node['@type'] === 'Offer' || node['@type'] === 'AggregateOffer') node.shippingDetails = SHIPPING_DETAILS;
+  Object.values(node).forEach(addShipping);
+}
+
+
 // The picture a page offers when it's shared or shown by search engines and AI assistants (og:image): a JPEG
 // copy of that page's own main photo, made at build time. JPEG because not every app reads WebP (link
 // previews, some AI answers), and each page names its own photo ("ogImage" in its header, an image name
@@ -173,8 +196,13 @@ function reviewList(list, withPhotos = true) {
 <ul class="reviews" role="list">${more.map(card).join('')}
 </ul></details>` : '');
 }
-const allReviews = reviewData.reviews || [];
-// Home page: the 12 most recent reviews with words, whatever their rating, each with its photo beside it.
+// Reviews Daniel chose not to show here ("hiddenReviews" in src/config.json: the start of each review's words).
+// They stay on Etsy and still count in the Etsy average and total shown with the reviews; the pages call
+// what's shown a selection and link to all the reviews on Etsy.
+const hiddenReviews = (site.hiddenReviews || []).map((t) => String(t).toLowerCase().replace(/\s+/g, ' ').trim()).filter(Boolean);
+const isHidden = (r) => hiddenReviews.some((h) => String(r.text || '').toLowerCase().replace(/\s+/g, ' ').trim().startsWith(h));
+const allReviews = (reviewData.reviews || []).filter((r) => !isHidden(r));
+// Home page: the 12 most recent reviews with words, each with its photo beside it.
 const homeReviews = allReviews.filter((r) => r.text).slice(0, 12);
 const reviews = () => reviewList(homeReviews);
 
@@ -212,9 +240,10 @@ function productReviewsSummary(id) {
   const n = (reviewsById[id] || []).filter((r) => r.text).length;
   const p = products.find((x) => x.id === id);
   const shop = rating ? `Our Etsy shop is rated <strong>${esc(rating.score)} out of 5</strong> from ${esc(rating.count)} reviews.` : '';
-  if (!n) return `${shop} Here are some recent ones, in the customers' own words.`;
+  const all = `<a href="${esc(site.etsyReviewsUrl)}" target="_blank" rel="noopener">Read all our reviews on Etsy</a>.`;
+  if (!n) return `${shop} Here's a selection of recent ones, in the customers' own words. ${all}`;
   const name = esc(p ? p.name.replace(/\s*\(.*\)$/, '') : 'product');
-  return `${shop} Here's what customers said about the ${name}${n < 6 ? ', then recent reviews of our other pieces' : ''}, in their own words.`;
+  return `${shop} Here's a selection of what customers said about the ${name}${n < 6 ? ', then recent reviews of our other pieces' : ''}, in their own words. ${all}`;
 }
 // More photos customers added to their reviews (a row of small photos on the home page): up to 8, newest
 // first, leaving out the ones already beside a home page review.
@@ -301,6 +330,7 @@ for (const file of pageFiles) {
   page.robots = page.noindex ? 'noindex, follow' : 'index, follow';
   page.ogType ||= 'website';
   await setOgImage(page, page.ogImage || 'hero-bbq', page.ogImageAlt || (page.ogImage ? '' : 'A man wearing a tan leather BBQ apron engraved "Paul Smith", with a beer bottle in the drink holder'));
+  if (page.jsonld) addShipping(page.jsonld);
   page.jsonldTag = page.jsonld
     ? `<script type="application/ld+json">${JSON.stringify(page.jsonld).replace(/</g, '\\u003c')}</script>`
     : '';
@@ -320,11 +350,11 @@ const GROUP_LABEL = { aprons: 'Leather aprons', more: 'Leather bags & cases', ex
 const engravingLine = FLAGS.extraEngraving ? 'Two engravings included (name, phrase or logo), extra spots $5 each' : 'Name, phrase or logo engraving included';
 
 function productFacts(p) {
-  if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Real leather, handmade in Colombia', engravingLine,
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included worldwide, US import duties included'];
-  if (p.group === 'more') return ['Real leather, handmade in Colombia', 'Personalised with your name, phrase or logo',
-    'Design proof to approve before we start', 'Made in about 3 days after you approve, then tracked shipping', 'Shipping included worldwide, US import duties included'];
-  return ['Shipped from Colombia with tracking', 'Shipping cost shown at checkout'];
+  if (p.group === 'aprons') return ['Made to measure from the wearer\'s height and build', 'Full-grain Colombian leather, 1.6 mm thick, handmade', engravingLine,
+    'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Free shipping to the US with import duties paid (nothing to pay on delivery); $15 per order to Europe'];
+  if (p.group === 'more') return ['Full-grain Colombian leather, 1.6 mm thick, handmade', 'Personalized with your name, phrase or logo',
+    'Design proof to approve before we start', 'Made in 1 to 3 days after you approve, then tracked shipping (3 to 5 days to the US)', 'Free shipping to the US with import duties paid (nothing to pay on delivery); $15 per order to Europe'];
+  return ['Shipped from Colombia with tracking', 'Ships free with your order'];
 }
 
 function productCta(p) {
@@ -355,7 +385,7 @@ ${photos.length > 1 ? `      <ul class="product-thumbs" role="list">${photos.sli
     <div class="product-info">
       <p class="eyebrow">${esc(GROUP_LABEL[p.group])}</p>
       <h1>${esc(p.name)}</h1>
-      <p class="product-price"><strong>${money(p.price)}</strong> <span class="muted">USD${p.group === 'aprons' ? ' · shipping included' : ''}</span></p>
+      <p class="product-price"><strong>${money(p.price)}</strong> <span class="muted">USD${p.group === 'aprons' ? ' · free US shipping' : ''}</span></p>
       <p class="product-lead">${esc(about)}</p>
       <ul class="hero-facts product-facts" role="list">${productFacts(p).map((f) => `
         <li>${tick}${esc(f)}</li>`).join('')}
@@ -385,11 +415,11 @@ function productJsonld(p, url) {
   const offer = { '@type': 'Offer', url, price: Number(p.price).toFixed(2), priceCurrency: site.currency,
     availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition',
     seller: { '@type': 'Organization', name: site.siteName } };
-  if (p.group === 'aprons') offer.shippingDetails = { '@type': 'OfferShippingDetails', shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: site.currency } };
+  offer.shippingDetails = SHIPPING_DETAILS;
   return { '@context': 'https://schema.org', '@graph': [
     { '@type': 'Product', '@id': `${url}#product`, name: p.name, description: (galleryData[p.gallery] || {}).about || p.summary,
       image: productPhotos(p).slice(0, 4).map(([n]) => imgUrl(n)), sku: p.id, productID: p.id,
-      brand: { '@type': 'Brand', name: site.siteName }, offers: offer },
+      brand: { '@type': 'Brand', name: site.siteName }, material: 'Full-grain leather', countryOfOrigin: { '@type': 'Country', name: site.madeIn }, offers: offer },
     { '@type': 'BreadcrumbList', itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${site.siteUrl}/` },
       { '@type': 'ListItem', position: 2, name: 'Shop', item: `${site.siteUrl}/shop/` },
@@ -479,7 +509,7 @@ const FEED_TYPE = { aprons: 'Leather aprons', more: 'Leather bags & cases' };
 const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
   const photos = productPhotos(p).map(([n]) => imgUrl(n));
   const about = (galleryData[p.gallery] || {}).about || p.description || p.summary;
-  const description = `${prices(about)} Personalised: engraved with your name, phrase or logo. Handmade to order in Colombia; you approve a design proof before we make it.`;
+  const description = `${prices(about)} Personalized: engraved with your name, phrase or logo. Handmade to order in Colombia; you approve a design proof before we make it.`;
   const tags = [
     ['g:id', p.id],
     ['g:title', us(p.title || p.name)],
@@ -493,18 +523,18 @@ const feedItems = products.filter((p) => FEED_TYPE[p.group]).map((p) => {
     ['g:brand', site.siteName],
     ['g:identifier_exists', 'no'],
     ['g:product_type', `${FEED_TYPE[p.group]} > ${p.name}`],
-    ['g:material', 'Leather'],
+    ['g:material', 'Full-grain leather'],
     ['g:color', 'Brown'],
     ['g:age_group', 'adult'],
     ['g:gender', 'unisex'],
     ['g:size', 'One Size'],
     ['g:is_bundle', 'no'],
-    ['g:min_handling_time', '3'],
-    ['g:max_handling_time', '5'],
+    ['g:min_handling_time', '1'],
+    ['g:max_handling_time', '3'],
     ['g:custom_label_0', p.group],
   ];
   return `    <item>\n${tags.map(([k, v]) => `      <${k}>${esc(v)}</${k}>`).join('\n')}
-      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 ${site.currency}</g:price></g:shipping>
+      <g:shipping><g:country>US</g:country><g:service>Tracked shipping from Colombia</g:service><g:price>0.00 ${site.currency}</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>
     </item>`;
 });
 await fs.mkdir(path.join(outDir, 'feed'), { recursive: true });
@@ -519,6 +549,37 @@ ${feedItems.join('\n')}
 </rss>
 `);
 console.log(`built feed/google.xml (${feedItems.length} products)`);
+
+// ChatGPT shopping product feed (OpenAI product feed spec, JSONL, discovery only: no checkout in ChatGPT).
+// Daniel adds https://virtualleather.net/feed/chatgpt.jsonl as a hosted feed URL in OpenAI's merchant portal,
+// so ChatGPT shows our own photos, prices and links. Same products as the Google feed.
+const chatgptItems = await Promise.all(products.filter((p) => FEED_TYPE[p.group]).map(async (p) => {
+  const photos = productPhotos(p).map(([n]) => imgUrl(n));
+  const mainJpeg = (await ogImage(productPhotos(p)[0][0])).url; // JPEG: the most widely accepted feed image format
+  const about = (galleryData[p.gallery] || {}).about || p.description || p.summary;
+  return JSON.stringify({
+    item_id: p.id,
+    title: p.title || p.name,
+    description: `${prices(about)} Personalized: engraved with your name, phrase or logo. Full-grain Colombian leather, 1.6 mm thick, handmade to order; you approve a design proof before we make it. Made in 1 to 3 days, then 3 to 5 days to the US with free tracked shipping and US import duties paid.`,
+    url: `${site.siteUrl}${productUrl(p)}?utm_source=chatgpt.com&utm_medium=shopping&utm_campaign=chatgpt_feed`,
+    brand: site.siteName,
+    seller_name: site.siteName,
+    image_url: mainJpeg,
+    additional_image_urls: photos.slice(1, 11),
+    availability: 'in_stock',
+    price: `${Number(p.price).toFixed(2)} ${site.currency}`,
+    shipping_price: `0.00 ${site.currency}`,
+    condition: 'new',
+    product_category: `${FEED_TYPE[p.group]} > ${p.name}`,
+    material: 'Full-grain leather',
+    target_countries: ['US'],
+    store_country: 'CO',
+    is_eligible_search: true,
+    is_eligible_checkout: false,
+  });
+}));
+await fs.writeFile(path.join(outDir, 'feed/chatgpt.jsonl'), chatgptItems.join('\n') + '\n');
+console.log(`built feed/chatgpt.jsonl (${chatgptItems.length} products)`);
 
 const today = new Date().toISOString().slice(0, 10);
 await fs.writeFile(path.join(outDir, 'sitemap.xml'),
@@ -545,18 +606,20 @@ if (site.indexNowKey) await fs.writeFile(path.join(outDir, `${site.indexNowKey}.
     .map((m) => { try { return JSON.parse(m[1]); } catch { return {}; } })
     .flatMap((d) => d['@graph'] || [d]).filter((d) => d['@type'] === 'FAQPage')
     .flatMap((d) => d.mainEntity || []).map((q) => [q.name, q.acceptedAnswer?.text]).filter(([q, a]) => q && a);
-  const line = (p) => `- [${p.name}](${site.siteUrl}${productUrl(p)}): ${p.summary} ${money(p.price)} USD${p.group === 'extras' ? ', added to an apron order' : ', shipping included'}.`;
+  const line = (p) => `- [${p.name}](${site.siteUrl}${productUrl(p)}): ${p.summary} ${money(p.price)} USD${p.group === 'extras' ? ', added to an apron order' : ', free US shipping'}.`;
   const rating = reviewData.etsyRating && reviewData.etsyReviewCount ? `${reviewData.etsyRating} out of 5 from ${reviewData.etsyReviewCount} reviews on Etsy` : '';
   const md = `# ${site.siteName}
 
-> ${site.siteName} makes personalised leather goods by hand in ${site.madeIn}: made-to-measure leather aprons (BBQ, chef, barber, woodworking, tattoo and forging), knife rolls, backpacks and duffle bags, engraved with the customer's name, phrase or logo. Customers design their piece online at ${site.siteUrl}, approve a design proof before it is made, and it is shipped worldwide with tracking. Prices are in US dollars${products.some((p) => p.group === 'aprons') ? `; aprons start at ${money(Math.min(...products.filter((p) => p.group === 'aprons').map((p) => p.price)))} with engraving and shipping included` : ''}.
+> ${site.siteName} makes personalized leather goods by hand in ${site.madeIn}: made-to-measure leather aprons (BBQ, chef, barber, woodworking, tattoo and forging), knife rolls, backpacks and duffle bags, engraved with the customer's name, phrase or logo. Customers design their piece online at ${site.siteUrl}, approve a design proof before it is made, and it is shipped worldwide with tracking. Prices are in US dollars${products.some((p) => p.group === 'aprons') ? `; aprons start at ${money(Math.min(...products.filter((p) => p.group === 'aprons').map((p) => p.price)))} with engraving included and free US shipping` : ''}.
 
 Key facts:
 
 - Seller: ${site.legalName} (${site.siteName}), ${site.legalForm}; founder ${site.ownerName}. Products are handmade in ${site.madeIn}.
-- Personalisation: names, short phrases, dates, monograms and logos, laser engraved. A free online designer on the website shows a live preview; a design proof is sent by email or WhatsApp before production.
+- Personalization: names, short phrases, dates, monograms and logos, laser engraved. A free online designer on the website shows a live preview; a design proof is sent by email or WhatsApp before production.
 - Fit: aprons are made to measure from the wearer's height and weight.
-- Timing: made in about 3 days after the design proof is approved, then shipped from ${site.madeIn} with a tracking number.
+- Leather: full-grain leather of the highest quality (natural marks and wrinkles kept) from ${site.madeIn}, 1.6 mm thick.
+- Timing: made in 1 to 3 days after the design proof is approved, then shipped from ${site.madeIn} by FedEx or DHL with tracking. Delivery usually takes 3 to 5 days to the US and 5 to 7 business days to Europe. Shipping is free to the US, and US import duties are paid by us, so US buyers pay nothing on delivery. Shipping to Europe (including the UK) is $15 per order; everywhere else it is free.
+- Care: leave the leather untreated for a vintage look that develops quickly, or treat it every few months with the leather care grease to keep it moisturized and looking new.
 - Business and team orders: aprons with a company logo for restaurants, cafés, barbershops, breweries and teams; prices for several aprons are agreed directly (WhatsApp or email).
 - Gifts: popular for Father's Day, birthdays, Christmas, BBQ lovers, chefs, barbers, woodworkers and tattoo artists.${rating ? `\n- Reviews: ${rating} (${site.etsyUrl}).` : ''}
 - Contact: WhatsApp ${site.whatsappDisplay}, email ${site.email}, Instagram ${site.instagramHandle} (${site.instagramUrl}).

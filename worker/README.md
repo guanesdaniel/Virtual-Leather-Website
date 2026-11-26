@@ -14,7 +14,9 @@ How it works:
    The knife roll, backpack and duffle designer (`site/assets/js/product-designer.js`, `mcItem`) does the same for its
    product (`mc` in `designs/*.js`: `estuche`, `maletin-14`, `maleta-mediana`): leathers, the knife roll's size, and
    each engraving's box in mm (`h`, `w`, `font` for text), centred on its place. The Worker turns the places into
-   MarketCenter's spots (`ITEM_SPOTS`: knife roll `outside` / `inside`; the bags' pieces `1` and `2`). A design idea
+   MarketCenter's spots (`ITEM_SPOTS`, confirmed by Juan Miguel 21 Nov 2026: knife roll `outside` (centre of the
+   outside) / `inside` (centre of the inside flap); backpack piece `1` front, `2` front pocket; duffle `1` side, `2`
+   round end). A design idea
    (Best Dad Ever...) goes as a logo: a black PNG of it, uploaded to Cloudinary.
 2. When a customer finishes checkout, Ecwid tells the shop page the order was placed (`Ecwid.OnOrderPlaced`, on every
    Ecwid plan, Starter included: no Ecwid API or app needed). The page (`site/assets/js/main.js`, `sendPlacedOrder`)

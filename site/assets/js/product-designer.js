@@ -338,7 +338,7 @@
         '<input id="' + id + '-size" type="range" min="' + r[0] + '" max="' + r[1] + '" step="1" value="' + it.size + '" data-k="size">' +
         '<button type="button" class="size-btn" data-step="1" aria-label="Bigger">+</button></div>' +
         '<p class="fit-note" id="' + id + '-fit" aria-live="polite"></p></div>' +
-      '<div class="btn-row pd-item-actions"><button type="button" class="link-button" data-centre>Centre it</button>' +
+      '<div class="btn-row pd-item-actions"><button type="button" class="link-button" data-centre>Center it</button>' +
         '<button type="button" class="link-button" data-remove>Remove</button></div>' +
       '</fieldset>';
   }

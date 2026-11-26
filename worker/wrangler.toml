@@ -21,4 +21,4 @@ CLOUDINARY_PREFIX = "https://res.cloudinary.com/ndixlyhg/"
 DRY_RUN = "0"
 # "1": knife rolls, backpacks, duffle bags and loose extras (bottle opener, wings, grease) go to MarketCenter too
 # (pedido-web v2). "0": they're entered by hand, and each such order is only checked as v2 (logged "v2-check").
-V2_LIVE = "0"
+V2_LIVE = "1"
