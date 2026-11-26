@@ -191,35 +191,80 @@
     if (d > max) { it.x = z.cx + (d ? dx / d * max : 0); it.y = z.cy + (d ? dy / d * max : 0); }
   }
 
+  // Engravings sharing a place must not overlap. When they do, line them up across the place (side by side
+  // or one above the other, whichever lets them stay bigger) in their current order, centred, with a small gap,
+  // and make them all smaller if they don't fit at the chosen sizes (we tell the customer in the form).
+  // Positions the customer chose are kept while nothing overlaps. it.box is the room an engraving takes up
+  // ([w, h]: for a text, its letters with their ascenders and descenders; it.drawn.h is the letter size).
+  var GAP_MM = 5;
+  function overlaps(a, b) {
+    return Math.abs(a.x - b.x) * 2 < a.box[0] + b.box[0] && Math.abs(a.y - b.y) * 2 < a.box[1] + b.box[1];
+  }
+  function arrange(group) {
+    var place = group[0].place, z = P.places[place].zone, gap = GAP_MM * perMm(place), n = group.length;
+    var c = zoneCentre(place), zw = z.r ? z.r * 2 * .7 : z.w, zh = z.r ? z.r * 2 * .7 : z.h;
+    function sum(k) { return group.reduce(function (t, it) { return t + it.box[k]; }, 0); }
+    function most(k) { return Math.max.apply(null, group.map(function (it) { return it.box[k]; })); }
+    var free = function (len) { return Math.max(0, len * .96 - gap * (n - 1)); };
+    var row = Math.min(1, free(zw) / sum(0), zh * .96 / most(1));
+    var col = Math.min(1, free(zh) / sum(1), zw * .96 / most(0));
+    var across = row > col, s = across ? row : col;
+    group.sort(function (a, b) { return across ? a.x - b.x : a.y - b.y; });
+    var pos = (across ? c.x : c.y) - (sum(across ? 0 : 1) * s + gap * (n - 1)) / 2;
+    group.forEach(function (it) {
+      var d = it.drawn, b = it.box;
+      d.w *= s; d.h *= s; d.fs *= s; it.fit *= s; b[0] *= s; b[1] *= s;
+      if (across) { it.x = pos + b[0] / 2; it.y = c.y; pos += b[0] + gap; }
+      else { it.y = pos + b[1] / 2; it.x = c.x; pos += b[1] + gap; }
+    });
+  }
+
   function drawItems(main) {
     while (layer.firstChild) layer.removeChild(layer.firstChild);
     if (isPlain()) return;
     var ink = COLORS[main].engrave;
-    items.forEach(function (it, i) {
+    // First measure each engraving (a text has to be drawn to be measured)...
+    var nodes = items.map(function (it, i) {
       var g = el('g', { 'clip-path': 'url(#pd-clip-' + it.place + ')' }, layer);
       var hit = el('g', { class: 'pd-item', 'data-i': i, tabindex: 0, role: 'button',
         'aria-label': 'Engraving ' + (i + 1) + ' on ' + P.places[it.place].long + '. Drag, or use the arrow keys, to move it.' }, g);
-      var w, h, node, fit = 1;
+      var w, h, node = null, fit = 1;
       if (it.kind === 'text') {
         var f = FONTS[it.font] || FONTS.montserrat, empty = !it.text.trim();
         node = el('text', { x: it.x, y: it.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: ink,
           'font-family': f.family, 'font-weight': f.weight, 'font-size': (it.size * perMm(it.place) / .7 * f.scale).toFixed(1),
           opacity: empty ? .35 : .92 }, hit);
         node.textContent = empty ? 'Your name' : it.text;
-        var bw = node.getBBox().width, r = room(it, it.y);
+        var bb = node.getBBox(), bw = bb.width, r = room(it, it.y);
         // Too long for the place at this size: shrink it to fit (we tell the customer in the form).
-        if (bw > r[0] * .96) { fit = r[0] * .96 / bw; node.setAttribute('font-size', (node.getAttribute('font-size') * fit).toFixed(1)); }
+        if (bw > r[0] * .96) fit = r[0] * .96 / bw;
         w = bw * fit; h = it.size * perMm(it.place) * fit;
       } else {
         var bx = boxOf(it), r2 = room(it, it.y);
         fit = Math.min(1, r2[0] * .96 / bx[0], r2[1] * .96 / bx[1]);
         w = bx[0] * fit; h = bx[1] * fit;
       }
-      it.fit = fit;
-      it.drawn = { w: w, h: h, fs: it.kind === 'text' ? Number(node.getAttribute('font-size')) : 0 };
-      clamp(it, w, h);
-      if (it.kind === 'text') { node.setAttribute('x', it.x); node.setAttribute('y', it.y); }
-      else if (ideaOf(it)) {
+      it.fit = fit; it.shared = false;
+      it.drawn = { w: w, h: h, fs: node ? Number(node.getAttribute('font-size')) * fit : 0 };
+      it.box = [w, node ? Math.min(Math.max(h, bb.height * fit), room(it, it.y)[1]) : h];
+      clamp(it, it.box[0], it.box[1]);
+      return { hit: hit, node: node };
+    });
+    // ...then keep engravings on the same place apart (not while one is being dragged: it's done on drop)...
+    if (!drag) PLACES.forEach(function (k) {
+      var group = items.filter(function (it) { return it.place === k; });
+      var clash = group.some(function (a, i) { return group.slice(i + 1).some(function (b) { return overlaps(a, b); }); });
+      if (!clash) return;
+      arrange(group);
+      group.forEach(function (it) { it.shared = true; clamp(it, it.box[0], it.box[1]); });
+    });
+    // ...and draw them.
+    items.forEach(function (it, i) {
+      var hit = nodes[i].hit, node = nodes[i].node, w = it.drawn.w, h = it.drawn.h;
+      if (it.kind === 'text') {
+        node.setAttribute('font-size', it.drawn.fs.toFixed(1));
+        node.setAttribute('x', it.x); node.setAttribute('y', it.y);
+      } else if (ideaOf(it)) {
         var art = artOf(ideaOf(it)), k = Math.min(w / art.w, h / art.h);
         el('path', { d: art.d, fill: ink, opacity: .92, 'fill-rule': 'evenodd',
           transform: 'translate(' + (it.x - art.w * k / 2).toFixed(1) + ',' + (it.y - art.h * k / 2).toFixed(1) + ') scale(' + k.toFixed(5) + ')' }, hit);
@@ -311,7 +356,7 @@
       tag.textContent = t; tag.classList.toggle('is-extra', t.charAt(0) === '+');
       var note = c.querySelector('.fit-note');
       note.textContent = it.fit < .995 && hasContent(it)
-        ? 'At this size it doesn\'t fit ' + P.places[it.place].long + ', so we\'ve made it smaller: about ' + Math.round(it.size * it.fit) + ' mm tall.' : '';
+        ? 'At this size it doesn\'t fit ' + P.places[it.place].long + (it.shared ? ' next to the other engraving there' : '') + ', so we\'ve made it smaller: about ' + Math.round(it.size * it.fit) + ' mm tall.' : '';
     });
   }
 
@@ -548,6 +593,7 @@
     if (!drag || e.pointerId !== drag.id) return;
     drag = null;
     changed();
+    drawItems(val('main'));
     refreshCards(); updateSummary(); saveDraft();
     var g = layer.querySelector('.pd-item[data-i="' + selected + '"]');
     if (g) g.focus({ preventScroll: true });
