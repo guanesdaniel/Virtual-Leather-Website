@@ -643,6 +643,9 @@ ${products.filter((p) => p.group === 'extras').map(line).join('\n')}
 - [BBQ apron gifts](${site.siteUrl}/bbq-apron-gifts/)
 - [Leather chef aprons](${site.siteUrl}/leather-chef-apron/)
 - [Leather gifts for men](${site.siteUrl}/leather-gifts-for-men/)
+- [Leather apron size guide by height (cm and inches)](${site.siteUrl}/leather-apron-size-guide/)
+- [Full-grain vs top-grain leather aprons](${site.siteUrl}/full-grain-leather-aprons/)
+- [How to clean and care for a leather apron](${site.siteUrl}/leather-apron-care/)
 - [About ${site.siteName}](${site.siteUrl}/about/)
 - [Shipping and returns](${site.siteUrl}/shipping-returns/)
 ${faq.length ? `
