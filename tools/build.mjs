@@ -92,6 +92,29 @@ function img(name, alt = '', sizes = '100vw', eager = '') {
 // /products/<slug>/ built below.
 const productUrl = (p) => p.page || `/products/${p.slug}/`;
 
+// Shipping rules for Google's Merchant listings structured data (Offer.shippingDetails), matching
+// /shipping-returns/: free to the US (import duties paid) and outside Europe, $15 per order to Europe
+// including the UK, Norway and Switzerland. Made in 1 to 3 days; transit 3 to 5 days to the US and
+// 5 to 7 business days to Europe. Google needs named countries, so "everywhere else" lists our main
+// non-European markets.
+const EUROPE = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU',
+  'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB', 'NO', 'CH'];
+const OTHER_FREE = ['CA', 'MX', 'AU', 'NZ', 'CO'];
+const days = (min, max) => ({ '@type': 'QuantitativeValue', minValue: min, maxValue: max, unitCode: 'DAY' });
+const shippingRule = (countries, value, transit) => ({ '@type': 'OfferShippingDetails',
+  shippingRate: { '@type': 'MonetaryAmount', value, currency: site.currency },
+  shippingDestination: { '@type': 'DefinedRegion', addressCountry: countries.length === 1 ? countries[0] : countries },
+  deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: days(1, 3), ...(transit ? { transitTime: days(...transit) } : {}) } });
+const SHIPPING_DETAILS = [shippingRule(['US'], '0', [3, 5]), shippingRule(EUROPE, '15', [5, 7]), shippingRule(OTHER_FREE, '0')];
+// Pages with hand-written Product JSON-LD (knife roll, backpack, duffle) get the same rules.
+function addShipping(node) {
+  if (Array.isArray(node)) return node.forEach(addShipping);
+  if (!node || typeof node !== 'object') return;
+  if (node['@type'] === 'Offer' || node['@type'] === 'AggregateOffer') node.shippingDetails = SHIPPING_DETAILS;
+  Object.values(node).forEach(addShipping);
+}
+
+
 // The picture a page offers when it's shared or shown by search engines and AI assistants (og:image): a JPEG
 // copy of that page's own main photo, made at build time. JPEG because not every app reads WebP (link
 // previews, some AI answers), and each page names its own photo ("ogImage" in its header, an image name
@@ -307,6 +330,7 @@ for (const file of pageFiles) {
   page.robots = page.noindex ? 'noindex, follow' : 'index, follow';
   page.ogType ||= 'website';
   await setOgImage(page, page.ogImage || 'hero-bbq', page.ogImageAlt || (page.ogImage ? '' : 'A man wearing a tan leather BBQ apron engraved "Paul Smith", with a beer bottle in the drink holder'));
+  if (page.jsonld) addShipping(page.jsonld);
   page.jsonldTag = page.jsonld
     ? `<script type="application/ld+json">${JSON.stringify(page.jsonld).replace(/</g, '\\u003c')}</script>`
     : '';
@@ -391,11 +415,7 @@ function productJsonld(p, url) {
   const offer = { '@type': 'Offer', url, price: Number(p.price).toFixed(2), priceCurrency: site.currency,
     availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition',
     seller: { '@type': 'Organization', name: site.siteName } };
-  if (p.group === 'aprons') offer.shippingDetails = { '@type': 'OfferShippingDetails', shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: site.currency },
-    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'US' },
-    deliveryTime: { '@type': 'ShippingDeliveryTime',
-      handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
-      transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'DAY' } } };
+  offer.shippingDetails = SHIPPING_DETAILS;
   return { '@context': 'https://schema.org', '@graph': [
     { '@type': 'Product', '@id': `${url}#product`, name: p.name, description: (galleryData[p.gallery] || {}).about || p.summary,
       image: productPhotos(p).slice(0, 4).map(([n]) => imgUrl(n)), sku: p.id, productID: p.id,
