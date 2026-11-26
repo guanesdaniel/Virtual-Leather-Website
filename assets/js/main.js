@@ -1,0 +1,567 @@
+/* Virtual Leather — site behaviour: consent banner, click tracking, Ecwid loader + analytics bridge. */
+(function () {
+  'use strict';
+  var C = window.VL_CONFIG || {};
+  var VL = window.VL = window.VL || {};
+  var track = VL.track || function () {};
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  // One way to order an apron: the shop's pages for the aprons our designer makes open the designer,
+  // with that apron chosen, instead of the shop's own order form.
+  function designerStyle(id) { var p = (C.products || {})[String(id)]; return p && p.designer; }
+  // Products bought only through a designer: the aprons it makes, products with their own design page
+  // (the duffle bag), and the extra engraving (which only comes with one of those). Their shop pages open
+  // the designer instead.
+  function designerUrl(id) {
+    if (C.extraEngravingId && String(id) === String(C.extraEngravingId)) return '/#design';
+    var p = (C.products || {})[String(id)];
+    if (p && p.page) return p.page + '#design';
+    var style = designerStyle(id);
+    return style ? '/?style=' + encodeURIComponent(style) + '#design' : '';
+  }
+  var linked = /^#!\/(?:p\/(\d+)|[^?#]*?-p(\d+))(?:[\/?&]|$)/.exec(location.hash);
+  if (linked && document.getElementById('my-store-' + C.ecwidStoreId) && designerUrl(linked[1] || linked[2])) {
+    location.replace(designerUrl(linked[1] || linked[2]));
+    return;
+  }
+
+  function productInfo(id) {
+    var p = (C.products || {})[String(id)];
+    return p ? { item_id: String(id), item_name: p.name, price: p.price, item_category: p.group } : { item_id: String(id) };
+  }
+
+  /* ---------- Consent banner ---------- */
+  var banner = $('#consent');
+  if (banner) {
+    var opts = $('#consent-options', banner);
+    var btnChoose = $('[data-consent="customise"]', banner);
+    var btnSave = $('[data-consent="save"]', banner);
+    var lastFocus = null;
+
+    var openBanner = function (showOptions) {
+      var cur = VL.consent && VL.consent.get();
+      opts.analytics.checked = !!(cur && cur.analytics);
+      opts.marketing.checked = !!(cur && cur.marketing);
+      banner.hidden = false;
+      setOptions(!!showOptions);
+      // Only move focus when the visitor opened the settings themselves.
+      if (showOptions) { lastFocus = document.activeElement; opts.analytics.focus({ preventScroll: true }); }
+    };
+    var setOptions = function (show) {
+      opts.hidden = !show;
+      btnSave.hidden = !show;
+      btnChoose.setAttribute('aria-expanded', String(show));
+    };
+    var close = function (choice) {
+      VL.consent.set(choice);
+      banner.hidden = true;
+      if (lastFocus && lastFocus.focus && lastFocus !== document.body) lastFocus.focus({ preventScroll: true });
+    };
+
+    banner.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-consent]');
+      if (!b) return;
+      var a = b.getAttribute('data-consent');
+      if (a === 'accept') close({ analytics: true, marketing: true });
+      else if (a === 'reject') close({ analytics: false, marketing: false });
+      else if (a === 'customise') { var open = opts.hidden; setOptions(open); if (open) opts.analytics.focus(); }
+      else if (a === 'save') close({ analytics: opts.analytics.checked, marketing: opts.marketing.checked });
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-open-consent]')) openBanner(true);
+    });
+    if (!(VL.consent && VL.consent.get())) {
+      openBanner(false);
+      // Scrolling the page counts as accepting, like pressing Accept, so the banner
+      // does not stay on screen. Not while the visitor has "More info" open.
+      // Listens to the page scroll and to the finger/wheel gesture itself, because
+      // iPhone Safari does not always report the scroll while the finger is moving.
+      var startY = window.scrollY || document.documentElement.scrollTop || 0;
+      var touchY = null;
+      var events = ['scroll', 'touchstart', 'touchmove', 'wheel'];
+      var stop = function () { events.forEach(function (n) { document.removeEventListener(n, onMove, true); }); };
+      var accept = function () { stop(); close({ analytics: true, marketing: true }); };
+      var onMove = function (e) {
+        if (banner.hidden) return stop();
+        if (!opts.hidden || banner.contains(e.target)) return;
+        if (e.type === 'touchstart') { touchY = e.touches[0].clientY; return; }
+        if (e.type === 'touchmove') { if (touchY !== null && Math.abs(e.touches[0].clientY - touchY) >= 40) accept(); return; }
+        if (e.type === 'wheel') { if (Math.abs(e.deltaY) >= 20) accept(); return; }
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (Math.abs(y - startY) >= 60) accept();
+      };
+      events.forEach(function (n) { document.addEventListener(n, onMove, { capture: true, passive: true }); });
+    }
+  }
+
+  /* ---------- Click tracking (data-track attributes) ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-track]');
+    if (!el) return;
+    var kind = el.getAttribute('data-track');
+    if (kind === 'contact') {
+      track('generate_lead', { method: el.getAttribute('data-channel') || 'link', location: el.getAttribute('data-location') || '' });
+    } else if (kind === 'select_item') {
+      track('select_item', { items: [productInfo(el.getAttribute('data-id'))] });
+    } else if (kind === 'select_style') {
+      var style = el.getAttribute('data-style');
+      if (style && VL.designer) {
+        VL.designer.setStyle(style);
+        // Stay on this page: its address can carry tags (like ?fbclid= from an ad), and following "/#design"
+        // would load the page again without them, and without the apron just chosen.
+        if (el.getAttribute('href') === '/#design') el.setAttribute('href', location.pathname + location.search + '#design');
+      }
+      else if (style) { e.preventDefault(); location.href = '/?style=' + encodeURIComponent(style) + '#design'; }
+    }
+  });
+
+  /* ---------- Toast ---------- */
+  VL.toast = function (html, ms) {
+    var old = $('.toast'); if (old) old.remove();
+    var t = document.createElement('div');
+    t.className = 'toast'; t.setAttribute('role', 'status'); t.innerHTML = html;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, ms || 7000);
+  };
+
+  /* ---------- Order files: the customer's logo files and a picture of the design ---------- */
+  // When a design goes in the cart, its logo files (as the customer chose them) and a picture of the preview
+  // are uploaded to the shop's Cloudinary account (cloudinaryCloud + cloudinaryPreset in src/config.json,
+  // an unsigned upload preset that can only add files), and their links go in the order's description.
+  // Uploads that fail or take too long are left out: the customer is then asked to send the file instead.
+  VL.uploadOrderFile = function (blob, name, ref) {
+    if (!C.cloudinaryCloud || !C.cloudinaryPreset || !window.fetch || !window.FormData) return Promise.reject(new Error('off'));
+    var fd = new FormData();
+    fd.append('file', blob, name || 'file');
+    fd.append('upload_preset', C.cloudinaryPreset);
+    if (ref) { fd.append('tags', ref); fd.append('context', 'ref=' + ref); }
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl && setTimeout(function () { ctl.abort(); }, 45000);
+    return fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(C.cloudinaryCloud) + '/auto/upload',
+      { method: 'POST', body: fd, signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('upload ' + r.status)); })
+      .then(function (j) { clearTimeout(timer); if (!j.secure_url) throw new Error('no url'); return j.secure_url; },
+        function (err) { clearTimeout(timer); throw err; });
+  };
+  // Several uploads at once: resolves to { key: url } with whichever ones worked (never rejects).
+  VL.uploadOrderFiles = function (jobs, ref) {
+    var out = {};
+    return Promise.all(jobs.map(function (j) {
+      return Promise.resolve().then(function () { return typeof j.blob === 'function' ? j.blob() : j.blob; }).then(function (b) { return b && VL.uploadOrderFile(b, j.name, ref); })
+        .then(function (url) { if (url) out[j.key] = url; }, function () {});
+    })).then(function () { return out; });
+  };
+  // A JPEG picture of an SVG preview, with the web fonts and pictures it uses built in (an SVG drawn as an image can't
+  // load anything itself). Resolves to a Blob, or null if the browser can't make one.
+  var fontData = {};
+  function asDataUrl(url) {
+    return fetch(url).then(function (r) { return r.blob(); }).then(function (b) {
+      return new Promise(function (res, rej) { var f = new FileReader(); f.onload = function () { res(f.result); }; f.onerror = rej; f.readAsDataURL(b); });
+    });
+  }
+  function fontFaces(used) {
+    var rules = [];
+    $$('link[rel="stylesheet"], style').forEach(function (n) {
+      try { Array.prototype.forEach.call(n.sheet.cssRules, function (r) { if (r.type === 5) rules.push(r); }); } catch (e) {}
+    });
+    return Promise.all(rules.filter(function (r) {
+      var fam = r.style.getPropertyValue('font-family').replace(/["']/g, '').trim().toLowerCase();
+      return used.some(function (u) { return u.indexOf(fam) !== -1; });
+    }).map(function (r) {
+      var m = /url\(["']?([^"')]+)["']?\)/.exec(r.style.getPropertyValue('src'));
+      if (!m) return '';
+      var url = new URL(m[1], r.parentStyleSheet.href || location.href).href;
+      return (fontData[url] || (fontData[url] = asDataUrl(url))).then(function (d) {
+        return '@font-face{font-family:' + r.style.getPropertyValue('font-family') + ';font-weight:' + (r.style.getPropertyValue('font-weight') || 'normal') +
+          ';src:url(' + d + ') format("woff2");}';
+      }, function () { return ''; });
+    })).then(function (css) { return css.join(''); });
+  }
+  VL.svgToPicture = function (svg, width) {
+    if (!svg || !window.XMLSerializer || !window.fetch) return Promise.resolve(null);
+    var copy = svg.cloneNode(true), vb = (svg.getAttribute('viewBox') || '0 0 1000 1000').split(/[\s,]+/).map(Number);
+    var w = width || 1000, h = Math.round(w * vb[3] / vb[2]);
+    copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    copy.setAttribute('width', w); copy.setAttribute('height', h);
+    var used = [];
+    Array.prototype.forEach.call(copy.querySelectorAll('[font-family]'), function (t) { used.push(t.getAttribute('font-family').replace(/["']/g, '').toLowerCase()); });
+    var images = Array.prototype.filter.call(copy.querySelectorAll('image'), function (i) { return !/^data:/.test(i.getAttribute('href') || ''); });
+    return Promise.all([fontFaces(used)].concat(images.map(function (i) {
+      return asDataUrl(i.getAttribute('href')).then(function (d) { i.setAttribute('href', d); }, function () { i.remove(); });
+    }))).then(function (r) {
+      var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      style.textContent = r[0];
+      copy.insertBefore(style, copy.firstChild);
+      var src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(copy));
+      return new Promise(function (res) {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            var g = c.getContext('2d'); g.fillStyle = '#f6f0e7'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+            c.toBlob(function (b) { res(b); }, 'image/jpeg', .9);
+          } catch (e) { res(null); }
+        };
+        img.onerror = function () { res(null); };
+        img.src = src;
+      });
+    }).catch(function () { return null; });
+  };
+
+  /* ---------- Designs for the workshop (MarketCenter) ---------- */
+  // A design added to the cart is filed with the shop's order Worker under its ref (see worker/README.md), with this
+  // device's random key for that ref (vl_design_keys, the same keys the apron designer keeps), so only this device can
+  // order it. data is { item: ... } (product-designer.js). Never holds up the cart: a design that doesn't reach the
+  // Worker is entered by hand, as before.
+  VL.designKey = function (ref) {
+    var all = readJSON('vl_design_keys', {}) || {};
+    if (!all[ref]) {
+      var a = new Uint8Array(16);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+      all[ref] = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      try { localStorage.setItem('vl_design_keys', JSON.stringify(all)); } catch (e) { /* private mode: a new key each time */ }
+    }
+    return all[ref];
+  };
+  VL.sendDesign = function (ref, data) {
+    if (!C.orderWorker || !window.fetch) return Promise.resolve();
+    var body = { ref: ref, key: VL.designKey(ref) };
+    Object.keys(data).forEach(function (k) { body[k] = data[k]; });
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl && setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(C.orderWorker.replace(/\/+$/, '') + '/design', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body), keepalive: true, signal: ctl ? ctl.signal : undefined })
+      .then(function () { clearTimeout(timer); }, function () { clearTimeout(timer); });
+  };
+
+  /* ---------- Saved apron designs (kept on this device only) ---------- */
+  // The designer keeps the design in progress and each apron design added to the cart, so customers can
+  // come back and change it without starting again. A design is dropped once its apron leaves the cart,
+  // everything is cleared when an order is placed, and nothing older than 30 days is used. Nothing here
+  // is sent anywhere. If the browser is short of space, logo previews are left out.
+  var SAVED_KEY = 'vl_designs', DRAFT_KEY = 'vl_design_draft', KEEP_MS = 30 * 864e5;
+  var DESC = 'Description For Personalization';
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; }
+  }
+  function writeJSON(key, v) {
+    try { if (v == null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); return true; } catch (e) { return false; }
+  }
+  function noLogos(d) { return d && d.snap ? Object.assign({}, d, { snap: Object.assign({}, d.snap, { logos: {} }) }) : d; }
+  function fresh(d) { return d && Date.now() - (d.time || 0) < KEEP_MS; }
+  VL.saved = {
+    designs: function () {
+      var all = readJSON(SAVED_KEY, []), list = (Array.isArray(all) ? all : []).filter(function (d) { return fresh(d) && d.ref && d.cart; });
+      if (list.length !== all.length) writeJSON(SAVED_KEY, list.length ? list : null);
+      return list;
+    },
+    setDesigns: function (list) {
+      if (!writeJSON(SAVED_KEY, list.length ? list : null)) writeJSON(SAVED_KEY, list.map(noLogos));
+      document.dispatchEvent(new CustomEvent('vl:saved-designs'));
+    },
+    find: function (ref) { return VL.saved.designs().filter(function (d) { return d.ref === ref; })[0] || null; },
+    draft: function () {
+      var d = readJSON(DRAFT_KEY, null);
+      if (d && !fresh(d)) writeJSON(DRAFT_KEY, null);
+      return fresh(d) && d.fields ? d : null;
+    },
+    setDraft: function (d) { if (!writeJSON(DRAFT_KEY, d)) writeJSON(DRAFT_KEY, noLogos(d)); },
+    clear: function () { writeJSON(SAVED_KEY, null); writeJSON(DRAFT_KEY, null); },
+    // The cart line holding this design's apron (its order description carries the design ref).
+    lineIndex: function (d, cart) {
+      var items = cart && cart.items || [];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i], desc = String((it.options || {})[DESC] || '');
+        if (it.product && it.product.id === d.cart.apronId && desc.indexOf(d.ref) !== -1) return i;
+      }
+      return -1;
+    }
+  };
+  // Keep only the designs still in the cart, and offer to edit them above the shop (and its cart).
+  function syncSaved(cart) {
+    var list = VL.saved.designs(), kept = list.filter(function (d) { return VL.saved.lineIndex(d, cart) !== -1; });
+    if (kept.length !== list.length && !VL.cartBusy) VL.saved.setDesigns(kept);
+    var box = $('[data-edit-designs]');
+    if (!box) return;
+    box.textContent = '';
+    box.hidden = !kept.length;
+    if (!kept.length) return;
+    box.appendChild(document.createTextNode(kept.length > 1 ? 'Want to change an apron? Edit ' : 'Want to change your apron? '));
+    kept.forEach(function (d, i) {
+      if (i) box.appendChild(document.createTextNode(i === kept.length - 1 ? ' or ' : ', '));
+      var a = document.createElement('a');
+      a.href = '/?edit=' + encodeURIComponent(d.ref) + '#design';
+      a.textContent = kept.length > 1 ? 'your ' + d.label : 'Edit your design';
+      box.appendChild(a);
+    });
+    box.appendChild(document.createTextNode('. Everything you entered is kept.'));
+  }
+
+  /* ---------- Order file links: for the shop owner only ---------- */
+  // The links to a design's uploaded files (VL.uploadOrderFile) are kept on this device by design ref and,
+  // for the designs still in the cart, put in a hidden order field: the customer doesn't see it, the shop
+  // owner sees it in the order in Ecwid. The order description itself only says "file received".
+  // (The files are also tagged with the ref in Cloudinary, so they can be found from any order.)
+  var FILES_KEY = 'vl_order_files', FILES_FIELD = 'vl_design_files', filesValue = null;
+  VL.orderFiles = {
+    add: function (ref, label, lines) {
+      if (!ref || !lines || !lines.length) return;
+      var all = readJSON(FILES_KEY, {});
+      if (typeof all !== 'object' || Array.isArray(all)) all = {};
+      Object.keys(all).forEach(function (r) { if (!fresh(all[r])) delete all[r]; });
+      all[ref] = { time: Date.now(), label: label || '', lines: lines };
+      writeJSON(FILES_KEY, all);
+      if (window.Ecwid && window.Ecwid.Cart) window.Ecwid.Cart.get(syncFiles);
+    },
+    clear: function () { writeJSON(FILES_KEY, null); }
+  };
+  // The hidden field's value for the designs in this cart ('' when none), e.g.
+  // "VL-7K2P (BBQ apron): Position 1 logo "logo.png": https://… ; Design picture: https://…".
+  function filesFor(cart) {
+    var all = readJSON(FILES_KEY, {}) || {}, text = (cart && cart.items || []).map(function (it) {
+      return Object.keys(it.options || {}).map(function (k) { return String(it.options[k]); }).join(' ');
+    }).join(' ');
+    return Object.keys(all).filter(function (r) { return fresh(all[r]) && (!cart || text.indexOf(r) !== -1); }).map(function (r) {
+      return r + (all[r].label ? ' (' + all[r].label + ')' : '') + ': ' + all[r].lines.join(' ; ');
+    }).join(' || ');
+  }
+  function setFilesField(value) {
+    window.ec = window.ec || {};
+    window.ec.order = window.ec.order || {};
+    window.ec.order.extraFields = window.ec.order.extraFields || {};
+    if (value) {
+      window.ec.order.extraFields[FILES_FIELD] = { title: 'Design files', type: 'hidden', value: value,
+        orderDetailsDisplaySection: 'order_comments', showInInvoice: false, showInNotifications: false };
+    } else delete window.ec.order.extraFields[FILES_FIELD];
+  }
+  function syncFiles(cart) {
+    if (VL.cartBusy) return;
+    var v = filesFor(cart);
+    if (v === filesValue) return;
+    filesValue = v;
+    setFilesField(v);
+    if (window.Ecwid && window.Ecwid.refreshConfig) window.Ecwid.refreshConfig();
+  }
+
+  /* ---------- Placed orders to the workshop (MarketCenter) ---------- */
+  // When Ecwid says an order was placed, its designed products (aprons, knife rolls, bags) and apron extras go to the
+  // shop's order Worker (orderWorker in src/config.json; see worker/README.md), which sends paid ones to Juan Miguel's
+  // MarketCenter portal with the designs the designers saved there. Each design's ref goes with this device's key for
+  // it (vl_design_keys, made by the designers), so only the device that made a design can order it this way. Works on
+  // every Ecwid plan.
+  var EXTRA_IDS = [619483308, 688211109, 619498559];   // bottle opener, leather wings, grease
+  function optionsOf(it) {
+    var o = {}, list = it.selectedOptions || it.options;
+    if (Array.isArray(list)) list.forEach(function (x) { if (x && x.name) o[x.name] = x.value != null ? String(x.value) : ''; });
+    else if (list && typeof list === 'object') Object.keys(list).forEach(function (k) { o[k] = String(list[k]); });
+    return o;
+  }
+  function sendPlacedOrder(order, id) {
+    if (!C.orderWorker || !window.fetch || !id) return;
+    var keys = readJSON('vl_design_keys', {}) || {}, items = [], extras = [];
+    (order.items || []).forEach(function (it) {
+      // The design ref is in the order description, or for a product with its own store fields (the knife roll's
+      // "Interior Personalization Description") in whichever field the designer put the description.
+      var o = optionsOf(it), REF = /\bVL-[A-Z0-9]{4,8}\b/;
+      var desc = REF.test(o[DESC] || '') ? o[DESC] : Object.keys(o).map(function (k) { return o[k]; }).filter(function (v) { return REF.test(v); })[0] || '';
+      var m = REF.exec(desc);
+      var pid = Number((it.product || it).id || it.productId);
+      if (EXTRA_IDS.indexOf(pid) !== -1) {
+        var color = Object.keys(o).filter(function (k) { return /colou?r/i.test(k); }).map(function (k) { return o[k]; })[0] || '';
+        extras.push({ id: pid, color: color, qty: it.quantity || 1 });
+        return;
+      }
+      if (!m || !keys[m[0]]) return;
+      items.push({ ref: m[0], key: keys[m[0]], qty: it.quantity || 1, height: o['Customer Height'] || '',
+        weight: o['Customer Weight'] || '', description: desc });
+    });
+    if (!items.length && !extras.length) return;
+    // MarketCenter gets the order number the shop owner sees in Ecwid (like WCREF), not Ecwid's internal number.
+    var shortId = [order.id, order.vendorOrderNumber, order.orderNumber].map(function (v) { return v == null ? '' : String(v); })
+      .filter(function (v) { return /^[A-Za-z0-9-]{4,20}$/.test(v) && /[A-Za-z]/.test(v); })[0] || id;
+    var p = order.shippingPerson || order.billingPerson || {}, bill = order.billingPerson || {};
+    // Ecwid's checkout may not ask for a phone (or the customer skips it): then the phone (and email) the customer gave
+    // in the designer, which goes with each designed product as an option, is used.
+    var given = function (re) {
+      var v = '';
+      (order.items || []).forEach(function (it) {
+        var o = optionsOf(it);
+        Object.keys(o).forEach(function (k) { if (!v && re.test(k) && o[k].trim()) v = o[k].trim(); });
+      });
+      return v;
+    };
+    var phone = p.phone || bill.phone || (order.customer && order.customer.phone) || given(/phone/i);
+    var body = { orderId: shortId, paymentStatus: order.paymentStatus || '', email: order.email || (order.customer && order.customer.email) || given(/e-?mail/i),
+      notes: order.orderComments || order.comments || '', items: items, extras: extras,
+      shipTo: { name: p.name || '', street: p.street || '', city: p.city || '', state: p.stateOrProvinceCode || p.stateOrProvinceName || '',
+        postal: p.postalCode || '', country: p.countryCode || '', phone: phone } };
+    fetch(C.orderWorker.replace(/\/+$/, '') + '/order', { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body), keepalive: true }).catch(function () {});
+  }
+
+  /* ---------- Ecwid loader ---------- */
+  var ecwidPromise = null;
+  VL.loadEcwid = function () {
+    if (ecwidPromise) return ecwidPromise;
+    ecwidPromise = new Promise(function (resolve, reject) {
+      if (!C.ecwidStoreId) return reject(new Error('No Ecwid store ID'));
+      window.ecwid_script_defer = true;
+      window.ecwid_dynamic_widgets = true;
+      window.ec = window.ec || {};
+      window.ec.config = window.ec.config || {};
+      window.ec.config.storefrontUrls = { cleanUrls: false };
+      // Our cookie banner decides, before the store loads (see VL.consent.ecwid in analytics.js).
+      window.ec.config.tracking = { ask_consent: true, user_response: VL.consent && VL.consent.ecwid ? VL.consent.ecwid() : 'DECLINE' };
+      filesValue = filesFor(null);
+      setFilesField(filesValue);
+      var s = document.createElement('script');
+      s.src = 'https://app.ecwid.com/script.js?' + C.ecwidStoreId + '&data_platform=code';
+      s.charset = 'utf-8';
+      s.setAttribute('data-cfasync', 'false');
+      var timer = setTimeout(function () { reject(new Error('Ecwid timed out')); }, 15000);
+      s.onerror = function () { clearTimeout(timer); reject(new Error('Ecwid blocked')); };
+      s.onload = function () {
+        var store = document.getElementById('my-store-' + C.ecwidStoreId);
+        if (store && window.xProductBrowser) {
+          window.xProductBrowser('categoriesPerRow=3', 'views=grid(20,3) list(60) table(60)', 'categoryView=grid', 'searchView=list', 'id=my-store-' + C.ecwidStoreId);
+        }
+        window.Ecwid.OnAPILoaded.add(function () { clearTimeout(timer); bridge(); resolve(window.Ecwid); });
+        window.Ecwid.init();
+      };
+      document.head.appendChild(s);
+    });
+    return ecwidPromise;
+  };
+
+  /* ---------- Ecwid -> analytics bridge ---------- */
+  var bridged = false;
+  function bridge() {
+    if (bridged) return; bridged = true;
+    var E = window.Ecwid;
+    var lastQty = null;
+    var checkoutTracked = false;
+
+    function cartItems(cart) {
+      var map = {};
+      (cart && cart.items || []).forEach(function (it) {
+        var id = String(it.product && it.product.id);
+        if (!map[id]) map[id] = { qty: 0, price: it.product && it.product.price, name: it.product && it.product.name };
+        map[id].qty += it.quantity || 0;
+      });
+      return map;
+    }
+    function setCount(n) {
+      $$('[data-cart-count]').forEach(function (el) {
+        el.textContent = n;
+        if (n > 0) el.removeAttribute('data-empty'); else el.setAttribute('data-empty', '');
+      });
+    }
+
+    // Baseline = cart contents at load, so only later additions count as add_to_cart.
+    // The extra engraving only comes with an apron or a duffle bag: if neither is left in the cart, take it out.
+    function dropLoneEngraving(cart) {
+      if (!C.extraEngravingId || VL.cartBusy) return;
+      var lone = [], apron = false;
+      (cart && cart.items || []).forEach(function (it, i) {
+        var id = String(it.product && it.product.id), p = (C.products || {})[id];
+        if (id === String(C.extraEngravingId)) lone.push(i);
+        else if (p && (p.group === 'aprons' || p.page)) apron = true;
+      });
+      if (lone.length && !apron) E.Cart.removeProducts(lone);
+    }
+
+    E.Cart.get(function (cart) {
+      if (!lastQty) lastQty = cartItems(cart);
+      setCount(cart && cart.productsQuantity || 0);
+      syncSaved(cart);
+      dropLoneEngraving(cart);
+      syncFiles(cart);
+    });
+
+    E.OnCartChanged.add(function (cart) {
+      var now = cartItems(cart);
+      setCount(cart && cart.productsQuantity || 0);
+      E.Cart.get(function (c) { syncSaved(c); dropLoneEngraving(c); syncFiles(c); });
+      // While the designer swaps an edited design into the cart, re-adding it isn't a new add to cart.
+      if (lastQty && !VL.cartBusy) {
+        Object.keys(now).forEach(function (id) {
+          var added = now[id].qty - (lastQty[id] ? lastQty[id].qty : 0);
+          if (added > 0) {
+            var info = productInfo(id);
+            info.item_name = info.item_name || now[id].name;
+            info.price = now[id].price != null ? now[id].price : info.price;
+            info.quantity = added;
+            track('add_to_cart', { currency: C.currency, value: (info.price || 0) * added, items: [info], from_store: true });
+          }
+        });
+      }
+      lastQty = now;
+    });
+
+    E.OnPageLoaded.add(function (page) {
+      if (!page) return;
+      if (page.type === 'PRODUCT' && page.productId && designerUrl(page.productId)) {
+        location.replace(designerUrl(page.productId));
+        return;
+      }
+      if (page.type === 'PRODUCT' && page.productId) {
+        var info = productInfo(page.productId);
+        info.item_name = info.item_name || page.name;
+        track('view_item', { currency: C.currency, value: info.price || 0, items: [info], from_store: true });
+      } else if (page.type === 'CART') {
+        track('view_cart', {});
+      } else if (/^CHECKOUT/.test(page.type) && !checkoutTracked) {
+        checkoutTracked = true;
+        E.Cart.get(function (cart) {
+          var items = (cart.items || []).map(function (it) {
+            var info = productInfo(it.product.id);
+            info.item_name = info.item_name || it.product.name;
+            info.price = it.product.price; info.quantity = it.quantity;
+            return info;
+          });
+          var value = items.reduce(function (s, i) { return s + (i.price || 0) * (i.quantity || 1); }, 0);
+          track('begin_checkout', { currency: C.currency, value: value, items: items, from_store: true });
+        });
+      }
+    });
+
+    if (E.OnOrderPlaced) {
+      E.OnOrderPlaced.add(function (order) {
+        if (!order) return;
+        VL.saved.clear();
+        VL.orderFiles.clear();
+        var id = String(order.vendorOrderNumber || order.orderNumber || order.id || '');
+        try { sendPlacedOrder(order, id); } catch (e) { /* never in the customer's way */ }
+        var seenKey = 'vl_order_' + id;
+        try { if (sessionStorage.getItem(seenKey)) return; sessionStorage.setItem(seenKey, '1'); } catch (e) { /* ignore */ }
+        var items = (order.items || []).map(function (it) {
+          var p = it.product || it;
+          var info = productInfo(p.id || it.productId);
+          info.item_name = info.item_name || p.name;
+          info.price = p.price != null ? p.price : it.price;
+          info.quantity = it.quantity || 1;
+          return info;
+        });
+        track('purchase', {
+          transaction_id: id, event_id: 'Purchase.' + id, from_store: true,
+          currency: C.currency, value: Number(order.total) || 0,
+          tax: Number(order.tax) || 0, shipping: Number(order.shippingOption && order.shippingOption.shippingRate) || 0,
+          items: items
+        });
+      });
+    }
+  }
+
+  /* Load Ecwid immediately on the shop page; elsewhere when the cart icon is used or the designer is near. */
+  if (document.getElementById('my-store-' + C.ecwidStoreId)) {
+    VL.loadEcwid().then(function () {
+      var l = $('[data-store-loading]'); if (l) l.hidden = true;
+    }).catch(function () {
+      var f = $('[data-store-fallback]'); if (f) f.hidden = false;
+      var l = $('[data-store-loading]'); if (l) l.hidden = true;
+    });
+  } else {
+    var warm = function () { VL.loadEcwid().catch(function () {}); };
+    if ('requestIdleCallback' in window) requestIdleCallback(function () { setTimeout(warm, 2500); });
+    else setTimeout(warm, 4000);
+  }
+})();
